@@ -57,7 +57,8 @@ under the License.
 		<module>flink-connector-base</module>
 		<module>flink-file-sink-common</module>
 		<module>flink-connector-files</module>
-	</modules>
+        <module>flink-connector-hbase</module>
+    </modules>
 
 	<!-- override these root dependencies as 'provided', so they don't end up
 		in the jars-with-dependencies (uber jars) of connectors and
