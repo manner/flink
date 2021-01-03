@@ -17,7 +17,7 @@ public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, 
 
 	@Override
 	public void start() {
-
+		System.out.println("Staring HbaseSourceEnumerator");
 	}
 
 	@Override
