@@ -27,6 +27,6 @@ public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<Hba
 
 	@Override
 	public HbaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
-		return new HbaseSourceSplit();
+		return new HbaseSourceSplit("2");
 	}
 }
