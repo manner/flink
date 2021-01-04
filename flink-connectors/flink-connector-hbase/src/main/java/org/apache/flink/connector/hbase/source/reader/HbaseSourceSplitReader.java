@@ -21,6 +21,8 @@ public class HbaseSourceSplitReader<T> implements SplitReader<Tuple3<T, Long, Lo
 	private List<Tuple3<T, Long, Long>> records;
 
 	public HbaseSourceSplitReader() {
+		System.out.println("constructing Split Reader");
+
 		records = Arrays.asList(new Tuple3((T) "a", 1, 1), new Tuple3((T) "a", 1, 1));
 	}
 
@@ -56,13 +58,13 @@ public class HbaseSourceSplitReader<T> implements SplitReader<Tuple3<T, Long, Lo
 		@Nullable
 		@Override
 		public String nextSplit() {
-			return null;
+			return "a";
 		}
 
 		@Nullable
 		@Override
 		public T nextRecordFromSplit() {
-			if (records.iterator().hasNext()) {
+			if (!records.iterator().hasNext()) {
 				return null;
 			} else {
 				return records.iterator().next();
