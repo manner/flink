@@ -61,7 +61,7 @@ public class HbaseSource<OUT> implements Source<OUT, HbaseSourceSplit, HbaseSour
 	public SplitEnumerator<HbaseSourceSplit, HbaseSourceEnumState> createEnumerator(
 		SplitEnumeratorContext<HbaseSourceSplit> enumContext) throws Exception {
 		System.out.println("createEnumerator");
-		return new HbaseSourceEnumerator();
+		return new HbaseSourceEnumerator(enumContext);
 	}
 
 	@Override

@@ -2,11 +2,13 @@ package org.apache.flink.connector.hbase.source.enumerator;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SplitEnumerator;
+import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.connector.hbase.source.split.HbaseSourceSplit;
 
 import javax.annotation.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,10 +16,31 @@ import java.util.List;
  */
 @Internal
 public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, HbaseSourceEnumState> {
+	private final SplitEnumeratorContext<HbaseSourceSplit> context;
+
+	public HbaseSourceEnumerator(SplitEnumeratorContext<HbaseSourceSplit> context) {
+		this.context = context;
+	}
 
 	@Override
 	public void start() {
-		System.out.println("Staring HbaseSourceEnumerator");
+		System.out.println("Starting HbaseSourceEnumerator");
+		context.callAsync(
+			this::discoverStuff,
+			this::handleStuff
+		);
+	}
+
+	private List<HbaseSourceSplit> discoverStuff() {
+		System.out.println("discoverStuff");
+		return Arrays.asList(new HbaseSourceSplit("1"));
+	}
+
+	private void handleStuff(List<HbaseSourceSplit> splits, Throwable t) {
+		System.out.println("handleStuff");
+		for (HbaseSourceSplit split : splits) {
+			context.assignSplit(split, 0);
+		}
 	}
 
 	@Override

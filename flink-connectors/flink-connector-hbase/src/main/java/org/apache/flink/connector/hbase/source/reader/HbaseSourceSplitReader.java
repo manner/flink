@@ -26,6 +26,7 @@ public class HbaseSourceSplitReader<T> implements SplitReader<Tuple3<T, Long, Lo
 
 	@Override
 	public RecordsWithSplitIds<Tuple3<T, Long, Long>> fetch() throws IOException {
+		System.out.println("fetching in Split Reader");
 		HbaseSplitRecords<Tuple3<T, Long, Long>> records = new HbaseSplitRecords<>(this.records);
 		return records;
 	}
