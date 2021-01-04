@@ -16,6 +16,7 @@ public class HbaseRecordEmitter<T> implements RecordEmitter<Tuple3<T, Long, Long
 		Tuple3<T, Long, Long> element,
 		SourceOutput<T> output,
 		HbaseSourceSplitState splitState) throws Exception {
+		System.out.println("emitRecord");
 		output.collect(element.f0, element.f2);
 
 	}
