@@ -25,10 +25,10 @@ public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, 
 	@Override
 	public void start() {
 		System.out.println("Starting HbaseSourceEnumerator");
-		context.callAsync(
-			this::discoverStuff,
-			this::handleStuff
-		);
+//		context.callAsync(
+//			this::discoverStuff,
+//			this::handleStuff
+//		);
 	}
 
 	private List<HbaseSourceSplit> discoverStuff() {
@@ -57,7 +57,7 @@ public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, 
 
 	@Override
 	public void addReader(int subtaskId) {
-
+		System.out.println("addReader");
 	}
 
 	@Override
