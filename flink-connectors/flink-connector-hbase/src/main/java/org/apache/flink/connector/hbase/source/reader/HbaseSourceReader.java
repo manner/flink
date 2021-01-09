@@ -12,31 +12,30 @@ import java.util.Map;
 /**
  * The source reader for Hbase.
  */
-public class HbaseSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<Tuple3<T, Long, Long>, T, HbaseSourceSplit, HbaseSourceSplitState> {
-	public HbaseSourceReader(
-		Configuration config,
-		SourceReaderContext context) {
+public class HbaseSourceReader
+	extends SingleThreadMultiplexSourceReaderBase<Tuple3<byte[], Long, Long>, byte[], HbaseSourceSplit, HbaseSourceSplitState> {
+	public HbaseSourceReader(Configuration config, SourceReaderContext context) {
 		super(
 			HbaseSourceSplitReader::new,
-			new HbaseRecordEmitter<>(),
+			new HbaseRecordEmitter(),
 			config,
 			context);
 		System.out.println("constructing in Source Reader");
-
 	}
 
 	@Override
 	protected void onSplitFinished(Map<String, HbaseSourceSplitState> finishedSplitIds) {
+		context.sendSplitRequest();
 	}
 
 	@Override
 	protected HbaseSourceSplitState initializedState(HbaseSourceSplit split) {
 		System.out.println("initializedState");
-		return new HbaseSourceSplitState("init");
+		return new HbaseSourceSplitState(split);
 	}
 
 	@Override
 	protected HbaseSourceSplit toSplitType(String splitId, HbaseSourceSplitState splitState) {
-		return null;
+		return splitState.getSplit();
 	}
 }

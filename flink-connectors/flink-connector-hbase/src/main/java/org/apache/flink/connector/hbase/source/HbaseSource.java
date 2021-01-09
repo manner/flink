@@ -17,7 +17,7 @@ import org.apache.flink.core.io.SimpleVersionedSerializer;
 /**
  * A connector for Hbase.
  */
-public class HbaseSource<OUT> implements Source<OUT, HbaseSourceSplit, HbaseSourceEnumState> {
+public class HbaseSource implements Source<byte[], HbaseSourceSplit, HbaseSourceEnumState> {
 
 	private final Boundedness boundedness;
 
@@ -31,9 +31,9 @@ public class HbaseSource<OUT> implements Source<OUT, HbaseSourceSplit, HbaseSour
 	}
 
 	@Override
-	public SourceReader<OUT, HbaseSourceSplit> createReader(SourceReaderContext readerContext) throws Exception {
+	public SourceReader<byte[], HbaseSourceSplit> createReader(SourceReaderContext readerContext) throws Exception {
 		System.out.println("createReader");
-		return new HbaseSourceReader<>(new Configuration(), readerContext);
+		return new HbaseSourceReader(new Configuration(), readerContext);
 	}
 
 	@Override
