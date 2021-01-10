@@ -45,7 +45,7 @@ public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<
 		Collection<HbaseSourceSplit> checkpoint) throws Exception {
 		System.out.println("restoreEnumerator");
 
-		return null;
+		return new HbaseSourceEnumerator(enumContext, checkpoint);
 	}
 
 	@Override
