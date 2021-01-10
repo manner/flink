@@ -7,66 +7,61 @@ import org.apache.flink.connector.hbase.source.split.HbaseSourceSplit;
 
 import javax.annotation.Nullable;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * The enumerator class for Hbase source.
  */
 @Internal
-public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, HbaseSourceEnumState> {
+public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> {
 	private final SplitEnumeratorContext<HbaseSourceSplit> context;
+	private Queue<HbaseSourceSplit> remainingSplits;
 
-	public HbaseSourceEnumerator(SplitEnumeratorContext<HbaseSourceSplit> context) {
+	public HbaseSourceEnumerator(
+		SplitEnumeratorContext<HbaseSourceSplit> context,
+		Collection<HbaseSourceSplit> splits) {
 		this.context = context;
+		this.remainingSplits = new ArrayDeque<>(splits);
 	}
 
 	@Override
 	public void start() {
 		System.out.println("Starting HbaseSourceEnumerator");
-//		context.callAsync(
-//			this::discoverStuff,
-//			this::handleStuff
-//		);
 	}
 
-	private List<HbaseSourceSplit> discoverStuff() {
-		System.out.println("discoverStuff");
-		return Arrays.asList(new HbaseSourceSplit("1"));
-	}
+	@Override
+	public void close() {
 
-	private void handleStuff(List<HbaseSourceSplit> splits, Throwable t) {
-		System.out.println("handleStuff");
-		for (HbaseSourceSplit split : splits) {
-			context.assignSplit(split, 0);
-		}
 	}
 
 	@Override
 	public void handleSplitRequest(
 		int subtaskId,
 		@Nullable String requesterHostname) {
+		final HbaseSourceSplit nextSplit = remainingSplits.poll();
+		if (nextSplit != null) {
+			context.assignSplit(nextSplit, subtaskId);
 
+		} else {
+			context.signalNoMoreSplits(subtaskId);
+		}
 	}
 
 	@Override
 	public void addSplitsBack(List<HbaseSourceSplit> splits, int subtaskId) {
-
+		remainingSplits.addAll(splits);
 	}
 
 	@Override
 	public void addReader(int subtaskId) {
-		System.out.println("addReader");
+		System.out.println("addReader - nothing should happen here");
 	}
 
 	@Override
-	public HbaseSourceEnumState snapshotState() throws Exception {
-		return null;
-	}
-
-	@Override
-	public void close() throws IOException {
-
+	public Collection<HbaseSourceSplit> snapshotState() throws Exception {
+		return remainingSplits;
 	}
 }
