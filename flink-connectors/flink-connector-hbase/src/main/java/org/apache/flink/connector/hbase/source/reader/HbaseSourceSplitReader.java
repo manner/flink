@@ -36,7 +36,8 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
 
 		final HbaseSourceSplit nextSplit = splits.poll();
 		if (nextSplit == null) {
-			throw new IOException("Cannot fetch from another split - no split remaining");
+			return new HbaseSplitRecords(null, null, Collections.singleton(currentSplitId));
+//			throw new IOException("Cannot fetch from another split - no split remaining");
 		}
 
 		currentSplitId = nextSplit.splitId();
@@ -44,7 +45,7 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
 		byte[] data = "Hello World!".getBytes();
 		List<byte[]> records = Arrays.asList(data, data);
 
-		return new HbaseSplitRecords(currentSplitId, records.iterator());
+		return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
 	}
 
 	@Override
@@ -68,10 +69,13 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
 
 		private String splitId;
 
-		private HbaseSplitRecords(String splitId, Iterator<byte[]> recordsForSplit) {
+		private HbaseSplitRecords(
+			String splitId,
+			Iterator<byte[]> recordsForSplit,
+			Set<String> finishedSplits) {
 			this.splitId = splitId;
 			this.recordsForSplit = recordsForSplit;
-			this.finishedSplits = Collections.emptySet();
+			this.finishedSplits = finishedSplits;
 		}
 
 		@Nullable
@@ -87,10 +91,10 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
 		@Nullable
 		@Override
 		public byte[] nextRecordFromSplit() {
-			if (recordsForSplit != null) {
+			if (recordsForSplit != null && recordsForSplit.hasNext()) {
 				return recordsForSplit.next();
 			} else {
-				throw new IllegalStateException();
+				return null;
 			}
 		}
 

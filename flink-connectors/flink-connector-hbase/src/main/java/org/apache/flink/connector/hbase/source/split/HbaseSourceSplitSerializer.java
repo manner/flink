@@ -2,7 +2,11 @@ package org.apache.flink.connector.hbase.source.split;
 
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import org.apache.hadoop.conf.Configuration;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -10,16 +14,19 @@ import java.io.IOException;
  * The {@link org.apache.flink.core.io.SimpleVersionedSerializer serializer} for {@link HbaseSourceSplit}.
  */
 public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<HbaseSourceSplit> {
+	private static final int VERSION = 1;
+
 	@Override
 	public int getVersion() {
-		return 0;
+		return VERSION;
 	}
 
 	@Override
-	public byte[] serialize(HbaseSourceSplit obj) throws IOException {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				DataOutputStream out = new DataOutputStream(baos)) {
-			out.writeUTF("test");
+	public byte[] serialize(HbaseSourceSplit split) throws IOException {
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(baos)) {
+			out.writeUTF(split.splitId());
+			out.writeUTF(split.getHost());
+			out.writeUTF(split.getTable());
 			out.flush();
 			return baos.toByteArray();
 		}
@@ -27,6 +34,11 @@ public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<Hba
 
 	@Override
 	public HbaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
-		return new HbaseSourceSplit("2");
+		try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized); DataInputStream in = new DataInputStream(bais)) {
+			String id = in.readUTF();
+			String host = in.readUTF();
+			String table = in.readUTF();
+			return new HbaseSourceSplit(id, host, table, new Configuration());
+		}
 	}
 }
