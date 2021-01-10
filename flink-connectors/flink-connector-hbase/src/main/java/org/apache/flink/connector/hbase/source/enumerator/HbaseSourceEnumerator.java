@@ -44,7 +44,6 @@ public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, 
 		final HbaseSourceSplit nextSplit = remainingSplits.poll();
 		if (nextSplit != null) {
 			context.assignSplit(nextSplit, subtaskId);
-
 		} else {
 			context.signalNoMoreSplits(subtaskId);
 		}
@@ -57,7 +56,14 @@ public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, 
 
 	@Override
 	public void addReader(int subtaskId) {
-		System.out.println("addReader - nothing should happen here");
+		System.out.println("addReader");
+		HbaseSourceSplit nextSplit = remainingSplits.poll();
+		if (nextSplit != null) {
+			context.assignSplit(nextSplit, subtaskId);
+		} else {
+			context.signalNoMoreSplits(subtaskId);
+		}
+
 	}
 
 	@Override

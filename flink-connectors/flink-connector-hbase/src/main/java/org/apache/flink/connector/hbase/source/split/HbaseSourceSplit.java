@@ -44,4 +44,9 @@ public class HbaseSourceSplit implements SourceSplit, Serializable {
 	public String splitId() {
 		return id;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("HbaseSourceSplit: %s %s", getHost(), getTable());
+	}
 }
