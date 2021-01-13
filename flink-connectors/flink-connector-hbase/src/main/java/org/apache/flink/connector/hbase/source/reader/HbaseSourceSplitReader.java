@@ -4,6 +4,7 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.hbase.source.split.HbaseSourceSplit;
+import org.apache.flink.connector.hbase.source.standalone.HbaseConsumer;
 
 import javax.annotation.Nullable;
 
@@ -20,27 +21,31 @@ import java.util.Set;
 public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSplit> {
 
     private final Queue<HbaseSourceSplit> splits;
+    private final HbaseConsumer hbaseConsumer;
     @Nullable private String currentSplitId;
 
     public HbaseSourceSplitReader() {
         System.out.println("constructing Split Reader");
+        try {
+            this.hbaseConsumer = new HbaseConsumer();
+        } catch (Exception e) {
+            throw new RuntimeException("failed HBase consumer", e);
+        }
         this.splits = new ArrayDeque<>();
     }
 
     @Override
     public RecordsWithSplitIds<byte[]> fetch() throws IOException {
-        System.out.println("fetching in Split Reader");
-
         final HbaseSourceSplit nextSplit = splits.poll();
-        if (nextSplit == null) {
-            return new HbaseSplitRecords(null, null, Collections.singleton(currentSplitId));
-            //			throw new IOException("Cannot fetch from another split - no split remaining");
+        if (nextSplit != null) {
+            currentSplitId = nextSplit.splitId();
         }
+        byte[] nextValue = hbaseConsumer.next();
 
-        currentSplitId = nextSplit.splitId();
-
-        byte[] data = "Hello World!".getBytes();
-        List<byte[]> records = Arrays.asList(data, data);
+        if (nextValue != null) {
+            System.out.println(Arrays.toString(nextValue));
+        }
+        List<byte[]> records = Collections.singletonList(nextValue);
 
         return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
     }
