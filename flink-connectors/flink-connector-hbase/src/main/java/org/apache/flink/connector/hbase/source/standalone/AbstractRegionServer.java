@@ -58,255 +58,218 @@ import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 
 import java.io.IOException;
 
-/**
- * Bla.
- */
-public class AbstractRegionServer implements org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService.BlockingInterface, Server {
+/** Bla. */
+public class AbstractRegionServer
+        implements org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService
+                        .BlockingInterface,
+                Server {
 
-	@Override
-	public Configuration getConfiguration() {
-		return HBaseConfiguration.create();
-	}
+    @Override
+    public Configuration getConfiguration() {
+        return HBaseConfiguration.create();
+    }
 
-	////////////////////
+    ////////////////////
 
-	@Override
-	public ClearCompactionQueuesResponse clearCompactionQueues(
-		RpcController arg0,
-		ClearCompactionQueuesRequest arg1)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ClearCompactionQueuesResponse clearCompactionQueues(
+            RpcController arg0, ClearCompactionQueuesRequest arg1) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public GetRegionInfoResponse getRegionInfo(
-		RpcController controller,
-		GetRegionInfoRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public GetRegionInfoResponse getRegionInfo(
+            RpcController controller, GetRegionInfoRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public GetStoreFileResponse getStoreFile(RpcController controller, GetStoreFileRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public GetStoreFileResponse getStoreFile(RpcController controller, GetStoreFileRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public GetOnlineRegionResponse getOnlineRegion(
-		RpcController controller,
-		GetOnlineRegionRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public GetOnlineRegionResponse getOnlineRegion(
+            RpcController controller, GetOnlineRegionRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public OpenRegionResponse openRegion(
-		RpcController controller,
-		OpenRegionRequest request) throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public OpenRegionResponse openRegion(RpcController controller, OpenRegionRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public WarmupRegionResponse warmupRegion(RpcController controller, WarmupRegionRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public WarmupRegionResponse warmupRegion(RpcController controller, WarmupRegionRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public CloseRegionResponse closeRegion(RpcController controller, CloseRegionRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public CloseRegionResponse closeRegion(RpcController controller, CloseRegionRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public FlushRegionResponse flushRegion(RpcController controller, FlushRegionRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public FlushRegionResponse flushRegion(RpcController controller, FlushRegionRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public CompactionSwitchResponse compactionSwitch(
-		RpcController controller,
-		CompactionSwitchRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public CompactionSwitchResponse compactionSwitch(
+            RpcController controller, CompactionSwitchRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public CompactRegionResponse compactRegion(
-		RpcController controller,
-		CompactRegionRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public CompactRegionResponse compactRegion(
+            RpcController controller, CompactRegionRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ReplicateWALEntryResponse replicateWALEntry(
-		RpcController controller,
-		ReplicateWALEntryRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ReplicateWALEntryResponse replicateWALEntry(
+            RpcController controller, ReplicateWALEntryRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ReplicateWALEntryResponse replay(
-		RpcController controller,
-		ReplicateWALEntryRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ReplicateWALEntryResponse replay(
+            RpcController controller, ReplicateWALEntryRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public RollWALWriterResponse rollWALWriter(
-		RpcController controller,
-		RollWALWriterRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public RollWALWriterResponse rollWALWriter(
+            RpcController controller, RollWALWriterRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public GetServerInfoResponse getServerInfo(
-		RpcController controller,
-		GetServerInfoRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public GetServerInfoResponse getServerInfo(
+            RpcController controller, GetServerInfoRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public StopServerResponse stopServer(
-		RpcController controller,
-		StopServerRequest request) throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public StopServerResponse stopServer(RpcController controller, StopServerRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public UpdateFavoredNodesResponse updateFavoredNodes(
-		RpcController controller,
-		UpdateFavoredNodesRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public UpdateFavoredNodesResponse updateFavoredNodes(
+            RpcController controller, UpdateFavoredNodesRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public UpdateConfigurationResponse updateConfiguration(
-		RpcController controller,
-		UpdateConfigurationRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public UpdateConfigurationResponse updateConfiguration(
+            RpcController controller, UpdateConfigurationRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public GetRegionLoadResponse getRegionLoad(
-		RpcController controller,
-		GetRegionLoadRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public GetRegionLoadResponse getRegionLoad(
+            RpcController controller, GetRegionLoadRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ClearRegionBlockCacheResponse clearRegionBlockCache(
-		RpcController controller,
-		ClearRegionBlockCacheRequest request) throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ClearRegionBlockCacheResponse clearRegionBlockCache(
+            RpcController controller, ClearRegionBlockCacheRequest request)
+            throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ExecuteProceduresResponse executeProcedures(
-		RpcController controller,
-		ExecuteProceduresRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ExecuteProceduresResponse executeProcedures(
+            RpcController controller, ExecuteProceduresRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public GetSpaceQuotaSnapshotsResponse getSpaceQuotaSnapshots(
-		RpcController arg0,
-		GetSpaceQuotaSnapshotsRequest arg1)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public GetSpaceQuotaSnapshotsResponse getSpaceQuotaSnapshots(
+            RpcController arg0, GetSpaceQuotaSnapshotsRequest arg1) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public void abort(String why, Throwable e) {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public void abort(String why, Throwable e) {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public boolean isAborted() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public boolean isAborted() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public void stop(String why) {
-		throw new UnsupportedOperationException("Just a dummy");
+    @Override
+    public void stop(String why) {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	}
+    @Override
+    public boolean isStopped() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public boolean isStopped() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ZKWatcher getZooKeeper() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ZKWatcher getZooKeeper() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public Connection getConnection() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public Connection getConnection() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public Connection createConnection(Configuration conf) throws IOException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public Connection createConnection(Configuration conf) throws IOException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ClusterConnection getClusterConnection() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ClusterConnection getClusterConnection() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ServerName getServerName() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ServerName getServerName() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public CoordinatedStateManager getCoordinatedStateManager() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public CoordinatedStateManager getCoordinatedStateManager() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ChoreService getChoreService() {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public ChoreService getChoreService() {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    ////////////////////////////////////////////
 
+    @Override
+    public SlowLogResponses getSlowLogResponses(
+            RpcController controller, SlowLogResponseRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	////////////////////////////////////////////
+    @Override
+    public SlowLogResponses getLargeLogResponses(
+            RpcController controller, SlowLogResponseRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 
-	@Override
-	public SlowLogResponses getSlowLogResponses(
-		RpcController controller,
-		SlowLogResponseRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
-
-	@Override
-	public SlowLogResponses getLargeLogResponses(
-		RpcController controller,
-		SlowLogResponseRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
-
-	@Override
-	public ClearSlowLogResponses clearSlowLogsResponses(
-		RpcController controller,
-		ClearSlowLogResponseRequest request)
-		throws ServiceException {
-		throw new UnsupportedOperationException("Just a dummy");
-	}
+    @Override
+    public ClearSlowLogResponses clearSlowLogsResponses(
+            RpcController controller, ClearSlowLogResponseRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Just a dummy");
+    }
 }

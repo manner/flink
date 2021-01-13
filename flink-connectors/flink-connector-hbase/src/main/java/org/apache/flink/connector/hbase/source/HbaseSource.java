@@ -17,61 +17,60 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * A connector for Hbase.
- */
+/** A connector for Hbase. */
 public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<HbaseSourceSplit>> {
 
-	private final Boundedness boundedness;
+    private final Boundedness boundedness;
 
-	public HbaseSource(Boundedness boundedness) {
-		this.boundedness = boundedness;
-	}
+    public HbaseSource(Boundedness boundedness) {
+        this.boundedness = boundedness;
+    }
 
-	@Override
-	public Boundedness getBoundedness() {
-		return boundedness;
-	}
+    @Override
+    public Boundedness getBoundedness() {
+        return boundedness;
+    }
 
-	@Override
-	public SourceReader<byte[], HbaseSourceSplit> createReader(SourceReaderContext readerContext) throws Exception {
-		System.out.println("createReader");
-		return new HbaseSourceReader(new Configuration(), readerContext);
-	}
+    @Override
+    public SourceReader<byte[], HbaseSourceSplit> createReader(SourceReaderContext readerContext)
+            throws Exception {
+        System.out.println("createReader");
+        return new HbaseSourceReader(new Configuration(), readerContext);
+    }
 
-	@Override
-	public SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> restoreEnumerator(
-		SplitEnumeratorContext<HbaseSourceSplit> enumContext,
-		Collection<HbaseSourceSplit> checkpoint) throws Exception {
-		System.out.println("restoreEnumerator");
+    @Override
+    public SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> restoreEnumerator(
+            SplitEnumeratorContext<HbaseSourceSplit> enumContext,
+            Collection<HbaseSourceSplit> checkpoint)
+            throws Exception {
+        System.out.println("restoreEnumerator");
 
-		return new HbaseSourceEnumerator(enumContext, checkpoint);
-	}
+        return new HbaseSourceEnumerator(enumContext, checkpoint);
+    }
 
-	@Override
-	public SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> createEnumerator(
-		SplitEnumeratorContext<HbaseSourceSplit> enumContext) throws Exception {
-		System.out.println("createEnumerator");
-		List<HbaseSourceSplit> splits = new ArrayList<>();
-		splits.add(new HbaseSourceSplit(
-			"1234",
-			"localhost",
-			"test",
-			new org.apache.hadoop.conf.Configuration()));
-		return new HbaseSourceEnumerator(enumContext, splits);
-	}
+    @Override
+    public SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> createEnumerator(
+            SplitEnumeratorContext<HbaseSourceSplit> enumContext) throws Exception {
+        System.out.println("createEnumerator");
+        List<HbaseSourceSplit> splits = new ArrayList<>();
+        splits.add(
+                new HbaseSourceSplit(
+                        "1234", "localhost", "test", new org.apache.hadoop.conf.Configuration()));
+        return new HbaseSourceEnumerator(enumContext, splits);
+    }
 
-	@Override
-	public SimpleVersionedSerializer<HbaseSourceSplit> getSplitSerializer() {
-		System.out.println("getSplitSerializer");
+    @Override
+    public SimpleVersionedSerializer<HbaseSourceSplit> getSplitSerializer() {
+        System.out.println("getSplitSerializer");
 
-		return new HbaseSourceSplitSerializer();
-	}
+        return new HbaseSourceSplitSerializer();
+    }
 
-	@Override
-	public SimpleVersionedSerializer<Collection<HbaseSourceSplit>> getEnumeratorCheckpointSerializer() {
-		System.out.println("getEnumeratorCheckpointSerializer");
+    @Override
+    public SimpleVersionedSerializer<Collection<HbaseSourceSplit>>
+            getEnumeratorCheckpointSerializer() {
+        System.out.println("getEnumeratorCheckpointSerializer");
 
-		return null;
-	}
+        return null;
+    }
 }

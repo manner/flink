@@ -12,62 +12,55 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 
-/**
- * The enumerator class for Hbase source.
- */
+/** The enumerator class for Hbase source. */
 @Internal
-public class HbaseSourceEnumerator implements SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> {
-	private final SplitEnumeratorContext<HbaseSourceSplit> context;
-	private Queue<HbaseSourceSplit> remainingSplits;
+public class HbaseSourceEnumerator
+        implements SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> {
+    private final SplitEnumeratorContext<HbaseSourceSplit> context;
+    private Queue<HbaseSourceSplit> remainingSplits;
 
-	public HbaseSourceEnumerator(
-		SplitEnumeratorContext<HbaseSourceSplit> context,
-		Collection<HbaseSourceSplit> splits) {
-		this.context = context;
-		this.remainingSplits = new ArrayDeque<>(splits);
-	}
+    public HbaseSourceEnumerator(
+            SplitEnumeratorContext<HbaseSourceSplit> context, Collection<HbaseSourceSplit> splits) {
+        this.context = context;
+        this.remainingSplits = new ArrayDeque<>(splits);
+    }
 
-	@Override
-	public void start() {
-		System.out.println("Starting HbaseSourceEnumerator");
-	}
+    @Override
+    public void start() {
+        System.out.println("Starting HbaseSourceEnumerator");
+    }
 
-	@Override
-	public void close() {
+    @Override
+    public void close() {}
 
-	}
+    @Override
+    public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
+        final HbaseSourceSplit nextSplit = remainingSplits.poll();
+        if (nextSplit != null) {
+            context.assignSplit(nextSplit, subtaskId);
+        } else {
+            context.signalNoMoreSplits(subtaskId);
+        }
+    }
 
-	@Override
-	public void handleSplitRequest(
-		int subtaskId,
-		@Nullable String requesterHostname) {
-		final HbaseSourceSplit nextSplit = remainingSplits.poll();
-		if (nextSplit != null) {
-			context.assignSplit(nextSplit, subtaskId);
-		} else {
-			context.signalNoMoreSplits(subtaskId);
-		}
-	}
+    @Override
+    public void addSplitsBack(List<HbaseSourceSplit> splits, int subtaskId) {
+        remainingSplits.addAll(splits);
+    }
 
-	@Override
-	public void addSplitsBack(List<HbaseSourceSplit> splits, int subtaskId) {
-		remainingSplits.addAll(splits);
-	}
+    @Override
+    public void addReader(int subtaskId) {
+        System.out.println("addReader");
+        HbaseSourceSplit nextSplit = remainingSplits.poll();
+        if (nextSplit != null) {
+            context.assignSplit(nextSplit, subtaskId);
+        } else {
+            context.signalNoMoreSplits(subtaskId);
+        }
+    }
 
-	@Override
-	public void addReader(int subtaskId) {
-		System.out.println("addReader");
-		HbaseSourceSplit nextSplit = remainingSplits.poll();
-		if (nextSplit != null) {
-			context.assignSplit(nextSplit, subtaskId);
-		} else {
-			context.signalNoMoreSplits(subtaskId);
-		}
-
-	}
-
-	@Override
-	public Collection<HbaseSourceSplit> snapshotState() throws Exception {
-		return remainingSplits;
-	}
+    @Override
+    public Collection<HbaseSourceSplit> snapshotState() throws Exception {
+        return remainingSplits;
+    }
 }

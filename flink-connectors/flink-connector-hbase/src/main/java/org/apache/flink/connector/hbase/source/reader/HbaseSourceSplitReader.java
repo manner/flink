@@ -4,6 +4,7 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.hbase.source.split.HbaseSourceSplit;
+import org.apache.flink.connector.hbase.source.standalone.HbaseConsumer;
 
 import javax.annotation.Nullable;
 
@@ -16,91 +17,86 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
-/**
- * A {@link SplitReader} implementation for Hbase.
- */
+/** A {@link SplitReader} implementation for Hbase. */
 public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSplit> {
 
-	private final Queue<HbaseSourceSplit> splits;
-	@Nullable
-	private String currentSplitId;
+    private final Queue<HbaseSourceSplit> splits;
+    private final HbaseConsumer hbaseConsumer;
+    @Nullable private String currentSplitId;
 
-	public HbaseSourceSplitReader() {
-		System.out.println("constructing Split Reader");
-		this.splits = new ArrayDeque<>();
-	}
+    public HbaseSourceSplitReader() {
+        System.out.println("constructing Split Reader");
+        try {
+            this.hbaseConsumer = new HbaseConsumer();
+        } catch (Exception e) {
+            throw new RuntimeException("failed HBase consumer", e);
+        }
+        this.splits = new ArrayDeque<>();
+    }
 
-	@Override
-	public RecordsWithSplitIds<byte[]> fetch() throws IOException {
-		System.out.println("fetching in Split Reader");
+    @Override
+    public RecordsWithSplitIds<byte[]> fetch() throws IOException {
+        final HbaseSourceSplit nextSplit = splits.poll();
+        if (nextSplit != null) {
+            currentSplitId = nextSplit.splitId();
+        }
+        byte[] nextValue = hbaseConsumer.next();
 
-		final HbaseSourceSplit nextSplit = splits.poll();
-		if (nextSplit == null) {
-			return new HbaseSplitRecords(null, null, Collections.singleton(currentSplitId));
-//			throw new IOException("Cannot fetch from another split - no split remaining");
-		}
+        if (nextValue != null) {
+            System.out.println(Arrays.toString(nextValue));
+        }
+        List<byte[]> records = Collections.singletonList(nextValue);
 
-		currentSplitId = nextSplit.splitId();
+        return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
+    }
 
-		byte[] data = "Hello World!".getBytes();
-		List<byte[]> records = Arrays.asList(data, data);
+    @Override
+    public void handleSplitsChanges(SplitsChange<HbaseSourceSplit> splitsChanges) {
+        splits.addAll(splitsChanges.splits());
+    }
 
-		return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
-	}
+    @Override
+    public void wakeUp() {}
 
-	@Override
-	public void handleSplitsChanges(SplitsChange<HbaseSourceSplit> splitsChanges) {
-		splits.addAll(splitsChanges.splits());
-	}
+    @Override
+    public void close() throws Exception {}
 
-	@Override
-	public void wakeUp() {
+    private static class HbaseSplitRecords implements RecordsWithSplitIds<byte[]> {
+        private final Set<String> finishedSplits;
+        private Iterator<byte[]> recordsForSplit;
 
-	}
+        private String splitId;
 
-	@Override
-	public void close() throws Exception {
+        private HbaseSplitRecords(
+                String splitId, Iterator<byte[]> recordsForSplit, Set<String> finishedSplits) {
+            this.splitId = splitId;
+            this.recordsForSplit = recordsForSplit;
+            this.finishedSplits = finishedSplits;
+        }
 
-	}
+        @Nullable
+        @Override
+        public String nextSplit() {
+            final String nextSplit = this.splitId;
+            this.splitId = null;
+            this.recordsForSplit = nextSplit != null ? this.recordsForSplit : null;
 
-	private static class HbaseSplitRecords implements RecordsWithSplitIds<byte[]> {
-		private final Set<String> finishedSplits;
-		private Iterator<byte[]> recordsForSplit;
+            return nextSplit;
+        }
 
-		private String splitId;
+        @Nullable
+        @Override
+        public byte[] nextRecordFromSplit() {
+            if (recordsForSplit != null && recordsForSplit.hasNext()) {
+                return recordsForSplit.next();
+            } else {
+                return null;
+            }
+        }
 
-		private HbaseSplitRecords(
-			String splitId,
-			Iterator<byte[]> recordsForSplit,
-			Set<String> finishedSplits) {
-			this.splitId = splitId;
-			this.recordsForSplit = recordsForSplit;
-			this.finishedSplits = finishedSplits;
-		}
-
-		@Nullable
-		@Override
-		public String nextSplit() {
-			final String nextSplit = this.splitId;
-			this.splitId = null;
-			this.recordsForSplit = nextSplit != null ? this.recordsForSplit : null;
-
-			return nextSplit;
-		}
-
-		@Nullable
-		@Override
-		public byte[] nextRecordFromSplit() {
-			if (recordsForSplit != null && recordsForSplit.hasNext()) {
-				return recordsForSplit.next();
-			} else {
-				return null;
-			}
-		}
-
-		@Override
-		public Set<String> finishedSplits() {
-			return finishedSplits;
-		}
-	}
+        @Override
+        public Set<String> finishedSplits() {
+            return finishedSplits;
+        }
+    }
 }

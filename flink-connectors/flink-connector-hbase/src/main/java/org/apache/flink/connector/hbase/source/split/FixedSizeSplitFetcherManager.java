@@ -9,15 +9,15 @@ import org.apache.flink.connector.base.source.reader.synchronization.FutureCompl
 import java.util.function.Supplier;
 
 /**
- * A SplitFetcherManager that has a fixed size of split fetchers and assign splits
- * to the split fetchers based on the hash code of split IDs.
+ * A SplitFetcherManager that has a fixed size of split fetchers and assign splits to the split
+ * fetchers based on the hash code of split IDs.
  */
 public class FixedSizeSplitFetcherManager<T>
-	extends SingleThreadFetcherManager<Tuple3<T, Long, Long>, HbaseSourceSplit> {
+        extends SingleThreadFetcherManager<Tuple3<T, Long, Long>, HbaseSourceSplit> {
 
-	public FixedSizeSplitFetcherManager(
-		FutureCompletingBlockingQueue<RecordsWithSplitIds<Tuple3<T, Long, Long>>> elementsQueue,
-		Supplier<SplitReader<Tuple3<T, Long, Long>, HbaseSourceSplit>> splitReaderSupplier) {
-		super(elementsQueue, splitReaderSupplier);
-	}
+    public FixedSizeSplitFetcherManager(
+            FutureCompletingBlockingQueue<RecordsWithSplitIds<Tuple3<T, Long, Long>>> elementsQueue,
+            Supplier<SplitReader<Tuple3<T, Long, Long>, HbaseSourceSplit>> splitReaderSupplier) {
+        super(elementsQueue, splitReaderSupplier);
+    }
 }
