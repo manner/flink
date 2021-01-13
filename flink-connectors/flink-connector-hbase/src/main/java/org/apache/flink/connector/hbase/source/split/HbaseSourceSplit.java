@@ -6,47 +6,49 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.io.Serializable;
 
-/**
- * A {@link SourceSplit} for a Hbase.
- */
+/** A {@link SourceSplit} for a Hbase. */
 public class HbaseSourceSplit implements SourceSplit, Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private final String id;
+    private final String id;
 
-	private final String table;
+    private final String table;
 
-	private final String host;
+    private final String regionId;
 
-	private final Configuration hbaseConf;
+    private final String host;
 
-	public HbaseSourceSplit(String id, String host, String table, Configuration hbaseConf) {
-		this.id = id;
-		this.host = host;
-		this.table = table;
-		this.hbaseConf = hbaseConf;
-	}
+    private final Configuration hbaseConf;
 
-	public String getTable() {
-		return table;
-	}
+    public HbaseSourceSplit(
+            String id, String host, String table, String regionId, Configuration hbaseConf) {
+        this.id = id;
+        this.host = host;
+        this.table = table;
+        this.regionId = regionId;
+        this.hbaseConf = hbaseConf;
+    }
 
-	public String getHost() {
-		return host;
-	}
+    public String getTable() {
+        return table;
+    }
 
-	public Configuration getHbaseConf() {
-		return hbaseConf;
-	}
+    public String getHost() {
+        return host;
+    }
 
-	@Override
-	public String splitId() {
-		return id;
-	}
+    public Configuration getHbaseConf() {
+        return hbaseConf;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("HbaseSourceSplit: %s %s", getHost(), getTable());
-	}
+    @Override
+    public String splitId() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("HbaseSourceSplit: %s %s", getHost(), getTable());
+    }
 }

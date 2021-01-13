@@ -4,6 +4,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.HbaseSource;
+import org.apache.flink.connector.hbase.source.standalone.Consumer;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -42,7 +43,8 @@ public class Playground {
     public static void testHBaseSource() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        HbaseSource source = new HbaseSource(Boundedness.BOUNDED);
+        HbaseSource source =
+                new HbaseSource(Boundedness.BOUNDED, "TestTable", Consumer.parseConfig());
 
         DataStream<byte[]> stream =
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "HBaseSource");
