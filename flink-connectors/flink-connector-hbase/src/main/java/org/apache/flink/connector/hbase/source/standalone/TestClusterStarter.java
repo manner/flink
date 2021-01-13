@@ -4,7 +4,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
-import org.apache.hadoop.hbase.StartMiniClusterOption;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -53,9 +52,7 @@ public class TestClusterStarter {
         HBaseTestingUtility utility = new HBaseTestingUtility(hbaseConf);
         System.out.println(utility.getDataTestDir().toString());
         try {
-            cluster =
-                    utility.startMiniCluster(
-                            StartMiniClusterOption.builder().numRegionServers(3).build());
+            cluster = utility.startMiniCluster();
             System.out.println("==================");
             System.out.println(hbaseConf.get("hbase.fs.tmp.dir"));
             System.out.println(hbaseConf.get("hbase.rootdir"));
