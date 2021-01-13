@@ -29,6 +29,7 @@ public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<Hba
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
+            out.writeUTF(split.getRegionId());
             out.flush();
             return baos.toByteArray();
         }
@@ -40,8 +41,8 @@ public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<Hba
                 DataInputStream in = new DataInputStream(bais)) {
             String id = in.readUTF();
             String host = in.readUTF();
-            String regionId = in.readUTF();
             String table = in.readUTF();
+            String regionId = in.readUTF();
             return new HbaseSourceSplit(
                     id, host, table, regionId, new Configuration()); // TODO find real configuration
         }
