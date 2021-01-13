@@ -13,13 +13,13 @@ public class HbaseSourceSplit implements SourceSplit, Serializable {
 
     private final String id;
 
+    private final String host;
+
     private final String table;
 
     private final String regionId;
 
-    private final String host;
-
-    private final Configuration hbaseConf;
+    private final Configuration hbaseConf; // TODO serialization
 
     public HbaseSourceSplit(
             String id, String host, String table, String regionId, Configuration hbaseConf) {
@@ -45,6 +45,10 @@ public class HbaseSourceSplit implements SourceSplit, Serializable {
     @Override
     public String splitId() {
         return id;
+    }
+
+    public String getRegionId() {
+        return regionId;
     }
 
     @Override
