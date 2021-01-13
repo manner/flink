@@ -55,7 +55,9 @@ public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<
             throws Exception {
         System.out.println("restoreEnumerator");
 
-        return new HbaseSplitEnumerator(enumContext, checkpoint);
+        HbaseSplitEnumerator enumerator = new HbaseSplitEnumerator(enumContext);
+        enumerator.addSplits(checkpoint);
+        return enumerator;
     }
 
     @Override
@@ -75,8 +77,9 @@ public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<
                                     regionId,
                                     hbaseConfiguration));
                 });
-
-        return new HbaseSplitEnumerator(enumContext, splits);
+        HbaseSplitEnumerator enumerator = new HbaseSplitEnumerator(enumContext);
+        enumerator.addSplits(splits);
+        return enumerator;
     }
 
     @Override

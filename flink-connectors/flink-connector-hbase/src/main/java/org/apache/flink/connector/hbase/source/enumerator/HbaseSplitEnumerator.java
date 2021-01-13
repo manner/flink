@@ -17,12 +17,11 @@ import java.util.Queue;
 public class HbaseSplitEnumerator
         implements SplitEnumerator<HbaseSourceSplit, Collection<HbaseSourceSplit>> {
     private final SplitEnumeratorContext<HbaseSourceSplit> context;
-    private Queue<HbaseSourceSplit> remainingSplits;
+    private final Queue<HbaseSourceSplit> remainingSplits;
 
-    public HbaseSplitEnumerator(
-            SplitEnumeratorContext<HbaseSourceSplit> context, Collection<HbaseSourceSplit> splits) {
+    public HbaseSplitEnumerator(SplitEnumeratorContext<HbaseSourceSplit> context) {
         this.context = context;
-        this.remainingSplits = new ArrayDeque<>(splits);
+        this.remainingSplits = new ArrayDeque<>();
     }
 
     @Override
@@ -62,5 +61,9 @@ public class HbaseSplitEnumerator
     @Override
     public Collection<HbaseSourceSplit> snapshotState() throws Exception {
         return remainingSplits;
+    }
+
+    public void addSplits(Collection<HbaseSourceSplit> splits) {
+        remainingSplits.addAll(splits);
     }
 }
