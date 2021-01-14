@@ -16,15 +16,13 @@
 
 package org.apache.flink.connector.hbase.source.standalone.util.zookeeper;
 
-/**
- * Bla.
- */
+/** Bla. */
 public class ZkConnectException extends Exception {
-	public ZkConnectException(String message) {
-		super(message);
-	}
+    public ZkConnectException(String message) {
+        super(message);
+    }
 
-	public ZkConnectException(String message, Exception cause) {
-		super(message, cause);
-	}
+    public ZkConnectException(String message, Exception cause) {
+        super(message, cause);
+    }
 }
