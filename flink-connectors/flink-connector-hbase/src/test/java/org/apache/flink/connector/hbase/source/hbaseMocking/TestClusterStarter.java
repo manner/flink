@@ -1,4 +1,4 @@
-package org.apache.flink.connector.hbase.source.standalone;
+package org.apache.flink.connector.hbase.source.hbaseMocking;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -6,10 +6,19 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 /** Bla. */
 public class TestClusterStarter {
@@ -19,6 +28,8 @@ public class TestClusterStarter {
     private static Configuration hbaseConf;
 
     public static void main(String[] args) {
+        Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
+
         startCluster();
     }
 
@@ -90,5 +101,23 @@ public class TestClusterStarter {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static Configuration getConfig()
+            throws SAXException, IOException, ParserConfigurationException {
+        Configuration hbaseConf = HBaseConfiguration.create();
+
+        Document config =
+                DocumentBuilderFactory.newInstance()
+                        .newDocumentBuilder()
+                        .parse(TestClusterStarter.CONFIG_PATH);
+        NodeList nodes = config.getDocumentElement().getElementsByTagName("property");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Element e = (Element) nodes.item(i);
+            hbaseConf.set(
+                    e.getElementsByTagName("name").item(0).getTextContent(),
+                    e.getElementsByTagName("value").item(0).getTextContent());
+        }
+        return hbaseConf;
     }
 }
