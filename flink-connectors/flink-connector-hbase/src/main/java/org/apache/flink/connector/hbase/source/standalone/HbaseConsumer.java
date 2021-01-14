@@ -1,7 +1,6 @@
 package org.apache.flink.connector.hbase.source.standalone;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
@@ -21,12 +20,8 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
@@ -43,11 +38,11 @@ public class HbaseConsumer {
     private static ZooKeeper zooKeeper;
     private ReplicationTargetServer server;
 
-    public HbaseConsumer()
+    public HbaseConsumer(Configuration hbaseConf)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
                     InterruptedException {
 
-        hbaseConf = parseConfig();
+        this.hbaseConf = hbaseConf;
 
         // Setup
         zooKeeper = connectZooKeeper();
@@ -109,24 +104,6 @@ public class HbaseConsumer {
         System.out.println("Connected to Zookeeper");
 
         return zooKeeper;
-    }
-
-    private Configuration parseConfig()
-            throws SAXException, IOException, ParserConfigurationException {
-        Configuration hbaseConf = HBaseConfiguration.create();
-
-        Document config =
-                DocumentBuilderFactory.newInstance()
-                        .newDocumentBuilder()
-                        .parse(TestClusterStarter.CONFIG_PATH);
-        NodeList nodes = config.getDocumentElement().getElementsByTagName("property");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Element e = (Element) nodes.item(i);
-            hbaseConf.set(
-                    e.getElementsByTagName("name").item(0).getTextContent(),
-                    e.getElementsByTagName("value").item(0).getTextContent());
-        }
-        return hbaseConf;
     }
 
     private void tryReplication() {
