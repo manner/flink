@@ -9,27 +9,23 @@ import org.apache.hbase.thirdparty.com.google.protobuf.Message;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
 import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 
-/**
- * Bla.
- */
+/** Bla. */
 public class ReplicationTargetServer extends AbstractRegionServer implements PriorityFunction {
 
-	@Override
-	public ReplicateWALEntryResponse replicateWALEntry(
-		RpcController controller,
-		ReplicateWALEntryRequest request)
-		throws ServiceException {
-		System.err.println("Replicatiooooooooooon!!!");
-		return ReplicateWALEntryResponse.newBuilder().build();
-	}
+    @Override
+    public ReplicateWALEntryResponse replicateWALEntry(
+            RpcController controller, ReplicateWALEntryRequest request) throws ServiceException {
+        System.err.println("Replicatiooooooooooon!!!");
+        return ReplicateWALEntryResponse.newBuilder().build();
+    }
 
-	@Override
-	public int getPriority(RequestHeader header, Message param, User user) {
-		return org.apache.hadoop.hbase.HConstants.NORMAL_QOS;
-	}
+    @Override
+    public int getPriority(RequestHeader header, Message param, User user) {
+        return org.apache.hadoop.hbase.HConstants.NORMAL_QOS;
+    }
 
-	@Override
-	public long getDeadline(RequestHeader header, Message param) {
-		return 0;
-	}
+    @Override
+    public long getDeadline(RequestHeader header, Message param) {
+        return 0;
+    }
 }

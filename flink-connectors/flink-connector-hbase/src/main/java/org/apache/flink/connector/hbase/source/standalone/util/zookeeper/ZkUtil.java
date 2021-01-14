@@ -26,142 +26,144 @@ import org.apache.zookeeper.data.Stat;
 import java.io.IOException;
 import java.util.Arrays;
 
-
-/**
- * Various ZooKeeper utility methods.
- */
+/** Various ZooKeeper utility methods. */
 public class ZkUtil {
 
-	public static ZooKeeperItf connect(
-		String connectString,
-		int sessionTimeout) throws ZkConnectException {
-		ZooKeeperImpl zooKeeper;
-		try {
-			zooKeeper = new ZooKeeperImpl(connectString, sessionTimeout);
-		} catch (IOException e) {
-			throw new ZkConnectException(
-				"Failed to connect with Zookeeper @ '" + connectString + "'",
-				e);
-		}
-		long waitUntil = System.currentTimeMillis() + sessionTimeout;
-		boolean connected = (States.CONNECTED).equals(zooKeeper.getState());
-		while (!connected && waitUntil > System.currentTimeMillis()) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				connected = (States.CONNECTED).equals(zooKeeper.getState());
-				break;
-			}
-			connected = (States.CONNECTED).equals(zooKeeper.getState());
-		}
-		if (!connected) {
-			System.out.println("Failed to connect to Zookeeper within timeout: Dumping stack: ");
-			Thread.dumpStack();
-			zooKeeper.close();
-			throw new ZkConnectException("Failed to connect with Zookeeper @ '" + connectString +
-				"' within timeout " + sessionTimeout);
-		}
-		return zooKeeper;
-	}
+    public static ZooKeeperItf connect(String connectString, int sessionTimeout)
+            throws ZkConnectException {
+        ZooKeeperImpl zooKeeper;
+        try {
+            zooKeeper = new ZooKeeperImpl(connectString, sessionTimeout);
+        } catch (IOException e) {
+            throw new ZkConnectException(
+                    "Failed to connect with Zookeeper @ '" + connectString + "'", e);
+        }
+        long waitUntil = System.currentTimeMillis() + sessionTimeout;
+        boolean connected = (States.CONNECTED).equals(zooKeeper.getState());
+        while (!connected && waitUntil > System.currentTimeMillis()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                connected = (States.CONNECTED).equals(zooKeeper.getState());
+                break;
+            }
+            connected = (States.CONNECTED).equals(zooKeeper.getState());
+        }
+        if (!connected) {
+            System.out.println("Failed to connect to Zookeeper within timeout: Dumping stack: ");
+            Thread.dumpStack();
+            zooKeeper.close();
+            throw new ZkConnectException(
+                    "Failed to connect with Zookeeper @ '"
+                            + connectString
+                            + "' within timeout "
+                            + sessionTimeout);
+        }
+        return zooKeeper;
+    }
 
-	public static void createPath(final ZooKeeperItf zk, final String path)
-		throws InterruptedException, KeeperException {
-		createPath(zk, path, null);
-	}
+    public static void createPath(final ZooKeeperItf zk, final String path)
+            throws InterruptedException, KeeperException {
+        createPath(zk, path, null);
+    }
 
-	/**
-	 * Creates a persistent path on zookeeper if it does not exist yet, including any parents.
-	 * Keeps retrying in case of connection loss.
-	 *
-	 * <p>The supplied data is used for the last node in the path. If the path already exists,
-	 * the data is updated if necessary.
-	 */
-	public static void createPath(final ZooKeeperItf zk, final String path, final byte[] data)
-		throws InterruptedException, KeeperException {
+    /**
+     * Creates a persistent path on zookeeper if it does not exist yet, including any parents. Keeps
+     * retrying in case of connection loss.
+     *
+     * <p>The supplied data is used for the last node in the path. If the path already exists, the
+     * data is updated if necessary.
+     */
+    public static void createPath(final ZooKeeperItf zk, final String path, final byte[] data)
+            throws InterruptedException, KeeperException {
 
-		if (!path.startsWith("/")) {
-			throw new IllegalArgumentException("Path should start with a slash.");
-		}
+        if (!path.startsWith("/")) {
+            throw new IllegalArgumentException("Path should start with a slash.");
+        }
 
-		if (path.endsWith("/")) {
-			throw new IllegalArgumentException("Path should not end on a slash.");
-		}
+        if (path.endsWith("/")) {
+            throw new IllegalArgumentException("Path should not end on a slash.");
+        }
 
-		String[] parts = path.substring(1).split("/");
+        String[] parts = path.substring(1).split("/");
 
-		final StringBuilder subPath = new StringBuilder();
-		boolean created = false;
-		for (int i = 0; i < parts.length; i++) {
-			String part = parts[i];
-			subPath.append("/").append(part);
+        final StringBuilder subPath = new StringBuilder();
+        boolean created = false;
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            subPath.append("/").append(part);
 
-			// Only use the supplied data for the last node in the path
-			final byte[] newData = (i == parts.length - 1 ? data : null);
+            // Only use the supplied data for the last node in the path
+            final byte[] newData = (i == parts.length - 1 ? data : null);
 
-			created = zk.retryOperation(new ZooKeeperOperation<Boolean>() {
-				@Override
-				public Boolean execute() throws KeeperException, InterruptedException {
-					if (zk.exists(subPath.toString(), false) == null) {
-						try {
-							zk.create(
-								subPath.toString(),
-								newData,
-								ZooDefs.Ids.OPEN_ACL_UNSAFE,
-								CreateMode.PERSISTENT);
-							return true;
-						} catch (KeeperException.NodeExistsException e) {
-							return false;
-						}
-					}
-					return false;
-				}
-			});
-		}
+            created =
+                    zk.retryOperation(
+                            new ZooKeeperOperation<Boolean>() {
+                                @Override
+                                public Boolean execute()
+                                        throws KeeperException, InterruptedException {
+                                    if (zk.exists(subPath.toString(), false) == null) {
+                                        try {
+                                            zk.create(
+                                                    subPath.toString(),
+                                                    newData,
+                                                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                                                    CreateMode.PERSISTENT);
+                                            return true;
+                                        } catch (KeeperException.NodeExistsException e) {
+                                            return false;
+                                        }
+                                    }
+                                    return false;
+                                }
+                            });
+        }
 
-		if (!created) {
-			// The node already existed, update its data if necessary
-			zk.retryOperation(new ZooKeeperOperation<Boolean>() {
-				@Override
-				public Boolean execute() throws KeeperException, InterruptedException {
-					byte[] currentData = zk.getData(path, false, new Stat());
-					if (!Arrays.equals(currentData, data)) {
-						zk.setData(path, data, -1);
-					}
-					return null;
-				}
-			});
-		}
-	}
+        if (!created) {
+            // The node already existed, update its data if necessary
+            zk.retryOperation(
+                    new ZooKeeperOperation<Boolean>() {
+                        @Override
+                        public Boolean execute() throws KeeperException, InterruptedException {
+                            byte[] currentData = zk.getData(path, false, new Stat());
+                            if (!Arrays.equals(currentData, data)) {
+                                zk.setData(path, data, -1);
+                            }
+                            return null;
+                        }
+                    });
+        }
+    }
 
-	/**
-	 * Deletes a path (non-recursively) in ZooKeeper, if it exists.
-	 * If the path doesn't exist, the delete will fail silently. The delete operation is retried until it succeeds, or
-	 * until it fails with a non-recoverable error.
-	 * If the path has children, the operation will fail with the underlying {@link NotEmptyException}.
-	 *
-	 * @param zk Handle to the ZooKeeper where the delete will occur
-	 * @param path The path to be deleted
-	 */
-	public static void deleteNode(
-		final ZooKeeperItf zk,
-		final String path) throws InterruptedException,
-		KeeperException {
-		zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+    /**
+     * Deletes a path (non-recursively) in ZooKeeper, if it exists. If the path doesn't exist, the
+     * delete will fail silently. The delete operation is retried until it succeeds, or until it
+     * fails with a non-recoverable error. If the path has children, the operation will fail with
+     * the underlying {@link NotEmptyException}.
+     *
+     * @param zk Handle to the ZooKeeper where the delete will occur
+     * @param path The path to be deleted
+     */
+    public static void deleteNode(final ZooKeeperItf zk, final String path)
+            throws InterruptedException, KeeperException {
+        zk.retryOperation(
+                new ZooKeeperOperation<Boolean>() {
 
-			@Override
-			public Boolean execute() throws KeeperException, InterruptedException {
-				Stat stat = zk.exists(path, false);
-				if (stat != null) {
-					try {
-						zk.delete(path, stat.getVersion());
-					} catch (KeeperException.NoNodeException nne) {
-						// This is ok, the node is already gone
-					}
-					// We don't catch BadVersion or NotEmpty as these are probably signs that there is something
-					// unexpected going on with the node that is to be deleted
-				}
-				return true;
-			}
-		});
-	}
+                    @Override
+                    public Boolean execute() throws KeeperException, InterruptedException {
+                        Stat stat = zk.exists(path, false);
+                        if (stat != null) {
+                            try {
+                                zk.delete(path, stat.getVersion());
+                            } catch (KeeperException.NoNodeException nne) {
+                                // This is ok, the node is already gone
+                            }
+                            // We don't catch BadVersion or NotEmpty as these are probably signs
+                            // that there is something
+                            // unexpected going on with the node that is to be deleted
+                        }
+                        return true;
+                    }
+                });
+    }
 }
