@@ -1,4 +1,4 @@
-package org.apache.flink.connector.hbase.source.standalone;
+package org.apache.flink.connector.hbase.source.hbaseMocking;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Admin;
@@ -19,7 +19,7 @@ public class ReplicationPeerClearer {
 
     public static void clearPeers() {
         try {
-            Configuration conf = Consumer.parseConfig();
+            Configuration conf = TestClusterStarter.getConfig();
             try (Admin admin = ConnectionFactory.createConnection(conf).getAdmin()) {
                 for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
                     System.out.println("==== " + desc.getPeerId() + " ====");

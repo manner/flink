@@ -3,6 +3,7 @@ package org.apache.flink.connector.hbase.source.reader;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
+import org.apache.flink.connector.hbase.source.HbaseSource;
 import org.apache.flink.connector.hbase.source.split.HbaseSourceSplit;
 import org.apache.flink.connector.hbase.source.standalone.HbaseConsumer;
 
@@ -27,7 +28,7 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
     public HbaseSourceSplitReader() {
         System.out.println("constructing Split Reader");
         try {
-            this.hbaseConsumer = new HbaseConsumer();
+            this.hbaseConsumer = new HbaseConsumer(HbaseSource.TEMP_hbaseConf);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
