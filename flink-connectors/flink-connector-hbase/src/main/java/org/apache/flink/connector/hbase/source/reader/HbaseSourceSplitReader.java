@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -42,12 +41,7 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
             currentSplitId = nextSplit.splitId();
         }
         byte[] nextValue = hbaseConsumer.next();
-
-        if (nextValue != null) {
-            System.out.println(Arrays.toString(nextValue));
-        }
         List<byte[]> records = Collections.singletonList(nextValue);
-
         return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
     }
 
