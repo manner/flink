@@ -70,7 +70,7 @@ public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<
         System.out.println("createEnumerator");
         List<HbaseSourceSplit> splits = new ArrayList<>();
 
-        List<String> regionIds = Arrays.asList("region1", "region2");
+        List<String> regionIds = Arrays.asList("region1"); // , "region2");
         regionIds.forEach(
                 regionId -> {
                     splits.add(
