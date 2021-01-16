@@ -1,5 +1,7 @@
 package org.apache.flink.connector.hbase.source.standalone;
 
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
+
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.KeyValue;
@@ -13,24 +15,27 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.RPCProtos.RequestHeader
 import org.apache.hbase.thirdparty.com.google.protobuf.Message;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
 import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
-import org.eclipse.jetty.util.ArrayQueue;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
 
 /** Bla. */
 public class ReplicationTargetServer extends AbstractRegionServer implements PriorityFunction {
 
-    private final Queue<byte[]> walEdits;
+    private final FutureCompletingBlockingQueue<byte[]> walEdits;
 
     public ReplicationTargetServer() {
-        walEdits = new ArrayQueue<>();
+        walEdits = new FutureCompletingBlockingQueue<>();
     }
 
     public byte[] next() {
-        return walEdits.poll();
+        try {
+            return walEdits.take();
+        } catch (InterruptedException e) {
+            System.err.println("Couldn't retrieve element from queue: " + e);
+        }
+        return null;
     }
 
     @Override
@@ -66,7 +71,11 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
                 Cell cell = cells.current();
                 KeyValue kv = KeyValueUtil.ensureKeyValue(cell);
                 System.out.println("consumes: " + Arrays.toString(kv.getValueArray()));
-                walEdits.add(kv.getValueArray());
+                try {
+                    walEdits.put(0, kv.getValueArray());
+                } catch (InterruptedException exception) {
+                    System.err.println("Error adding to Queue: " + exception);
+                }
             }
         }
         return AdminProtos.ReplicateWALEntryResponse.newBuilder().build();
