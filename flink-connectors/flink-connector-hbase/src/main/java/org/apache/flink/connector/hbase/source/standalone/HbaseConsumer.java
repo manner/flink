@@ -26,6 +26,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -59,8 +60,10 @@ public class HbaseConsumer {
         return hbaseConf.get("hbase.zookeeper.property.clientPort");
     }
 
-    private static int regionServerPort() {
-        return 9966;
+    private static int findFreePort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        }
     }
 
     private static void createZKPath(
@@ -142,7 +145,7 @@ public class HbaseConsumer {
         ReplicationTargetServer server = new ReplicationTargetServer();
 
         String hostName = "localhost";
-        InetSocketAddress initialIsa = new InetSocketAddress(hostName, regionServerPort());
+        InetSocketAddress initialIsa = new InetSocketAddress(hostName, 0);
         String name = "regionserver/" + initialIsa.toString();
 
         RpcServer.BlockingServiceAndInterface bsai =
