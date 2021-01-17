@@ -21,7 +21,7 @@ import java.util.List;
 /** A connector for Hbase. */
 public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<HbaseSourceSplit>> {
 
-    public static org.apache.hadoop.conf.Configuration TEMP_hbaseConf; // TODO remove asap
+    public static org.apache.hadoop.conf.Configuration tempHbaseConfig; // TODO remove asap
 
     private final Boundedness boundedness;
 
@@ -37,7 +37,7 @@ public class HbaseSource implements Source<byte[], HbaseSourceSplit, Collection<
         this.tableName = tableName;
         this.hbaseConfiguration = hbaseConfiguration;
 
-        TEMP_hbaseConf = hbaseConfiguration;
+        tempHbaseConfig = hbaseConfiguration;
     }
 
     @Override

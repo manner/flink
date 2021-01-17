@@ -1,4 +1,4 @@
-package org.apache.flink.connector.hbase.source.hbaseMocking;
+package org.apache.flink.connector.hbase.source.hbasemocking;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
