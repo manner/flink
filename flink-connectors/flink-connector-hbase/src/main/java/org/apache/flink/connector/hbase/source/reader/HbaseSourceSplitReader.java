@@ -36,7 +36,6 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
 
     @Override
     public RecordsWithSplitIds<byte[]> fetch() throws IOException {
-        System.out.println("fetching in Split Reader");
         final HbaseSourceSplit nextSplit = splits.poll();
         if (nextSplit != null) {
             currentSplitId = nextSplit.splitId();
