@@ -12,7 +12,6 @@ public class HbaseRecordEmitter implements RecordEmitter<byte[], byte[], HbaseSo
     @Override
     public void emitRecord(
             byte[] element, SourceOutput<byte[]> output, HbaseSourceSplitState splitState) {
-        System.out.println("emitRecord: " + Arrays.toString(element));
         output.collect(element);
     }
 }
