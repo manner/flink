@@ -4,7 +4,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.HbaseSource;
-import org.apache.flink.connector.hbase.source.hbaseMocking.TestClusterStarter;
+import org.apache.flink.connector.hbase.source.hbasemocking.TestClusterStarter;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -14,6 +14,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Playground. */
 public class Playground {
 
     private static final Logger LOG = LoggerFactory.getLogger(Playground.class);

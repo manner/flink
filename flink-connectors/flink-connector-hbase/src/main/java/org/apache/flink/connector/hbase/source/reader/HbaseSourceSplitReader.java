@@ -27,7 +27,7 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
     public HbaseSourceSplitReader() {
         System.out.println("constructing Split Reader");
         try {
-            this.hbaseConsumer = new HbaseConsumer(HbaseSource.TEMP_hbaseConf);
+            this.hbaseConsumer = new HbaseConsumer(HbaseSource.tempHbaseConfig);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
