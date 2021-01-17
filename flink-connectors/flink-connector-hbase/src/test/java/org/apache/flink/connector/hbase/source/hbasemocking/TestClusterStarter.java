@@ -27,10 +27,12 @@ public class TestClusterStarter {
     private static MiniHBaseCluster cluster;
     private static Configuration hbaseConf;
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+            throws ParserConfigurationException, SAXException, IOException {
         Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
 
         startCluster();
+        DemoSchema.createSchema(getConfig());
     }
 
     public static void startCluster() {
