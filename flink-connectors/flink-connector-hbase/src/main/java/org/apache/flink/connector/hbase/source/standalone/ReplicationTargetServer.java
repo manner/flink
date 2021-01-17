@@ -42,8 +42,6 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
     public AdminProtos.ReplicateWALEntryResponse replicateWALEntry(
             RpcController controller, AdminProtos.ReplicateWALEntryRequest request)
             throws ServiceException {
-        System.err.println("Replication!!!");
-
         List<AdminProtos.WALEntry> entries = request.getEntryList();
         CellScanner cells = ((HBaseRpcController) controller).cellScanner();
 
@@ -70,7 +68,6 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
 
                 Cell cell = cells.current();
                 KeyValue kv = KeyValueUtil.ensureKeyValue(cell);
-                System.out.println("consumes: " + Arrays.toString(kv.getValueArray()));
                 try {
                     walEdits.put(0, kv.getValueArray());
                 } catch (InterruptedException exception) {
