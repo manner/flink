@@ -7,7 +7,7 @@ import org.apache.hadoop.conf.Configuration;
 import java.io.Serializable;
 
 /** A {@link SourceSplit} for a Hbase. */
-public class HbaseSourceSplit implements SourceSplit, Serializable {
+public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -21,7 +21,7 @@ public class HbaseSourceSplit implements SourceSplit, Serializable {
 
     private final Configuration hbaseConf; // TODO serialization
 
-    public HbaseSourceSplit(
+    public HBaseSourceSplit(
             String id, String host, String table, String regionId, Configuration hbaseConf) {
         this.id = id;
         this.host = host;
