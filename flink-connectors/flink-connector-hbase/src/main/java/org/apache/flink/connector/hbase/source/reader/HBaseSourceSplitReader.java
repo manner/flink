@@ -3,9 +3,9 @@ package org.apache.flink.connector.hbase.source.reader;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
-import org.apache.flink.connector.hbase.source.HbaseSource;
-import org.apache.flink.connector.hbase.source.split.HbaseSourceSplit;
-import org.apache.flink.connector.hbase.source.standalone.HbaseConsumer;
+import org.apache.flink.connector.hbase.source.HBaseSource;
+import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
+import org.apache.flink.connector.hbase.source.standalone.HBaseConsumer;
 
 import javax.annotation.Nullable;
 
@@ -18,16 +18,16 @@ import java.util.Queue;
 import java.util.Set;
 
 /** A {@link SplitReader} implementation for Hbase. */
-public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSplit> {
+public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSplit> {
 
-    private final Queue<HbaseSourceSplit> splits;
-    private final HbaseConsumer hbaseConsumer;
+    private final Queue<HBaseSourceSplit> splits;
+    private final HBaseConsumer hbaseConsumer;
     @Nullable private String currentSplitId;
 
-    public HbaseSourceSplitReader() {
+    public HBaseSourceSplitReader() {
         System.out.println("constructing Split Reader");
         try {
-            this.hbaseConsumer = new HbaseConsumer(HbaseSource.tempHbaseConfig);
+            this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
@@ -36,7 +36,7 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
 
     @Override
     public RecordsWithSplitIds<byte[]> fetch() throws IOException {
-        final HbaseSourceSplit nextSplit = splits.poll();
+        final HBaseSourceSplit nextSplit = splits.poll();
         if (nextSplit != null) {
             currentSplitId = nextSplit.splitId();
         }
@@ -46,7 +46,7 @@ public class HbaseSourceSplitReader implements SplitReader<byte[], HbaseSourceSp
     }
 
     @Override
-    public void handleSplitsChanges(SplitsChange<HbaseSourceSplit> splitsChanges) {
+    public void handleSplitsChanges(SplitsChange<HBaseSourceSplit> splitsChanges) {
         splits.addAll(splitsChanges.splits());
     }
 

@@ -32,14 +32,14 @@ import java.util.List;
 import java.util.UUID;
 
 /** Test Hbase Consumer. */
-public class HbaseConsumer {
+public class HBaseConsumer {
 
     private static final String subscriptionName = "cdc";
     private static Configuration hbaseConf;
     private static ZooKeeper zooKeeper;
     private ReplicationTargetServer server;
 
-    public HbaseConsumer(Configuration hbaseConf)
+    public HBaseConsumer(Configuration hbaseConf)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
                     InterruptedException {
 
