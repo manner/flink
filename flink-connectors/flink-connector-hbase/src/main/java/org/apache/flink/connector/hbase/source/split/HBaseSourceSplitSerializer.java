@@ -12,9 +12,9 @@ import java.io.IOException;
 
 /**
  * The {@link org.apache.flink.core.io.SimpleVersionedSerializer serializer} for {@link
- * HbaseSourceSplit}.
+ * HBaseSourceSplit}.
  */
-public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<HbaseSourceSplit> {
+public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBaseSourceSplit> {
     private static final int VERSION = 1;
 
     @Override
@@ -23,25 +23,28 @@ public class HbaseSourceSplitSerializer implements SimpleVersionedSerializer<Hba
     }
 
     @Override
-    public byte[] serialize(HbaseSourceSplit split) throws IOException {
+    public byte[] serialize(HBaseSourceSplit split) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
+            out.writeUTF(split.getRegionId());
             out.flush();
             return baos.toByteArray();
         }
     }
 
     @Override
-    public HbaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
+    public HBaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {
             String id = in.readUTF();
             String host = in.readUTF();
             String table = in.readUTF();
-            return new HbaseSourceSplit(id, host, table, new Configuration());
+            String regionId = in.readUTF();
+            return new HBaseSourceSplit(
+                    id, host, table, regionId, new Configuration()); // TODO find real configuration
         }
     }
 }
