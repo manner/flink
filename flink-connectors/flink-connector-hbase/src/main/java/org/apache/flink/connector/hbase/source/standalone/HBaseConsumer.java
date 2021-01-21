@@ -69,12 +69,24 @@ public class HBaseConsumer {
     private static void createZKPath(
             final String path, byte[] data, List<ACL> acl, CreateMode createMode)
             throws KeeperException, InterruptedException {
+        createZKPath(path, data, acl, createMode, 3);
+    }
+
+    private static void createZKPath(
+            final String path, byte[] data, List<ACL> acl, CreateMode createMode, int retries)
+            throws KeeperException, InterruptedException {
         try {
             if (zooKeeper.exists(path, false) == null) {
                 zooKeeper.create(path, data, acl, createMode);
             }
         } catch (KeeperException e) {
             System.err.println(e.getMessage());
+            if (retries > 0) {
+                System.err.printf("Retry ... (%d retries left)", retries);
+                createZKPath(path, data, acl, createMode, retries - 1);
+            } else {
+                System.err.println("Abort");
+            }
         }
     }
 
