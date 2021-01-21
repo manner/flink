@@ -2,6 +2,7 @@ package org.apache.flink.connector.hbase.source;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.TestClusterStarter;
 import org.apache.flink.core.execution.JobClient;
@@ -40,7 +41,8 @@ public class HBaseSourceITCase {
 
     @Test
     public void testBasicPut() throws Exception {
-        HBaseSource source = new HBaseSource(null, "test_table", TestClusterStarter.getConfig());
+        CustomHBaseDeserializationScheme deserializationScheme = new CustomHBaseDeserializationScheme();
+        HBaseSource source = new HBaseSource(null, deserializationScheme, "test_table", TestClusterStarter.getConfig());
         // NumberSequenceSource source = new NumberSequenceSource(1, 10);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -94,5 +96,15 @@ public class HBaseSourceITCase {
             success = success || e instanceof SuccessException;
         }
         return success;
+    }
+
+    /** Bla. */
+    public static class CustomHBaseDeserializationScheme
+            extends AbstractDeserializationSchema<String> {
+
+        @Override
+        public String deserialize(byte[] message) throws IOException {
+            return new String(message);
+        }
     }
 }
