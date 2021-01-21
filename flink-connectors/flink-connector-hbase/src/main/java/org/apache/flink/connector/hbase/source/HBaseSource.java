@@ -20,20 +20,20 @@ import java.util.Collection;
 import java.util.List;
 
 /** A connector for Hbase. */
-public class HBaseSource implements Source<byte[], HBaseSourceSplit, Collection<HBaseSourceSplit>> {
+public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
     public static org.apache.hadoop.conf.Configuration tempHbaseConfig; // TODO remove asap
 
     private final Boundedness boundedness;
 
-    private final DeserializationSchema<String> deserializationSchema;
+    private final DeserializationSchema<T> deserializationSchema;
     private final String tableName;
     private final transient org.apache.hadoop.conf.Configuration
             hbaseConfiguration; // TODO find out why source needs to be serializable
 
     public HBaseSource(
             Boundedness boundedness,
-            DeserializationSchema<String> deserializationSchema,
+            DeserializationSchema<T> deserializationSchema,
             String tableName,
             org.apache.hadoop.conf.Configuration hbaseConfiguration) {
         this.boundedness = boundedness;
@@ -50,10 +50,10 @@ public class HBaseSource implements Source<byte[], HBaseSourceSplit, Collection<
     }
 
     @Override
-    public SourceReader<byte[], HBaseSourceSplit> createReader(SourceReaderContext readerContext)
+    public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
         System.out.println("createReader");
-        return new HBaseSourceReader(new Configuration(), deserializationSchema, readerContext);
+        return new HBaseSourceReader<>(new Configuration(), deserializationSchema, readerContext);
     }
 
     @Override

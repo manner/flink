@@ -7,13 +7,11 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.standalone.HBaseConsumer;
-import org.apache.flink.util.Collector;
 
 import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -21,16 +19,15 @@ import java.util.Queue;
 import java.util.Set;
 
 /** A {@link SplitReader} implementation for Hbase. */
-public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSplit> {
+public class HBaseSourceSplitReader<T> implements SplitReader<T, HBaseSourceSplit> {
 
     private final Queue<HBaseSourceSplit> splits;
     private final HBaseConsumer hbaseConsumer;
-    private final SimpleCollector<byte[]> collector;
-    private final DeserializationSchema<String> deserializationSchema;
+    private final DeserializationSchema<T> deserializationSchema;
 
     @Nullable private String currentSplitId;
 
-    public HBaseSourceSplitReader(DeserializationSchema<String> deserializationSchema) {
+    public HBaseSourceSplitReader(DeserializationSchema<T> deserializationSchema) {
         System.out.println("constructing Split Reader");
         try {
             this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig);
@@ -39,20 +36,18 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
         }
         this.splits = new ArrayDeque<>();
         this.deserializationSchema = deserializationSchema;
-        this.collector = new SimpleCollector<>();
     }
 
     @Override
-    public RecordsWithSplitIds<byte[]> fetch() throws IOException {
+    public RecordsWithSplitIds<T> fetch() throws IOException {
         final HBaseSourceSplit nextSplit = splits.poll();
         if (nextSplit != null) {
             currentSplitId = nextSplit.splitId();
         }
         byte[] nextValue = hbaseConsumer.next();
-        String value = deserializationSchema.deserialize(nextValue);
-        System.out.println(value);
-        List<byte[]> records = Collections.singletonList(nextValue);
-        return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
+        T value = deserializationSchema.deserialize(nextValue);
+        List<T> records = Collections.singletonList(value);
+        return new HbaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
     }
 
     @Override
@@ -66,14 +61,14 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
     @Override
     public void close() throws Exception {}
 
-    private static class HbaseSplitRecords implements RecordsWithSplitIds<byte[]> {
+    private static class HbaseSplitRecords<T> implements RecordsWithSplitIds<T> {
         private final Set<String> finishedSplits;
-        private Iterator<byte[]> recordsForSplit;
+        private Iterator<T> recordsForSplit;
 
         private String splitId;
 
         private HbaseSplitRecords(
-                String splitId, Iterator<byte[]> recordsForSplit, Set<String> finishedSplits) {
+                String splitId, Iterator<T> recordsForSplit, Set<String> finishedSplits) {
             this.splitId = splitId;
             this.recordsForSplit = recordsForSplit;
             this.finishedSplits = finishedSplits;
@@ -91,7 +86,7 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
 
         @Nullable
         @Override
-        public byte[] nextRecordFromSplit() {
+        public T nextRecordFromSplit() {
             if (recordsForSplit != null && recordsForSplit.hasNext()) {
                 return recordsForSplit.next();
             } else {
@@ -102,26 +97,6 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
         @Override
         public Set<String> finishedSplits() {
             return finishedSplits;
-        }
-    }
-
-    private static class SimpleCollector<T> implements Collector<T> {
-        private final List<T> records = new ArrayList<>();
-
-        @Override
-        public void collect(T record) {
-            records.add(record);
-        }
-
-        @Override
-        public void close() {}
-
-        private List<T> getRecords() {
-            return records;
-        }
-
-        private void reset() {
-            records.clear();
         }
     }
 }
