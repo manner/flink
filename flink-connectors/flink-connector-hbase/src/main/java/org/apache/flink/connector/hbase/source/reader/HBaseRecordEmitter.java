@@ -5,11 +5,11 @@ import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitState;
 
 /** The {@link RecordEmitter} implementation for {@link HBaseSourceReader}. */
-public class HBaseRecordEmitter implements RecordEmitter<byte[], byte[], HBaseSourceSplitState> {
+public class HBaseRecordEmitter<T> implements RecordEmitter<T, T, HBaseSourceSplitState> {
 
     @Override
     public void emitRecord(
-            byte[] element, SourceOutput<byte[]> output, HBaseSourceSplitState splitState) {
+            T element, SourceOutput<T> output, HBaseSourceSplitState splitState) {
         output.collect(element);
     }
 }
