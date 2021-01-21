@@ -27,6 +27,10 @@ import java.io.IOException;
 
 /** Adding DemoSchema to Hbase Test Cluster. */
 public class DemoSchema {
+
+    public static final String TABLE_NAME = "sep-user-demo";
+    public static final String COLUMN_FAMILY_NAME = "info";
+
     public static void main(String[] args) throws Exception {
         Configuration conf = TestClusterStarter.getConfig();
         createSchema(conf);
@@ -34,11 +38,10 @@ public class DemoSchema {
 
     public static void createSchema(Configuration hbaseConf) throws IOException {
         Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
-        if (!admin.tableExists(TableName.valueOf("sep-user-demo"))) {
-            HTableDescriptor tableDescriptor =
-                    new HTableDescriptor(TableName.valueOf("sep-user-demo"));
+        if (!admin.tableExists(TableName.valueOf(TABLE_NAME))) {
+            HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
 
-            HColumnDescriptor infoCf = new HColumnDescriptor("info");
+            HColumnDescriptor infoCf = new HColumnDescriptor(COLUMN_FAMILY_NAME);
             infoCf.setScope(1);
             tableDescriptor.addFamily(infoCf);
 
