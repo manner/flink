@@ -50,15 +50,19 @@ public class Playground {
         CustomHBaseDeserializationSchema deserializationSchema =
                 new CustomHBaseDeserializationSchema();
 
-        HBaseSource source =
-                new HBaseSource(
+        HBaseSource<String> source =
+                new HBaseSource<>(
                         Boundedness.BOUNDED,
                         deserializationSchema,
                         "TestTable",
                         TestClusterStarter.getConfig());
 
-        DataStream<byte[]> stream =
-                env.fromSource(source, WatermarkStrategy.noWatermarks(), "HBaseSource");
+        DataStream<String> stream =
+                env.fromSource(
+                        source,
+                        WatermarkStrategy.noWatermarks(),
+                        "HBaseSource",
+                        deserializationSchema.getProducedType());
 
         stream.print();
 

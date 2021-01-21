@@ -42,19 +42,19 @@ public class HBaseSourceITCase {
     @Test
     public void testBasicPut() throws Exception {
         CustomHBaseDeserializationScheme deserializationScheme = new CustomHBaseDeserializationScheme();
-        HBaseSource source = new HBaseSource(null, deserializationScheme, "test_table", TestClusterStarter.getConfig());
+        HBaseSource<String> source = new HBaseSource<>(null, deserializationScheme, "test_table", TestClusterStarter.getConfig());
         // NumberSequenceSource source = new NumberSequenceSource(1, 10);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-        DataStream<byte[]> stream =
-                env.fromSource(source, WatermarkStrategy.noWatermarks(), "testBasicPut");
+        DataStream<String> stream =
+                env.fromSource(source, WatermarkStrategy.noWatermarks(), "testBasicPut", deserializationScheme.getProducedType());
 
         // CompletableFuture<Collection<Long>> result = collector.collect(stream);
         stream.flatMap(
-                new RichFlatMapFunction<byte[], Object>() {
+                new RichFlatMapFunction<String, Object>() {
                     @Override
-                    public void flatMap(byte[] value, Collector<Object> out) throws Exception {
-                        System.out.println("Test collected " + (new String(value)));
+                    public void flatMap(String value, Collector<Object> out) throws Exception {
+                        System.out.println("Test collected " + value);
                         // TODO assertion goes here
                         //        assertEquals(
                         //                "HBase source did not produce the right values after a

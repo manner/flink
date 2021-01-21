@@ -10,16 +10,16 @@ import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitState;
 import java.util.Map;
 
 /** The source reader for Hbase. */
-public class HBaseSourceReader
+public class HBaseSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
-                byte[], byte[], HBaseSourceSplit, HBaseSourceSplitState> {
+                T, T, HBaseSourceSplit, HBaseSourceSplitState> {
     public HBaseSourceReader(
             Configuration config,
-            DeserializationSchema<String> deserializationSchema,
+            DeserializationSchema<T> deserializationSchema,
             SourceReaderContext context) {
         super(
-                () -> new HBaseSourceSplitReader(deserializationSchema),
-                new HBaseRecordEmitter(),
+                () -> new HBaseSourceSplitReader<T>(deserializationSchema),
+                new HBaseRecordEmitter<>(),
                 config,
                 context);
         System.out.println("constructing in Source Reader");
