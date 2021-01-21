@@ -24,6 +24,9 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,53 +36,75 @@ import java.util.UUID;
 
 /** DemoIngester for adding entries to the Hbase Test Cluster. */
 public class DemoIngester {
+    private final ObjectMapper jsonMapper;
     private List<String> names;
     private List<String> domains;
+
+    private static final byte[] infoCf = Bytes.toBytes("info");
+
+    // column qualifiers
+    private static final byte[] nameCq = Bytes.toBytes("name");
+    private static final byte[] emailCq = Bytes.toBytes("email");
+    private static final byte[] ageCq = Bytes.toBytes("age");
+    private static final byte[] payloadCq = Bytes.toBytes("payload");
+    private Table htable;
 
     public static void main(String[] args) throws Exception {
         new DemoIngester().run();
     }
 
+    public DemoIngester() {
+        jsonMapper = new ObjectMapper();
+        setup();
+    }
+
     public void run() throws Exception {
-        Configuration conf = TestClusterStarter.getConfig();
-
-        DemoSchema.createSchema(conf);
-
-        final byte[] infoCf = Bytes.toBytes("info");
-
-        // column qualifiers
-        final byte[] nameCq = Bytes.toBytes("name");
-        final byte[] emailCq = Bytes.toBytes("email");
-        final byte[] ageCq = Bytes.toBytes("age");
-        final byte[] payloadCq = Bytes.toBytes("payload");
-
-        loadData();
-
-        ObjectMapper jsonMapper = new ObjectMapper();
-
-        Table htable =
-                ConnectionFactory.createConnection(conf)
-                        .getTable(TableName.valueOf("sep-user-demo"));
-
         while (true) {
             Thread.sleep(1000);
-            byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
-            Put put = new Put(rowkey);
+            addRow();
+        }
+    }
 
-            String name = pickName();
-            String email = name.toLowerCase() + "@" + pickDomain();
-            String age = String.valueOf((int) Math.ceil(Math.random() * 100));
+    public void setup() {
+        try {
+            Configuration conf = TestClusterStarter.getConfig();
+            DemoSchema.createSchema(conf);
+            loadData();
+            htable =
+                    ConnectionFactory.createConnection(conf)
+                            .getTable(TableName.valueOf("sep-user-demo"));
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-            put.addColumn(infoCf, nameCq, Bytes.toBytes(name));
-            put.addColumn(infoCf, emailCq, Bytes.toBytes(email));
-            put.addColumn(infoCf, ageCq, Bytes.toBytes(age));
+    public Put addRow() {
+        byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
+        Put put = new Put(rowkey);
 
-            MyPayload payload = new MyPayload();
-            payload.setPartialUpdate(false);
+        String name = pickName();
+        String email = name.toLowerCase() + "@" + pickDomain();
+        String age = String.valueOf((int) Math.ceil(Math.random() * 100));
+
+        put.addColumn(infoCf, nameCq, Bytes.toBytes(name));
+        put.addColumn(infoCf, emailCq, Bytes.toBytes(email));
+        put.addColumn(infoCf, ageCq, Bytes.toBytes(age));
+
+        MyPayload payload = new MyPayload();
+        payload.setPartialUpdate(false);
+
+        try {
             put.addColumn(infoCf, payloadCq, jsonMapper.writeValueAsBytes(payload));
-
             htable.put(put);
             System.out.println("Added row " + Bytes.toString(rowkey));
+            return put;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

@@ -18,6 +18,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 /** Bla. */
@@ -26,6 +27,8 @@ public class TestClusterStarter {
     public static final String CONFIG_PATH = "config.xml";
     private static MiniHBaseCluster cluster;
     private static Configuration hbaseConf;
+
+    private static final String TEST_FOLDER = "/temp-data/";
 
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException, IOException {
@@ -46,11 +49,12 @@ public class TestClusterStarter {
         hbaseConf.setInt("replication.source.maxretriesmultiplier", 10);
         hbaseConf.setBoolean("hbase.replication", true);
 
+        System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, TEST_FOLDER);
+
         // System.out.println(hbaseConf.getTrimmed("fs.defaultFS"));
 
         System.out.println(hbaseConf.get("hbase.fs.tmp.dir"));
         System.out.println(hbaseConf.get("hbase.rootdir"));
-        System.out.println(hbaseConf.get("fs.defaultFS"));
         System.out.println("==================");
         // hbaseConf.set("hbase.fs.tmp.dir",	"hdfs://127.0.0.1:64771/user/Leon
         // Bein/test-data/d24ffa6b-b9a8-18b8-79d0-9430d327d07b/hbase-staging");
@@ -73,6 +77,9 @@ public class TestClusterStarter {
             System.out.println(hbaseConf.get("hbase.fs.tmp.dir"));
             System.out.println(hbaseConf.get("hbase.rootdir"));
             System.out.println(hbaseConf.get("fs.defaultFS"));
+            System.out.println(
+                    "Base test directory: "
+                            + hbaseConf.get(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY));
 
             System.out.println("Basedir: " + System.getProperty("test.build.data.basedirectory"));
             int numRegionServers = utility.getHBaseCluster().getRegionServerThreads().size();
@@ -85,6 +92,7 @@ public class TestClusterStarter {
             System.out.println(hbaseConf.get("hbase.master.info.port"));
             System.out.println(hbaseConf.get("hbase.master.info.port"));
 
+            cluster.waitForActiveAndReadyMaster(30 * 1000);
             try {
                 HBaseAdmin.available(hbaseConf);
                 System.out.println("Connected successfully");
@@ -103,6 +111,17 @@ public class TestClusterStarter {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void shutdownCluster() throws IOException {
+        System.out.println("Shutting down test cluster");
+        cluster.shutdown();
+        cluster.waitUntilShutDown();
+        Paths.get(TEST_FOLDER).toFile().delete();
+    }
+
+    public static void clearReplicationPeers() {
+        ReplicationPeerClearer.clearPeers();
     }
 
     public static Configuration getConfig()
