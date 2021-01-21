@@ -7,13 +7,11 @@ import org.apache.flink.connector.hbase.source.hbasemocking.TestClusterStarter;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.util.StreamCollector;
 import org.apache.flink.util.Collector;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -24,8 +22,6 @@ public class HBaseSourceITCase {
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
-
-    @Rule public StreamCollector collector = new StreamCollector();
 
     @BeforeClass
     public static void setup() {
