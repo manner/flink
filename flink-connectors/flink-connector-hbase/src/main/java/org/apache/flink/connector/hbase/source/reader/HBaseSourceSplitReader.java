@@ -1,16 +1,19 @@
 package org.apache.flink.connector.hbase.source.reader;
 
+import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.standalone.HBaseConsumer;
+import org.apache.flink.util.Collector;
 
 import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -22,9 +25,12 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
 
     private final Queue<HBaseSourceSplit> splits;
     private final HBaseConsumer hbaseConsumer;
+    private final SimpleCollector<byte[]> collector;
+    private final DeserializationSchema<String> deserializationSchema;
+
     @Nullable private String currentSplitId;
 
-    public HBaseSourceSplitReader() {
+    public HBaseSourceSplitReader(DeserializationSchema<String> deserializationSchema) {
         System.out.println("constructing Split Reader");
         try {
             this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig);
@@ -32,6 +38,8 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
             throw new RuntimeException("failed HBase consumer", e);
         }
         this.splits = new ArrayDeque<>();
+        this.deserializationSchema = deserializationSchema;
+        this.collector = new SimpleCollector<>();
     }
 
     @Override
@@ -41,6 +49,8 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
             currentSplitId = nextSplit.splitId();
         }
         byte[] nextValue = hbaseConsumer.next();
+        String value = deserializationSchema.deserialize(nextValue);
+        System.out.println(value);
         List<byte[]> records = Collections.singletonList(nextValue);
         return new HbaseSplitRecords(currentSplitId, records.iterator(), Collections.emptySet());
     }
@@ -92,6 +102,26 @@ public class HBaseSourceSplitReader implements SplitReader<byte[], HBaseSourceSp
         @Override
         public Set<String> finishedSplits() {
             return finishedSplits;
+        }
+    }
+
+    private static class SimpleCollector<T> implements Collector<T> {
+        private final List<T> records = new ArrayList<>();
+
+        @Override
+        public void collect(T record) {
+            records.add(record);
+        }
+
+        @Override
+        public void close() {}
+
+        private List<T> getRecords() {
+            return records;
+        }
+
+        private void reset() {
+            records.clear();
         }
     }
 }

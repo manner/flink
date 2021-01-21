@@ -1,5 +1,6 @@
 package org.apache.flink.connector.hbase.source.reader;
 
+import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
@@ -12,8 +13,15 @@ import java.util.Map;
 public class HBaseSourceReader
         extends SingleThreadMultiplexSourceReaderBase<
                 byte[], byte[], HBaseSourceSplit, HBaseSourceSplitState> {
-    public HBaseSourceReader(Configuration config, SourceReaderContext context) {
-        super(HBaseSourceSplitReader::new, new HBaseRecordEmitter(), config, context);
+    public HBaseSourceReader(
+            Configuration config,
+            DeserializationSchema<String> deserializationSchema,
+            SourceReaderContext context) {
+        super(
+                () -> new HBaseSourceSplitReader(deserializationSchema),
+                new HBaseRecordEmitter(),
+                config,
+                context);
         System.out.println("constructing in Source Reader");
     }
 

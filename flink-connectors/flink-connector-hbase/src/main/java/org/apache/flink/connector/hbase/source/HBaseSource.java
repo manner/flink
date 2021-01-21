@@ -1,5 +1,6 @@
 package org.apache.flink.connector.hbase.source;
 
+import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -25,17 +26,20 @@ public class HBaseSource implements Source<byte[], HBaseSourceSplit, Collection<
 
     private final Boundedness boundedness;
 
+    private final DeserializationSchema<String> deserializationSchema;
     private final String tableName;
     private final transient org.apache.hadoop.conf.Configuration
             hbaseConfiguration; // TODO find out why source needs to be serializable
 
     public HBaseSource(
             Boundedness boundedness,
+            DeserializationSchema<String> deserializationSchema,
             String tableName,
             org.apache.hadoop.conf.Configuration hbaseConfiguration) {
         this.boundedness = boundedness;
         this.tableName = tableName;
         this.hbaseConfiguration = hbaseConfiguration;
+        this.deserializationSchema = deserializationSchema;
 
         tempHbaseConfig = hbaseConfiguration;
     }
@@ -49,7 +53,7 @@ public class HBaseSource implements Source<byte[], HBaseSourceSplit, Collection<
     public SourceReader<byte[], HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
         System.out.println("createReader");
-        return new HBaseSourceReader(new Configuration(), readerContext);
+        return new HBaseSourceReader(new Configuration(), deserializationSchema, readerContext);
     }
 
     @Override
