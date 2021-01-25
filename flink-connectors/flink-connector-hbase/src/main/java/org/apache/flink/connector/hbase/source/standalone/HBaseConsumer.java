@@ -2,6 +2,7 @@ package org.apache.flink.connector.hbase.source.standalone;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,12 +40,14 @@ public class HBaseConsumer {
     private static Configuration hbaseConf;
     private static ZooKeeper zooKeeper;
     private ReplicationTargetServer server;
+    private static String table;
 
-    public HBaseConsumer(Configuration hbaseConf)
+    public HBaseConsumer(Configuration hbaseConf, String table)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
                     InterruptedException {
 
         this.hbaseConf = hbaseConf;
+        this.table = table;
 
         // Setup
         zooKeeper = connectZooKeeper();
@@ -135,6 +139,8 @@ public class HBaseConsumer {
                                 }
                             });
 
+            HashMap tableMap = new HashMap<>();
+            tableMap.put(TableName.valueOf(table), null);
             ReplicationPeerConfig peerConfig =
                     ReplicationPeerConfig.newBuilder()
                             .setClusterKey(
@@ -144,7 +150,7 @@ public class HBaseConsumer {
                                             + getBaseString()
                                             + "/"
                                             + subscriptionName)
-                            .build();
+                            .setReplicateAllUserTables(false).setTableCFsMap(tableMap).build();
             admin.addReplicationPeer("flink_cdc", peerConfig);
         } catch (IOException e) {
             e.printStackTrace();

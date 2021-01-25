@@ -23,25 +23,25 @@ import java.util.List;
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
     public static org.apache.hadoop.conf.Configuration tempHbaseConfig; // TODO remove asap
+    public static String tableName;
 
     private final Boundedness boundedness;
 
     private final DeserializationSchema<T> deserializationSchema;
-    private final String tableName;
     private final transient org.apache.hadoop.conf.Configuration
             hbaseConfiguration; // TODO find out why source needs to be serializable
 
     public HBaseSource(
             Boundedness boundedness,
             DeserializationSchema<T> deserializationSchema,
-            String tableName,
+            String table,
             org.apache.hadoop.conf.Configuration hbaseConfiguration) {
         this.boundedness = boundedness;
-        this.tableName = tableName;
         this.hbaseConfiguration = hbaseConfiguration;
         this.deserializationSchema = deserializationSchema;
 
         tempHbaseConfig = hbaseConfiguration;
+        tableName = table;
     }
 
     @Override
