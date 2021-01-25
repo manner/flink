@@ -30,7 +30,7 @@ public class HBaseSourceSplitReader<T> implements SplitReader<T, HBaseSourceSpli
     public HBaseSourceSplitReader(DeserializationSchema<T> deserializationSchema) {
         System.out.println("constructing Split Reader");
         try {
-            this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig);
+            this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig, HBaseSource.tableName);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
