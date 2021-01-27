@@ -5,9 +5,15 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -23,6 +29,14 @@ import java.util.Arrays;
 
 /** Bla. */
 public class TestClusterStarter {
+
+    static {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        org.apache.logging.log4j.core.config.Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        loggerConfig.setLevel(Level.WARN);
+        ctx.updateLoggers();
+    }
 
     public static final String CONFIG_PATH = "config.xml";
     private static MiniHBaseCluster cluster;
@@ -118,6 +132,15 @@ public class TestClusterStarter {
         cluster.shutdown();
         cluster.waitUntilShutDown();
         Paths.get(TEST_FOLDER).toFile().delete();
+    }
+
+    public static boolean isClusterAlreadyRunning() {
+        try (Connection connection = ConnectionFactory.createConnection(getConfig())) {
+            return true;
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public static void clearReplicationPeers() {
