@@ -4,6 +4,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
+import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
 import org.apache.flink.connector.hbase.source.hbasemocking.TestClusterStarter;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -41,13 +42,23 @@ public class HBaseSourceITCase {
 
     @Test
     public void testBasicPut() throws Exception {
-        CustomHBaseDeserializationScheme deserializationScheme = new CustomHBaseDeserializationScheme();
-        HBaseSource<String> source = new HBaseSource<>(null, deserializationScheme, "test_table", TestClusterStarter.getConfig());
+        CustomHBaseDeserializationScheme deserializationScheme =
+                new CustomHBaseDeserializationScheme();
+        HBaseSource<String> source =
+                new HBaseSource<>(
+                        null,
+                        deserializationScheme,
+                        DemoSchema.TABLE_NAME,
+                        TestClusterStarter.getConfig());
         // NumberSequenceSource source = new NumberSequenceSource(1, 10);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         DataStream<String> stream =
-                env.fromSource(source, WatermarkStrategy.noWatermarks(), "testBasicPut", deserializationScheme.getProducedType());
+                env.fromSource(
+                        source,
+                        WatermarkStrategy.noWatermarks(),
+                        "testBasicPut",
+                        deserializationScheme.getProducedType());
 
         // CompletableFuture<Collection<Long>> result = collector.collect(stream);
         stream.flatMap(
@@ -78,7 +89,7 @@ public class HBaseSourceITCase {
         try {
             JobClient jobClient = env.executeAsync();
             action.run();
-            jobClient.getJobExecutionResult().get(5, TimeUnit.SECONDS);
+            jobClient.getJobExecutionResult().get(timeout, TimeUnit.SECONDS);
             jobClient.cancel();
             throw new RuntimeException("Waiting for the correct data timed out");
         } catch (Exception exception) {
