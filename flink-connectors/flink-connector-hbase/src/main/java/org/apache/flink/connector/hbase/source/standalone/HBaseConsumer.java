@@ -84,7 +84,7 @@ public class HBaseConsumer {
                 zooKeeper.create(path, data, acl, createMode);
             }
         } catch (KeeperException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error creating ZK path: " + e.getMessage());
             if (retries > 0) {
                 System.err.printf("Retry ... (%d retries left)", retries);
                 createZKPath(path, data, acl, createMode, retries - 1);
@@ -150,7 +150,9 @@ public class HBaseConsumer {
                                             + getBaseString()
                                             + "/"
                                             + subscriptionName)
-                            .setReplicateAllUserTables(false).setTableCFsMap(tableMap).build();
+                            .setReplicateAllUserTables(false)
+                            .setTableCFsMap(tableMap)
+                            .build();
             admin.addReplicationPeer("flink_cdc", peerConfig);
         } catch (IOException e) {
             e.printStackTrace();
