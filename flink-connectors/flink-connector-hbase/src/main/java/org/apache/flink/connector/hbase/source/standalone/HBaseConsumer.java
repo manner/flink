@@ -73,7 +73,7 @@ public class HBaseConsumer {
     private static void createZKPath(
             final String path, byte[] data, List<ACL> acl, CreateMode createMode)
             throws KeeperException, InterruptedException {
-        createZKPath(path, data, acl, createMode, 3);
+        createZKPath(path, data, acl, createMode, 5);
     }
 
     private static void createZKPath(
@@ -90,6 +90,7 @@ public class HBaseConsumer {
                 createZKPath(path, data, acl, createMode, retries - 1);
             } else {
                 System.err.println("Abort");
+                throw e;
             }
         }
     }

@@ -16,6 +16,9 @@
 
 package org.apache.flink.connector.hbase.source.hbasemocking;
 
+import org.apache.flink.api.java.tuple.Tuple2;
+
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.hadoop.conf.Configuration;
@@ -36,7 +39,7 @@ import java.util.UUID;
 
 /** DemoIngester for adding entries to the Hbase Test Cluster. */
 public class DemoIngester {
-    private final ObjectMapper jsonMapper;
+    private static final ObjectMapper jsonMapper = new ObjectMapper();
     private List<String> names;
     private List<String> domains;
 
@@ -54,14 +57,13 @@ public class DemoIngester {
     }
 
     public DemoIngester() {
-        jsonMapper = new ObjectMapper();
         setup();
     }
 
     public void run() throws Exception {
         while (true) {
             Thread.sleep(1000);
-            addRow();
+            commitPut(createPut().f0);
         }
     }
 
@@ -82,7 +84,7 @@ public class DemoIngester {
         }
     }
 
-    public Put addRow() {
+    public Tuple2<Put, String[]> createPut() throws JsonProcessingException {
         byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
         Put put = new Put(rowkey);
 
@@ -97,14 +99,17 @@ public class DemoIngester {
         MyPayload payload = new MyPayload();
         payload.setPartialUpdate(false);
 
+        put.addColumn(infoCf, payloadCq, jsonMapper.writeValueAsBytes(payload));
+        return Tuple2.of(
+                put, new String[] {name, email, age, jsonMapper.writeValueAsString(payload)});
+    }
+
+    public void commitPut(Put put) {
         try {
-            put.addColumn(infoCf, payloadCq, jsonMapper.writeValueAsBytes(payload));
             htable.put(put);
-            System.out.println("Added row " + Bytes.toString(rowkey));
-            return put;
+            System.out.println("Added row " + Bytes.toString(put.getRow()));
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
         }
     }
 
