@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 /** Bla. */
-public class TestClusterStarter {
+public class HBaseTestClusterUtil {
 
     static {
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
@@ -154,7 +154,7 @@ public class TestClusterStarter {
         Document config =
                 DocumentBuilderFactory.newInstance()
                         .newDocumentBuilder()
-                        .parse(TestClusterStarter.CONFIG_PATH);
+                        .parse(HBaseTestClusterUtil.CONFIG_PATH);
         NodeList nodes = config.getDocumentElement().getElementsByTagName("property");
         for (int i = 0; i < nodes.getLength(); i++) {
             Element e = (Element) nodes.item(i);
