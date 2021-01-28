@@ -5,7 +5,7 @@ import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.HBaseSource;
-import org.apache.flink.connector.hbase.source.hbasemocking.TestClusterStarter;
+import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -55,7 +55,7 @@ public class Playground {
                         Boundedness.BOUNDED,
                         deserializationSchema,
                         "sep-user-demo",
-                        TestClusterStarter.getConfig());
+                        HBaseTestClusterUtil.getConfig());
 
         DataStream<String> stream =
                 env.fromSource(
