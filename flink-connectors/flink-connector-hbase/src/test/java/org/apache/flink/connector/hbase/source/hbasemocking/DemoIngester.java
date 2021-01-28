@@ -69,7 +69,7 @@ public class DemoIngester {
 
     public void setup() {
         try {
-            Configuration conf = TestClusterStarter.getConfig();
+            Configuration conf = HBaseTestClusterUtil.getConfig();
             DemoSchema.createSchema(conf);
             loadData();
             htable =
