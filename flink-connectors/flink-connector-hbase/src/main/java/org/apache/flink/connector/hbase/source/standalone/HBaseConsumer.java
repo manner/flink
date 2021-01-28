@@ -1,5 +1,7 @@
 package org.apache.flink.connector.hbase.source.standalone;
 
+import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -42,8 +44,8 @@ public class HBaseConsumer {
     private final String REPLICATION_PEER;
     private static Configuration hbaseConf;
     private static ZooKeeper zooKeeper;
-    private ReplicationTargetServer server;
-
+    private static String table;
+    private final ReplicationTargetServer server;
 
     public HBaseConsumer(Configuration hbaseConf)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
@@ -78,7 +80,7 @@ public class HBaseConsumer {
     private static void createZKPath(
             final String path, byte[] data, List<ACL> acl, CreateMode createMode)
             throws KeeperException, InterruptedException {
-        createZKPath(path, data, acl, createMode, 3);
+        createZKPath(path, data, acl, createMode, 5);
     }
 
     private static void createZKPath(
@@ -89,17 +91,18 @@ public class HBaseConsumer {
                 zooKeeper.create(path, data, acl, createMode);
             }
         } catch (KeeperException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error creating ZK path: " + e.getMessage());
             if (retries > 0) {
                 System.err.printf("Retry ... (%d retries left)", retries);
                 createZKPath(path, data, acl, createMode, retries - 1);
             } else {
                 System.err.println("Abort");
+                throw e;
             }
         }
     }
 
-    public byte[] next() {
+    public HBaseEvent next() {
         return server.next();
     }
 
@@ -157,7 +160,9 @@ public class HBaseConsumer {
                                             + getBaseString()
                                             + "/"
                                             + subscriptionName)
-                            .setReplicateAllUserTables(false).setTableCFsMap(tableMap).build();
+                            .setReplicateAllUserTables(false)
+                            .setTableCFsMap(tableMap)
+                            .build();
             admin.addReplicationPeer(REPLICATION_PEER, peerConfig);
         } catch (IOException e) {
             e.printStackTrace();
