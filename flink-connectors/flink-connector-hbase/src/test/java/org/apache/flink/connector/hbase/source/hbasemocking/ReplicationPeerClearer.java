@@ -19,7 +19,7 @@ public class ReplicationPeerClearer {
 
     public static void clearPeers() {
         try {
-            Configuration conf = TestClusterStarter.getConfig();
+            Configuration conf = HBaseTestClusterUtil.getConfig();
             try (Admin admin = ConnectionFactory.createConnection(conf).getAdmin()) {
                 for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
                     System.out.println("==== " + desc.getPeerId() + " ====");
