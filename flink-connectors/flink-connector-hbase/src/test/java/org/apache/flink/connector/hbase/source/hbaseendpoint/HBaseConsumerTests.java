@@ -5,7 +5,6 @@ import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
 import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
-import org.apache.flink.connector.hbase.source.standalone.HBaseConsumer;
 
 import org.junit.Test;
 
@@ -14,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 
-/** Tests for {@link org.apache.flink.connector.hbase.source.standalone.HBaseConsumer}. */
+/** Tests for {@link org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseConsumer}. */
 public class HBaseConsumerTests extends TestsWithTestHBaseCluster {
 
     @Test
