@@ -7,6 +7,8 @@ import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.standalone.HBaseConsumer;
 
+import org.apache.hadoop.conf.Configuration;
+
 import javax.annotation.Nullable;
 
 import java.io.IOException;
@@ -28,7 +30,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
     public HBaseSourceSplitReader() {
         System.out.println("constructing Split Reader");
         try {
-            this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig, HBaseSource.tableName);
+            this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
@@ -48,6 +50,12 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
 
     @Override
     public void handleSplitsChanges(SplitsChange<HBaseSourceSplit> splitsChanges) {
+        HBaseSourceSplit split = splitsChanges.splits().get(0);
+        try {
+            this.hbaseConsumer.startReplication(split.getTable(), split.getColumnFamily());
+        } catch(Exception e) {
+            throw new RuntimeException("failed HBase consumer", e);
+        }
         splits.addAll(splitsChanges.splits());
     }
 
