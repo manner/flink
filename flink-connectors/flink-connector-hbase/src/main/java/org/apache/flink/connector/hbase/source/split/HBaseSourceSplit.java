@@ -17,16 +17,16 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     private final String table;
 
-    private final String regionId;
+    private final String columnFamily;
 
     private final Configuration hbaseConf; // TODO serialization
 
     public HBaseSourceSplit(
-            String id, String host, String table, String regionId, Configuration hbaseConf) {
+            String id, String host, String table, String columnFamily, Configuration hbaseConf) {
         this.id = id;
         this.host = host;
         this.table = table;
-        this.regionId = regionId;
+        this.columnFamily = columnFamily;
         this.hbaseConf = hbaseConf;
     }
 
@@ -42,14 +42,13 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
         return hbaseConf;
     }
 
+    public String getColumnFamily() { return columnFamily;}
+
     @Override
     public String splitId() {
         return id;
     }
 
-    public String getRegionId() {
-        return regionId;
-    }
 
     @Override
     public String toString() {

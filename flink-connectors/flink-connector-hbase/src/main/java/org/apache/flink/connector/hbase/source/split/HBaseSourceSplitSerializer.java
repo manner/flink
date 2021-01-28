@@ -29,7 +29,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
-            out.writeUTF(split.getRegionId());
+            out.writeUTF(split.getColumnFamily());
             out.flush();
             return baos.toByteArray();
         }
@@ -42,9 +42,9 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             String id = in.readUTF();
             String host = in.readUTF();
             String table = in.readUTF();
-            String regionId = in.readUTF();
+            String columnFamily = in.readUTF();
             return new HBaseSourceSplit(
-                    id, host, table, regionId, new Configuration()); // TODO find real configuration
+                    id, host, table, columnFamily, new Configuration()); // TODO find real configuration
         }
     }
 }

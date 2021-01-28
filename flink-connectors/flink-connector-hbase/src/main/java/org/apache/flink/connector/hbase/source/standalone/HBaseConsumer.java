@@ -7,6 +7,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.ipc.FifoRpcScheduler;
@@ -30,6 +31,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,24 +40,27 @@ import java.util.UUID;
 /** Test Hbase Consumer. */
 public class HBaseConsumer {
 
-    private static final String subscriptionName = "cdc";
+    private final String subscriptionName;
+    private final String REPLICATION_PEER;
     private static Configuration hbaseConf;
     private static ZooKeeper zooKeeper;
     private static String table;
     private final ReplicationTargetServer server;
 
-    public HBaseConsumer(Configuration hbaseConf, String table)
+    public HBaseConsumer(Configuration hbaseConf)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
                     InterruptedException {
 
         this.hbaseConf = hbaseConf;
-        this.table = table;
+        this.subscriptionName = UUID.randomUUID().toString().substring(0,5);
+        this.REPLICATION_PEER = UUID.randomUUID().toString().substring(0,5);
+
 
         // Setup
         zooKeeper = connectZooKeeper();
         server = createServer();
 
-        tryReplication();
+//        tryReplication();
     }
 
     private static String getBaseString() {
@@ -102,17 +107,17 @@ public class HBaseConsumer {
     }
 
     private ZooKeeper connectZooKeeper() throws IOException {
-        ZooKeeper zooKeeper =
-                new ZooKeeper(
-                        "localhost:" + getPort(),
-                        20000,
-                        new Watcher() {
+            ZooKeeper zooKeeper =
+                    new ZooKeeper(
+                            "localhost:" + getPort(),
+                            20000,
+                            new Watcher() {
 
-                            @Override
-                            public void process(WatchedEvent event) {
-                                System.out.println("Watcher processed: " + event);
-                            }
-                        });
+                                @Override
+                                public void process(WatchedEvent event) {
+                                    System.out.println("Watcher processed: " + event);
+                                }
+                            });
         while ((ZooKeeper.States.CONNECTED).equals(zooKeeper.getState())) {
             try {
                 Thread.sleep(100);
@@ -128,11 +133,12 @@ public class HBaseConsumer {
         return zooKeeper;
     }
 
-    private void tryReplication() {
+    public void startReplication( String table, String columnFamily) {
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
                 Admin admin = connection.getAdmin(); ) {
+            //System.out.println( "PRINTING in  " + REPLICATION_PEER + " :   " + admin.listReplicationPeers());
             admin.listReplicationPeers().stream()
-                    .filter(peer -> peer.getPeerId().equals("flink_cdc"))
+                    .filter(peer -> peer.getPeerId().equals(REPLICATION_PEER))
                     .forEach(
                             peer -> {
                                 try {
@@ -141,9 +147,10 @@ public class HBaseConsumer {
                                     e.printStackTrace();
                                 }
                             });
-
             HashMap tableMap = new HashMap<>();
-            tableMap.put(TableName.valueOf(table), null);
+            ArrayList<String> cFs = new ArrayList<>();
+            cFs.add(columnFamily);
+            tableMap.put(TableName.valueOf(table), cFs);
             ReplicationPeerConfig peerConfig =
                     ReplicationPeerConfig.newBuilder()
                             .setClusterKey(
@@ -156,7 +163,7 @@ public class HBaseConsumer {
                             .setReplicateAllUserTables(false)
                             .setTableCFsMap(tableMap)
                             .build();
-            admin.addReplicationPeer("flink_cdc", peerConfig);
+            admin.addReplicationPeer(REPLICATION_PEER, peerConfig);
         } catch (IOException e) {
             e.printStackTrace();
         }
