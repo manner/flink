@@ -52,12 +52,19 @@ public class DemoIngester {
     private static final byte[] payloadCq = Bytes.toBytes("payload");
     private Table htable;
 
+    private final String tableName;
+
     public static void main(String[] args) throws Exception {
         new DemoIngester().run();
     }
 
-    public DemoIngester() {
+    public DemoIngester(String tableName) {
+        this.tableName = tableName;
         setup();
+    }
+
+    public DemoIngester() {
+        this(DemoSchema.TABLE_NAME);
     }
 
     public void run() throws Exception {
@@ -73,8 +80,7 @@ public class DemoIngester {
             DemoSchema.createSchema(conf);
             loadData();
             htable =
-                    ConnectionFactory.createConnection(conf)
-                            .getTable(TableName.valueOf("sep-user-demo"));
+                    ConnectionFactory.createConnection(conf).getTable(TableName.valueOf(tableName));
         } catch (SAXException e) {
             e.printStackTrace();
         } catch (ParserConfigurationException e) {
