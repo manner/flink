@@ -14,6 +14,12 @@ import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +29,7 @@ import java.util.List;
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
     public static org.apache.hadoop.conf.Configuration tempHbaseConfig; // TODO remove asap
-    public static String tableName;
+    private final String tableName;
 
     private final Boundedness boundedness;
 
@@ -39,9 +45,9 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
         this.boundedness = boundedness;
         this.hbaseConfiguration = hbaseConfiguration;
         this.deserializationSchema = deserializationSchema;
+        this.tableName = table;
 
         tempHbaseConfig = hbaseConfiguration;
-        tableName = table;
     }
 
     @Override
@@ -63,7 +69,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
             throws Exception {
         System.out.println("restoreEnumerator");
 
-        HBaseSplitEnumerator enumerator = new HBaseSplitEnumerator(enumContext);
+        HBaseSplitEnumerator enumerator = new HBaseSplitEnumerator(enumContext, tempHbaseConfig, tableName);
         enumerator.addSplits(checkpoint);
         return enumerator;
     }
@@ -72,22 +78,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
         System.out.println("createEnumerator");
-        List<HBaseSourceSplit> splits = new ArrayList<>();
-
-        List<String> regionIds = Arrays.asList("region1"); // , "region2");
-        regionIds.forEach(
-                regionId -> {
-                    splits.add(
-                            new HBaseSourceSplit(
-                                    String.format("1234%s", regionId),
-                                    "localhost",
-                                    tableName,
-                                    regionId,
-                                    hbaseConfiguration));
-                });
-        HBaseSplitEnumerator enumerator = new HBaseSplitEnumerator(enumContext);
-        enumerator.addSplits(splits);
-        return enumerator;
+        return new HBaseSplitEnumerator(enumContext, tempHbaseConfig, tableName);
     }
 
     @Override
