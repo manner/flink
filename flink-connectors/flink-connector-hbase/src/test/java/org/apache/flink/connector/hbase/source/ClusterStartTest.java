@@ -1,6 +1,6 @@
 package org.apache.flink.connector.hbase.source;
 
-import org.apache.flink.connector.hbase.source.hbasemocking.TestClusterStarter;
+import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -12,7 +12,7 @@ public class ClusterStartTest {
 
     @BeforeClass
     public static void setup() {
-        TestClusterStarter.startCluster();
+        HBaseTestClusterUtil.startCluster();
     }
 
     @AfterClass
