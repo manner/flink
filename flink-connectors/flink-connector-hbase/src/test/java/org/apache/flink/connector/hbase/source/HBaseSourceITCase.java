@@ -14,6 +14,9 @@ import org.apache.flink.util.Collector;
 
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Test;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,32 +30,35 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
     @Test
     public void testBasicPut() throws Exception {
-        CustomHBaseDeserializationScheme deserializationScheme =
-                new CustomHBaseDeserializationScheme();
-        HBaseSource<String> source =
-                new HBaseSource<>(
-                        null,
-                        deserializationScheme,
-                        DemoSchema.TABLE_NAME,
-                        HBaseTestClusterUtil.getConfig());
-        // NumberSequenceSource source = new NumberSequenceSource(1, 10);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
-        DataStream<String> stream =
-                env.fromSource(
-                        source,
-                        WatermarkStrategy.noWatermarks(),
-                        "testBasicPut",
-                        deserializationScheme.getProducedType());
+        DataStream<String> stream = streamFromHBaseSource(env, DemoSchema.TABLE_NAME);
         DemoIngester ingester = new DemoIngester();
         Tuple2<Put, String[]> put = ingester.createPut();
         String[] expectedValues = put.f1;
+
         expectFirstValuesToBe(
                 stream,
                 expectedValues,
                 "HBase source did not produce the right values after a basic put operation");
-
         doAndWaitForSuccess(env, () -> ingester.commitPut(put.f0), 120);
+    }
+
+    private static DataStream<String> streamFromHBaseSource(
+            StreamExecutionEnvironment environment, String tableName)
+            throws ParserConfigurationException, SAXException, IOException {
+        HBaseStringDeserializationScheme deserializationScheme =
+                new HBaseStringDeserializationScheme();
+        HBaseSource<String> source =
+                new HBaseSource<>(
+                        null, deserializationScheme, tableName, HBaseTestClusterUtil.getConfig());
+        environment.setParallelism(1);
+        DataStream<String> stream =
+                environment.fromSource(
+                        source,
+                        WatermarkStrategy.noWatermarks(),
+                        "testBasicPut",
+                        deserializationScheme.getProducedType());
+        return stream;
     }
 
     private static <T> void expectFirstValuesToBe(
@@ -91,7 +97,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     }
 
     /** Bla. */
-    public static class CustomHBaseDeserializationScheme
+    public static class HBaseStringDeserializationScheme
             extends AbstractDeserializationSchema<String> {
 
         @Override
