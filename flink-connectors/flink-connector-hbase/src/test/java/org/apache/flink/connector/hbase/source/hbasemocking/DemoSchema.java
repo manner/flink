@@ -32,7 +32,7 @@ public class DemoSchema {
     public static final String COLUMN_FAMILY_NAME = "info";
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = TestClusterStarter.getConfig();
+        Configuration conf = HBaseTestClusterUtil.getConfig();
         createSchema(conf);
     }
 
