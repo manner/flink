@@ -12,14 +12,14 @@ import java.util.Map;
 /** The source reader for Hbase. */
 public class HBaseSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
-                T, T, HBaseSourceSplit, HBaseSourceSplitState> {
+                HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
     public HBaseSourceReader(
             Configuration config,
             DeserializationSchema<T> deserializationSchema,
             SourceReaderContext context) {
         super(
-                () -> new HBaseSourceSplitReader<T>(deserializationSchema),
-                new HBaseRecordEmitter<>(),
+                HBaseSourceSplitReader::new,
+                new HBaseRecordEmitter<T>(deserializationSchema),
                 config,
                 context);
         System.out.println("constructing in Source Reader");
