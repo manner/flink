@@ -7,7 +7,6 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.ipc.FifoRpcScheduler;
@@ -16,11 +15,10 @@ import org.apache.hadoop.hbase.ipc.RpcServerFactory;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
@@ -43,7 +41,7 @@ public class HBaseConsumer {
     private final String subscriptionName;
     private final String REPLICATION_PEER;
     private static Configuration hbaseConf;
-    private static ZooKeeper zooKeeper;
+    private static RecoverableZooKeeper zooKeeper;
     private static String table;
     private final ReplicationTargetServer server;
 
@@ -52,15 +50,14 @@ public class HBaseConsumer {
                     InterruptedException {
 
         this.hbaseConf = hbaseConf;
-        this.subscriptionName = UUID.randomUUID().toString().substring(0,5);
-        this.REPLICATION_PEER = UUID.randomUUID().toString().substring(0,5);
-
+        this.subscriptionName = UUID.randomUUID().toString().substring(0, 5);
+        this.REPLICATION_PEER = UUID.randomUUID().toString().substring(0, 5);
 
         // Setup
         zooKeeper = connectZooKeeper();
         server = createServer();
 
-//        tryReplication();
+        //        tryReplication();
     }
 
     private static String getBaseString() {
@@ -106,18 +103,17 @@ public class HBaseConsumer {
         return server.next();
     }
 
-    private ZooKeeper connectZooKeeper() throws IOException {
-            ZooKeeper zooKeeper =
-                    new ZooKeeper(
-                            "localhost:" + getPort(),
-                            20000,
-                            new Watcher() {
-
-                                @Override
-                                public void process(WatchedEvent event) {
-                                    System.out.println("Watcher processed: " + event);
-                                }
-                            });
+    private RecoverableZooKeeper connectZooKeeper() throws IOException {
+        RecoverableZooKeeper zooKeeper =
+                new RecoverableZooKeeper(
+                        "localhost:" + getPort(),
+                        20000,
+                        event -> System.out.println("Watcher processed: " + event),
+                        5,
+                        200,
+                        200,
+                        null,
+                        1);
         while ((ZooKeeper.States.CONNECTED).equals(zooKeeper.getState())) {
             try {
                 Thread.sleep(100);
@@ -133,10 +129,11 @@ public class HBaseConsumer {
         return zooKeeper;
     }
 
-    public void startReplication( String table, String columnFamily) {
+    public void startReplication(String table, String columnFamily) {
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
                 Admin admin = connection.getAdmin(); ) {
-            //System.out.println( "PRINTING in  " + REPLICATION_PEER + " :   " + admin.listReplicationPeers());
+            // System.out.println( "PRINTING in  " + REPLICATION_PEER + " :   " +
+            // admin.listReplicationPeers());
             admin.listReplicationPeers().stream()
                     .filter(peer -> peer.getPeerId().equals(REPLICATION_PEER))
                     .forEach(
