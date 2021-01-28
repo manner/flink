@@ -1,5 +1,7 @@
 package org.apache.flink.connector.hbase.source.standalone;
 
+import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -39,8 +41,8 @@ public class HBaseConsumer {
     private static final String subscriptionName = "cdc";
     private static Configuration hbaseConf;
     private static ZooKeeper zooKeeper;
-    private ReplicationTargetServer server;
     private static String table;
+    private final ReplicationTargetServer server;
 
     public HBaseConsumer(Configuration hbaseConf, String table)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
@@ -95,7 +97,7 @@ public class HBaseConsumer {
         }
     }
 
-    public byte[] next() {
+    public HBaseEvent next() {
         return server.next();
     }
 

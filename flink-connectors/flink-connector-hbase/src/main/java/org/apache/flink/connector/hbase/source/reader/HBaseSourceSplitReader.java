@@ -1,6 +1,5 @@
 package org.apache.flink.connector.hbase.source.reader;
 
-import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
@@ -19,15 +18,14 @@ import java.util.Queue;
 import java.util.Set;
 
 /** A {@link SplitReader} implementation for Hbase. */
-public class HBaseSourceSplitReader<T> implements SplitReader<T, HBaseSourceSplit> {
+public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSourceSplit> {
 
     private final Queue<HBaseSourceSplit> splits;
     private final HBaseConsumer hbaseConsumer;
-    private final DeserializationSchema<T> deserializationSchema;
 
     @Nullable private String currentSplitId;
 
-    public HBaseSourceSplitReader(DeserializationSchema<T> deserializationSchema) {
+    public HBaseSourceSplitReader() {
         System.out.println("constructing Split Reader");
         try {
             this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig, HBaseSource.tableName);
@@ -35,18 +33,16 @@ public class HBaseSourceSplitReader<T> implements SplitReader<T, HBaseSourceSpli
             throw new RuntimeException("failed HBase consumer", e);
         }
         this.splits = new ArrayDeque<>();
-        this.deserializationSchema = deserializationSchema;
     }
 
     @Override
-    public RecordsWithSplitIds<T> fetch() throws IOException {
+    public RecordsWithSplitIds<HBaseEvent> fetch() throws IOException {
         final HBaseSourceSplit nextSplit = splits.poll();
         if (nextSplit != null) {
             currentSplitId = nextSplit.splitId();
         }
-        byte[] nextValue = hbaseConsumer.next();
-        T value = deserializationSchema.deserialize(nextValue);
-        List<T> records = Collections.singletonList(value);
+        HBaseEvent nextValue = hbaseConsumer.next();
+        List<HBaseEvent> records = Collections.singletonList(nextValue);
         return new HbaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
     }
 
