@@ -1,4 +1,4 @@
-package org.apache.flink.connector.hbase.source.standalone;
+package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 
