@@ -11,12 +11,12 @@ import java.io.IOException;
 public class ClusterStartTest {
 
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws IOException {
         HBaseTestClusterUtil.startCluster();
     }
 
     @AfterClass
-    public static void teardown() throws IOException {}
+    public static void teardown() {}
 
     @Test
     public void testBasicPut() throws Exception {
