@@ -24,7 +24,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 /** Bla. */
@@ -41,8 +42,10 @@ public class HBaseTestClusterUtil {
     public static final String CONFIG_PATH = "config.xml";
     private static MiniHBaseCluster cluster;
     private static Configuration hbaseConf;
+    private static Path TEST_FOLDER;
 
-    private static final String TEST_FOLDER = "/temp-data/";
+    public HBaseTestClusterUtil() {
+    }
 
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException, IOException {
@@ -52,7 +55,8 @@ public class HBaseTestClusterUtil {
         DemoSchema.createSchema(getConfig());
     }
 
-    public static void startCluster() {
+    public static void startCluster() throws IOException {
+        TEST_FOLDER = Files.createTempDirectory(null);
         // System.setProperty("test.build.data.basedirectory", "foobarbaz");
         UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser("tempusername"));
         // System.setProperty("user.name", "leonbein");
@@ -63,7 +67,7 @@ public class HBaseTestClusterUtil {
         hbaseConf.setInt("replication.source.maxretriesmultiplier", 10);
         hbaseConf.setBoolean("hbase.replication", true);
 
-        System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, TEST_FOLDER);
+        System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, TEST_FOLDER.toString());
 
         // System.out.println(hbaseConf.getTrimmed("fs.defaultFS"));
 
@@ -131,7 +135,6 @@ public class HBaseTestClusterUtil {
         System.out.println("Shutting down test cluster");
         cluster.shutdown();
         cluster.waitUntilShutDown();
-        Paths.get(TEST_FOLDER).toFile().delete();
     }
 
     public static boolean isClusterAlreadyRunning() {
