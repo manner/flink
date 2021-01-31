@@ -21,7 +21,7 @@ public abstract class TestsWithTestHBaseCluster {
     public static class SuccessException extends RuntimeException {}
 
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws IOException {
         if (!USE_EXISTING_CLUSTER) {
             HBaseTestClusterUtil.startCluster();
         }
