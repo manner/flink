@@ -28,15 +28,24 @@ import java.io.IOException;
 /** Adding DemoSchema to Hbase Test Cluster. */
 public class DemoSchema {
 
-    public static final String TABLE_NAME = "sep-user-demo";
+    public String TABLE_NAME = "test-table";
     public static final String COLUMN_FAMILY_NAME = "info";
 
-    public static void main(String[] args) throws Exception {
+    public DemoSchema(String tableName) {
+        TABLE_NAME = tableName;
+    }
+
+    public DemoSchema() {
+    }
+
+
+
+    public void main(String[] args) throws Exception {
         Configuration conf = HBaseTestClusterUtil.getConfig();
         createSchema(conf);
     }
 
-    public static void createSchema(Configuration hbaseConf) throws IOException {
+    public void createSchema(Configuration hbaseConf) throws IOException {
         Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
         if (!admin.tableExists(TableName.valueOf(TABLE_NAME))) {
             HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_NAME));

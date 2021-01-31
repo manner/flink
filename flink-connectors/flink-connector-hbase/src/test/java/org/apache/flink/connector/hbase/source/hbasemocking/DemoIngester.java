@@ -51,6 +51,7 @@ public class DemoIngester {
     private static final byte[] ageCq = Bytes.toBytes("age");
     private static final byte[] payloadCq = Bytes.toBytes("payload");
     private Table htable;
+    private final DemoSchema schema;
 
     private final String tableName;
 
@@ -59,12 +60,15 @@ public class DemoIngester {
     }
 
     public DemoIngester(String tableName) {
+        this.schema = new DemoSchema(tableName);
         this.tableName = tableName;
         setup();
     }
 
     public DemoIngester() {
-        this(DemoSchema.TABLE_NAME);
+        this.schema = new DemoSchema();
+        this.tableName = this.schema.TABLE_NAME;
+        setup();
     }
 
     public void run() throws Exception {
@@ -77,7 +81,7 @@ public class DemoIngester {
     public void setup() {
         try {
             Configuration conf = HBaseTestClusterUtil.getConfig();
-            DemoSchema.createSchema(conf);
+            this.schema.createSchema(conf);
             loadData();
             htable =
                     ConnectionFactory.createConnection(conf).getTable(TableName.valueOf(tableName));
