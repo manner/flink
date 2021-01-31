@@ -14,6 +14,7 @@ import java.io.IOException;
  */
 public abstract class TestsWithTestHBaseCluster {
 
+    public static String TABLE_NAME = "test-table";
     /** For debug purposes. Allows to run the test quickly without starting a fresh cluster */
     public static final boolean USE_EXISTING_CLUSTER = false;
 

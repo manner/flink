@@ -52,7 +52,8 @@ public class HBaseTestClusterUtil {
         Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
 
         startCluster();
-        DemoSchema.createSchema(getConfig());
+        DemoSchema schema = new DemoSchema();
+        schema.createSchema(getConfig());
     }
 
     public static void startCluster() throws IOException {
