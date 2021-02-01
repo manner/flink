@@ -17,7 +17,7 @@ import java.util.UUID;
 public abstract class TestsWithTestHBaseCluster {
 
     /** For debug purposes. Allows to run the test quickly without starting a fresh cluster */
-    public static final boolean USE_EXISTING_CLUSTER = false;
+    public static final boolean USE_EXISTING_CLUSTER = true;
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
@@ -40,7 +40,7 @@ public abstract class TestsWithTestHBaseCluster {
         if (!USE_EXISTING_CLUSTER) {
             HBaseTestClusterUtil.startCluster();
         }
-        assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+//        assert HBaseTestClusterUtil.isClusterAlreadyRunning();
     }
 
     @AfterClass
