@@ -25,7 +25,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 
 /** Bla. */
@@ -42,10 +41,9 @@ public class HBaseTestClusterUtil {
     public static final String CONFIG_PATH = "config.xml";
     private static MiniHBaseCluster cluster;
     private static Configuration hbaseConf;
-    private static Path TEST_FOLDER;
+    private static String testFolder;
 
-    public HBaseTestClusterUtil() {
-    }
+    public HBaseTestClusterUtil() {}
 
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException, IOException {
@@ -57,10 +55,11 @@ public class HBaseTestClusterUtil {
     }
 
     public static void startCluster() throws IOException {
-        TEST_FOLDER = Files.createTempDirectory(null);
-        // System.setProperty("test.build.data.basedirectory", "foobarbaz");
+        testFolder = Files.createTempDirectory(null).toString();
+
+        // Fallback for windows users with space in user name, will not work if path contains space.
+        if (testFolder.contains(" ")) testFolder = "/flink-hbase-test-data/";
         UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser("tempusername"));
-        // System.setProperty("user.name", "leonbein");
 
         hbaseConf = HBaseConfiguration.create();
         hbaseConf.setInt("replication.stats.thread.period.seconds", 5);
@@ -68,39 +67,15 @@ public class HBaseTestClusterUtil {
         hbaseConf.setInt("replication.source.maxretriesmultiplier", 10);
         hbaseConf.setBoolean("hbase.replication", true);
 
-        System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, TEST_FOLDER.toString());
+        System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, testFolder);
+        System.out.println("Testfolder: " + testFolder);
 
-        // System.out.println(hbaseConf.getTrimmed("fs.defaultFS"));
-
-        System.out.println(hbaseConf.get("hbase.fs.tmp.dir"));
-        System.out.println(hbaseConf.get("hbase.rootdir"));
-        System.out.println("==================");
-        // hbaseConf.set("hbase.fs.tmp.dir",	"hdfs://127.0.0.1:64771/user/Leon
-        // Bein/test-data/d24ffa6b-b9a8-18b8-79d0-9430d327d07b/hbase-staging");
-        // hbaseConf.set("hbase.rootdir", 		"hdfs://127.0.0.1:64771/user/Leon
-        // Bein/test-data/d24ffa6b-b9a8-18b8-79d0-9430d327d07b");
-        // hbaseConf.set("fs.defaultFS", 		"hdfs://127.0.0.1:64771/user/Leon
-        // Bein/test-data/d24ffa6b-b9a8-18b8-79d0-9430d327d07b");
-
-        // hbaseConf.setBoolean("hbase.cluster.distributed", false);
-        // hbaseConf.set("hbase.rootdir", "file:///D:/hbase/");
-        // hbaseConf.set("hbase.wal.dir", "file:///D:/hbase/wal/");
-        // hbaseConf.set("hbase.zookeeper.property.dataDir", "D:/hbase/zookeeper/");
         HBaseTestingUtility utility = new HBaseTestingUtility(hbaseConf);
         System.out.println(utility.getDataTestDir().toString());
         try {
             cluster =
                     utility.startMiniCluster(
                             StartMiniClusterOption.builder().numRegionServers(3).build());
-            System.out.println("==================");
-            System.out.println(hbaseConf.get("hbase.fs.tmp.dir"));
-            System.out.println(hbaseConf.get("hbase.rootdir"));
-            System.out.println(hbaseConf.get("fs.defaultFS"));
-            System.out.println(
-                    "Base test directory: "
-                            + hbaseConf.get(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY));
-
-            System.out.println("Basedir: " + System.getProperty("test.build.data.basedirectory"));
             int numRegionServers = utility.getHBaseCluster().getRegionServerThreads().size();
             System.out.println(numRegionServers);
 
