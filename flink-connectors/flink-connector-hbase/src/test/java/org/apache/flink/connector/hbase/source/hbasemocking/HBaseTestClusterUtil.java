@@ -25,6 +25,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 /** Bla. */
@@ -111,6 +112,7 @@ public class HBaseTestClusterUtil {
         System.out.println("Shutting down test cluster");
         cluster.shutdown();
         cluster.waitUntilShutDown();
+        Paths.get(testFolder).toFile().delete();
     }
 
     public static boolean isClusterAlreadyRunning() {
