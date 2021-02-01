@@ -28,17 +28,18 @@ import java.io.IOException;
 /** Adding DemoSchema to Hbase Test Cluster. */
 public class DemoSchema {
 
-    public String TABLE_NAME = "test-table";
     public static final String COLUMN_FAMILY_NAME = "info";
+    public static final String DEFAULT_TABLE_NAME = "test-table";
+
+    public final String tableName;
 
     public DemoSchema(String tableName) {
-        TABLE_NAME = tableName;
+        this.tableName = tableName;
     }
 
     public DemoSchema() {
+        this(DEFAULT_TABLE_NAME);
     }
-
-
 
     public void main(String[] args) throws Exception {
         Configuration conf = HBaseTestClusterUtil.getConfig();
@@ -47,8 +48,8 @@ public class DemoSchema {
 
     public void createSchema(Configuration hbaseConf) throws IOException {
         Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
-        if (!admin.tableExists(TableName.valueOf(TABLE_NAME))) {
-            HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
+        if (!admin.tableExists(TableName.valueOf(tableName))) {
+            HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableName));
 
             HColumnDescriptor infoCf = new HColumnDescriptor(COLUMN_FAMILY_NAME);
             infoCf.setScope(1);
