@@ -30,7 +30,6 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         Configuration hbaseConfiguration = HBaseTestClusterUtil.getConfig();
 
-        String tableName = "test-table";
         long start = 1;
         long end = 10;
 
@@ -40,7 +39,12 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
                         WatermarkStrategy.noWatermarks(),
                         "numberSource");
 
-        final HBaseSink<Long> hbaseSink = new HBaseSink<>(tableName, hbaseConfiguration);
+        String tableName = "test-table";
+        String columnFamily = "info";
+        String qualifier = "test";
+
+        final HBaseSink<Long> hbaseSink =
+                new HBaseSink<>(tableName, columnFamily, qualifier, hbaseConfiguration);
         numberSource.sinkTo(hbaseSink);
         env.execute();
 
@@ -49,7 +53,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
             for (long i = start; i <= end; i++) {
                 Get get = new Get(Bytes.toBytes(String.valueOf(i)));
                 Result r = table.get(get);
-                byte[] value = r.getValue("info".getBytes(), "age".getBytes());
+                byte[] value = r.getValue(columnFamily.getBytes(), qualifier.getBytes());
                 assertEquals(Long.parseLong(new String(value)), i);
             }
         } catch (IOException e) {
