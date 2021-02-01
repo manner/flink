@@ -20,22 +20,32 @@ import java.util.List;
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
     private final Configuration hbaseConfiguration;
-    private final TableName tableName;
+    private final String table;
+    private final String columnFamily;
+    private final String qualifier;
 
     public HBaseWriter(
-            Sink.InitContext context, TableName tableName, Configuration hbaseConfiguration) {
+            Sink.InitContext context,
+            String table,
+            String columnFamily,
+            String qualifier,
+            Configuration hbaseConfiguration) {
+        this.table = table;
+        this.columnFamily = columnFamily;
+        this.qualifier = qualifier;
+
         this.hbaseConfiguration = hbaseConfiguration;
-        this.tableName = tableName;
     }
 
     @Override
     public void write(IN element, Context context) throws IOException {
         Put put = new Put(Bytes.toBytes(element.toString()));
         put.addColumn(
-                Bytes.toBytes("info"), Bytes.toBytes("age"), Bytes.toBytes(element.toString()));
-        try (Connection connection =
-                ConnectionFactory.createConnection(this.hbaseConfiguration); ) {
-            Table table = connection.getTable(tableName);
+                Bytes.toBytes(columnFamily),
+                Bytes.toBytes(qualifier),
+                Bytes.toBytes(element.toString()));
+        try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration)) {
+            Table table = connection.getTable(TableName.valueOf(this.table));
             table.put(put);
         } catch (IOException e) {
             e.printStackTrace();
