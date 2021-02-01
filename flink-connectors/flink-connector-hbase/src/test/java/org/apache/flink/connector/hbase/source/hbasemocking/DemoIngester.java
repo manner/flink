@@ -66,9 +66,7 @@ public class DemoIngester {
     }
 
     public DemoIngester() {
-        this.schema = new DemoSchema();
-        this.tableName = this.schema.TABLE_NAME;
-        setup();
+        this(DemoSchema.DEFAULT_TABLE_NAME);
     }
 
     public void run() throws Exception {
