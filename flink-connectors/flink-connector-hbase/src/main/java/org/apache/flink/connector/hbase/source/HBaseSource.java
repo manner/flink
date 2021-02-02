@@ -14,16 +14,7 @@ import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /** A connector for Hbase. */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
@@ -69,7 +60,8 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
             throws Exception {
         System.out.println("restoreEnumerator");
 
-        HBaseSplitEnumerator enumerator = new HBaseSplitEnumerator(enumContext, tempHbaseConfig, tableName);
+        HBaseSplitEnumerator enumerator =
+                new HBaseSplitEnumerator(enumContext, tempHbaseConfig, tableName);
         enumerator.addSplits(checkpoint);
         return enumerator;
     }
