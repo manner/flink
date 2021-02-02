@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertNotNull;
 
 /** Tests for {@link org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseConsumer}. */
-public class HBaseConsumerTests extends TestsWithTestHBaseCluster {
+public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testSetup() throws Exception {
