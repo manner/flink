@@ -8,6 +8,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+/** This class is only used to start a (reusable) test cluster from the test root. */
+@Deprecated
 public class ClusterStartTest {
 
     @BeforeClass
@@ -21,6 +23,8 @@ public class ClusterStartTest {
     @Test
     public void testBasicPut() throws Exception {
         System.out.println("Pass");
-        while (true) Thread.sleep(30000);
+        while (true) {
+            Thread.sleep(30000);
+        }
     }
 }
