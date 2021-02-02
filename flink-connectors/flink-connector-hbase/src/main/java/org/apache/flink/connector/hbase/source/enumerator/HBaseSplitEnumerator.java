@@ -30,7 +30,10 @@ public class HBaseSplitEnumerator
     private final String table;
     private final Configuration hbaseConfiguration;
 
-    public HBaseSplitEnumerator(SplitEnumeratorContext<HBaseSourceSplit> context, Configuration hbaseConfiguration, String table) {
+    public HBaseSplitEnumerator(
+            SplitEnumeratorContext<HBaseSourceSplit> context,
+            Configuration hbaseConfiguration,
+            String table) {
         this.context = context;
         this.remainingSplits = new ArrayDeque<>();
         this.table = table;
@@ -40,10 +43,9 @@ public class HBaseSplitEnumerator
     @Override
     public void start() {
         try (Connection connection = ConnectionFactory.createConnection(this.hbaseConfiguration);
-             Admin admin = connection.getAdmin()) {
-            ColumnFamilyDescriptor[] colFamDes = admin
-                    .getDescriptor(TableName.valueOf(this.table))
-                    .getColumnFamilies();
+                Admin admin = connection.getAdmin()) {
+            ColumnFamilyDescriptor[] colFamDes =
+                    admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
             for (ColumnFamilyDescriptor colFamDe : colFamDes) {
                 splits.add(
@@ -63,7 +65,7 @@ public class HBaseSplitEnumerator
 
     @Override
     public void close() {}
-    
+
     @Override
     public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
 

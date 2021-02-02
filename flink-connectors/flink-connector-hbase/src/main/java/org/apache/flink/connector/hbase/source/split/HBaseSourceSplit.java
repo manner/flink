@@ -42,13 +42,14 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
         return hbaseConf;
     }
 
-    public String getColumnFamily() { return columnFamily;}
+    public String getColumnFamily() {
+        return columnFamily;
+    }
 
     @Override
     public String splitId() {
         return id;
     }
-
 
     @Override
     public String toString() {

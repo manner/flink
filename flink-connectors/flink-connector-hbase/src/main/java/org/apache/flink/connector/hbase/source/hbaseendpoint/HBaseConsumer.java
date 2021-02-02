@@ -39,7 +39,7 @@ import java.util.UUID;
 public class HBaseConsumer {
 
     private final String subscriptionName;
-    private final String REPLICATION_PEER;
+    private final String replicationPeer;
     private static Configuration hbaseConf;
     private static RecoverableZooKeeper zooKeeper;
     private static String table;
@@ -51,7 +51,7 @@ public class HBaseConsumer {
 
         this.hbaseConf = hbaseConf;
         this.subscriptionName = UUID.randomUUID().toString().substring(0, 5);
-        this.REPLICATION_PEER = UUID.randomUUID().toString().substring(0, 5);
+        this.replicationPeer = UUID.randomUUID().toString().substring(0, 5);
 
         // Setup
         zooKeeper = connectZooKeeper();
@@ -135,7 +135,7 @@ public class HBaseConsumer {
             // System.out.println( "PRINTING in  " + REPLICATION_PEER + " :   " +
             // admin.listReplicationPeers());
             admin.listReplicationPeers().stream()
-                    .filter(peer -> peer.getPeerId().equals(REPLICATION_PEER))
+                    .filter(peer -> peer.getPeerId().equals(replicationPeer))
                     .forEach(
                             peer -> {
                                 try {
@@ -160,7 +160,7 @@ public class HBaseConsumer {
                             .setReplicateAllUserTables(false)
                             .setTableCFsMap(tableMap)
                             .build();
-            admin.addReplicationPeer(REPLICATION_PEER, peerConfig);
+            admin.addReplicationPeer(replicationPeer, peerConfig);
         } catch (IOException e) {
             e.printStackTrace();
         }
