@@ -19,14 +19,14 @@ public class HBaseConsumerTests extends TestsWithTestHBaseCluster {
     @Test
     public void testSetup() throws Exception {
         new HBaseConsumer(HBaseTestClusterUtil.getConfig())
-                .startReplication(TABLE_NAME, DemoSchema.COLUMN_FAMILY_NAME);
+                .startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
     }
 
     @Test
     public void testPutCreatesEvent() throws Exception {
         HBaseConsumer consumer = new HBaseConsumer(HBaseTestClusterUtil.getConfig());
-        consumer.startReplication(TABLE_NAME, DemoSchema.COLUMN_FAMILY_NAME);
-        DemoIngester ingester = new DemoIngester(TABLE_NAME);
+        consumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
+        DemoIngester ingester = new DemoIngester(baseTableName);
         ingester.commitPut(ingester.createPut().f0);
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         assertNotNull(result);
