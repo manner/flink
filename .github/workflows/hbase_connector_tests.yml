@@ -17,4 +17,4 @@ jobs:
       with:
         java-version: 11
     - name: Test with Maven
-      run: mvn clean test integration-test --file flink-connectors/flink-connector-hbase/pom.xml -Dspotless.check.skip=true
+      run: mvn clean test integration-test --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
