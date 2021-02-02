@@ -4,9 +4,11 @@ import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * Abstract test class that provides that {@link
@@ -14,12 +16,24 @@ import java.io.IOException;
  */
 public abstract class TestsWithTestHBaseCluster {
 
-    public static String TABLE_NAME = "test-table";
     /** For debug purposes. Allows to run the test quickly without starting a fresh cluster */
     public static final boolean USE_EXISTING_CLUSTER = false;
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
+
+    /**
+     * Unique table name provided for each test; can be used to minimize interference between tests
+     * on the same cluster.
+     */
+    protected String baseTableName;
+
+    @Before
+    public void determineBaseTableName() {
+        baseTableName =
+                String.format(
+                        "%s-table-%s", getClass().getSimpleName().toLowerCase(), UUID.randomUUID());
+    }
 
     @BeforeClass
     public static void setup() throws IOException {
@@ -31,13 +45,15 @@ public abstract class TestsWithTestHBaseCluster {
 
     @AfterClass
     public static void teardown() throws IOException {
-        if (!USE_EXISTING_CLUSTER) HBaseTestClusterUtil.shutdownCluster();
+        if (!USE_EXISTING_CLUSTER) {
+            HBaseTestClusterUtil.shutdownCluster();
+        }
     }
 
     @After
     public void clearReplicationPeers() {
         HBaseTestClusterUtil.clearReplicationPeers();
-        // TODO also cleanup data
+        HBaseTestClusterUtil.clearTables();
     }
 
     protected static boolean causedBySuccess(Exception exception) {

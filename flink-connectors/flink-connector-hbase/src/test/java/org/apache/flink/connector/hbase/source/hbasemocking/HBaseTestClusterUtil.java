@@ -5,15 +5,13 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -28,16 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-/** Bla. */
+/** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
-
-    static {
-        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        org.apache.logging.log4j.core.config.Configuration config = ctx.getConfiguration();
-        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-        loggerConfig.setLevel(Level.WARN);
-        ctx.updateLoggers();
-    }
 
     public static final String CONFIG_PATH = "config.xml";
     private static MiniHBaseCluster cluster;
@@ -59,7 +49,9 @@ public class HBaseTestClusterUtil {
         testFolder = Files.createTempDirectory(null).toString();
 
         // Fallback for windows users with space in user name, will not work if path contains space.
-        if (testFolder.contains(" ")) testFolder = "/flink-hbase-test-data/";
+        if (testFolder.contains(" ")) {
+            testFolder = "/flink-hbase-test-data/";
+        }
         UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser("tempusername"));
 
         hbaseConf = HBaseConfiguration.create();
@@ -126,6 +118,17 @@ public class HBaseTestClusterUtil {
 
     public static void clearReplicationPeers() {
         ReplicationPeerClearer.clearPeers();
+    }
+
+    public static void clearTables() {
+        try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
+            for (TableDescriptor table : admin.listTableDescriptors()) {
+                admin.disableTable(table.getTableName());
+                admin.deleteTable(table.getTableName());
+            }
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            e.printStackTrace();
+        }
     }
 
     public static Configuration getConfig()
