@@ -1,0 +1,111 @@
+package org.apache.flink.connector.hbase.testutil;
+
+import org.apache.flink.api.common.state.CheckpointListener;
+import org.apache.flink.api.common.state.ListState;
+import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.runtime.state.FunctionInitializationContext;
+import org.apache.flink.runtime.state.FunctionSnapshotContext;
+import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+/** TODO documentation. */
+public abstract class FailureSink<T> extends RichSinkFunction<T>
+        implements CheckpointedFunction, CheckpointListener {
+
+    private final boolean verbose;
+    private final long activateAfter;
+    private final TypeInformation<T> typeInfo;
+    private boolean active = false;
+
+    protected final List<T> unCheckpointedValues = new ArrayList<>();
+    protected transient ListState<T> checkpointedValues;
+
+    public FailureSink(boolean verbose, long activateAfter, TypeInformation<T> typeInfo) {
+        this.verbose = verbose;
+        this.activateAfter = activateAfter;
+        this.typeInfo = typeInfo;
+    }
+
+    @Override
+    public void invoke(T value, Context context) throws Exception {
+        if (verbose) {
+            System.out.println(value + " " + active);
+        }
+        unCheckpointedValues.add(value);
+        collectValue(value);
+        throwFailureIfActive();
+    }
+
+    public void collectValue(T value) throws Exception {}
+
+    public void checkpoint() throws Exception {}
+
+    @Override
+    public void notifyCheckpointComplete(long checkpointId) throws Exception {
+        System.out.println(
+                "FailureSink.notifyCheckpointComplete has been called with checkpointId="
+                        + checkpointId);
+        throwFailureIfActive();
+    }
+
+    @Override
+    public void snapshotState(FunctionSnapshotContext context) throws Exception {
+        if (verbose) {
+            System.out.println("FailureSink.snapshotState has been called");
+        }
+        checkpointedValues.addAll(unCheckpointedValues);
+        unCheckpointedValues.clear();
+        checkpoint();
+    }
+
+    @Override
+    public void initializeState(FunctionInitializationContext context) throws Exception {
+        if (verbose) {
+            System.out.println("FailureSink.initializeState has been called");
+        }
+
+        ListStateDescriptor<T> descriptor = new ListStateDescriptor<>("checkpointed", typeInfo);
+
+        checkpointedValues = context.getOperatorStateStore().getListState(descriptor);
+
+        new Timer().schedule(activation(), activateAfter);
+    }
+
+    public List<T> getCheckpointedValues() {
+        try {
+            List<T> checkpointed = new ArrayList<>();
+            checkpointedValues.get().forEach(checkpointed::add);
+            return checkpointed;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private TimerTask activation() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                active = true;
+                if (verbose) {
+                    System.out.println("FailureSink activated");
+                }
+            }
+        };
+    }
+
+    private void throwFailureIfActive() {
+        if (active) {
+            if (verbose) {
+                System.out.println("FailureSink triggered");
+            }
+            throw new RuntimeException("Failure Sink throws error");
+        }
+    }
+}
