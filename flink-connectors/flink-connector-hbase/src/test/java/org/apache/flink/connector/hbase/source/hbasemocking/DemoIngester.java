@@ -112,6 +112,14 @@ public class DemoIngester {
                 put, new String[] {name, email, age, jsonMapper.writeValueAsString(payload)});
     }
 
+    public Tuple2<Put, String> createOneColumnUniquePut() {
+        String uuid = UUID.randomUUID().toString();
+        byte[] rowkey = Bytes.toBytes(uuid);
+        Put put = new Put(rowkey);
+        put.addColumn(infoCf, nameCq, Bytes.toBytes(uuid));
+        return Tuple2.of(put, uuid);
+    }
+
     public void commitPut(Put put) {
         try {
             htable.put(put);
