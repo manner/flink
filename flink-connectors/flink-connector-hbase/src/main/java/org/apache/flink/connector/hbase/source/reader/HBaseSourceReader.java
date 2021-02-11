@@ -38,6 +38,6 @@ public class HBaseSourceReader<T>
 
     @Override
     protected HBaseSourceSplit toSplitType(String splitId, HBaseSourceSplitState splitState) {
-        return splitState.getSplit();
+        return splitState.toSplit();
     }
 }

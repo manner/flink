@@ -2,6 +2,7 @@ package org.apache.flink.connector.hbase.source.reader;
 
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
+import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseConsumer;
@@ -48,20 +49,30 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
 
     @Override
     public void handleSplitsChanges(SplitsChange<HBaseSourceSplit> splitsChanges) {
-        HBaseSourceSplit split = splitsChanges.splits().get(0);
-        try {
-            this.hbaseConsumer.startReplication(split.getTable(), split.getColumnFamily());
-        } catch (Exception e) {
-            throw new RuntimeException("failed HBase consumer", e);
+        if (splitsChanges instanceof SplitsAddition) {
+            HBaseSourceSplit split = splitsChanges.splits().get(0);
+            try {
+                this.hbaseConsumer.startReplication(split.getTable(), split.getColumnFamily());
+            } catch (Exception e) {
+                throw new RuntimeException("failed HBase consumer", e);
+            }
+            splits.addAll(splitsChanges.splits());
+        } else {
+            throw new UnsupportedOperationException(
+                    "Unsupported splits change type "
+                            + splitsChanges.getClass().getSimpleName()
+                            + " in "
+                            + this.getClass().getSimpleName());
         }
-        splits.addAll(splitsChanges.splits());
     }
 
     @Override
     public void wakeUp() {}
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        // TODO close consumer and add test for that
+    }
 
     private static class HbaseSplitRecords<T> implements RecordsWithSplitIds<T> {
         private final Set<String> finishedSplits;

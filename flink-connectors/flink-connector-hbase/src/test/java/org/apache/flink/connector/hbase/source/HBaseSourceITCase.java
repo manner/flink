@@ -49,6 +49,10 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         signal(SUCCESS_SIGNAL);
     }
 
+    private static void signalFailure() {
+        signal(FAILURE_SIGNAL);
+    }
+
     private static void awaitSuccess(long timeout, TimeUnit timeUnit)
             throws InterruptedException, ExecutionException, TimeoutException {
         awaitSignalThrowOnFailure(SUCCESS_SIGNAL, timeout, timeUnit);
@@ -170,11 +174,11 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         }
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.enableCheckpointing(1000);
+        env.enableCheckpointing(2000);
         env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
         stream.addSink(
-                new FailureSink<String>(true, 2500, TypeInformation.of(String.class)) {
+                new FailureSink<String>(true, 3500, TypeInformation.of(String.class)) {
 
                     private void checkForSuccess() {
                         List<String> checkpointed = getCheckpointedValues();
@@ -187,8 +191,9 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                                         checkpointed.toArray());
                                 signalSuccess();
                             } catch (Exception e) {
+                                System.out.println("Exception occured: " + e.getMessage());
+                                signalFailure();
                                 e.printStackTrace();
-                                signal(FAILURE_SIGNAL);
                             }
                         }
                     }
@@ -197,8 +202,8 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     public void collectValue(String value) throws Exception {
 
                         if (getCheckpointedValues().contains(value)) {
-                            System.err.println("Unique value " + value + " was not seen only once");
-                            signal(FAILURE_SIGNAL);
+                            System.out.println("Unique value " + value + " was not seen only once");
+                            signalFailure();
                             throw new RuntimeException(
                                     "Unique value " + value + " was not seen only once");
                         }
