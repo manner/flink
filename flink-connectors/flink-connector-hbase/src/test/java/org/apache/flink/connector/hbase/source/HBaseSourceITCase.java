@@ -16,9 +16,11 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.FileUtils;
 
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -29,41 +31,86 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertArrayEquals;
 
 /** Tests the most basic use cases of the source with a mocked HBase system. */
 public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
-    public static final File SUCCESS_FILE = new File(".success");
+    private static final File SIGNAL_FOLDER = new File("signal");
 
-    @After
-    public void cleanupSuccess() {
-        SUCCESS_FILE.delete();
-    }
+    private static final String SUCCESS_SIGNAL = "success";
+    private static final String FAILURE_SIGNAL = "failure";
 
     private static void signalSuccess() {
+        signal(SUCCESS_SIGNAL);
+    }
+
+    private static void awaitSuccess(long timeout, TimeUnit timeUnit)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        awaitSignalThrowOnFailure(SUCCESS_SIGNAL, timeout, timeUnit);
+    }
+
+    @Before
+    public void makeSignalFolder() {
+        SIGNAL_FOLDER.mkdirs();
+    }
+
+    @After
+    public void cleanupSignalFolder() throws IOException {
+        FileUtils.deleteDirectory(SIGNAL_FOLDER);
+    }
+
+    private static File signalFile(String signalName) {
+        return SIGNAL_FOLDER.toPath().resolve(signalName + ".signal").toFile();
+    }
+
+    private static void signal(String signalName) {
+        File signalFile = signalFile(signalName);
         try {
-            SUCCESS_FILE.createNewFile();
-            System.out.println("Created success file at " + SUCCESS_FILE.getAbsolutePath());
+            signalFile.createNewFile();
+            System.out.println("Created signal file at " + signalFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static Future<Void> getSuccess() {
-        return CompletableFuture.runAsync(
+    private static void awaitSignalThrowOnFailure(
+            String signalName, long timeout, TimeUnit timeUnit)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        String result =
+                (String)
+                        CompletableFuture.anyOf(
+                                        awaitSignal(signalName), awaitSignal(FAILURE_SIGNAL))
+                                .get(120, TimeUnit.SECONDS);
+        if (result.equals(FAILURE_SIGNAL)) {
+            throw new RuntimeException("Waiting for signal " + signalName + " yielded failure");
+        }
+    }
+
+    private static CompletableFuture<String> awaitSignal(String signalName)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        File signalFile = signalFile(signalName);
+        return CompletableFuture.supplyAsync(
                 () -> {
-                    while (!SUCCESS_FILE.exists()) {
+                    while (!signalFile.exists()) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
+                    cleanupSignal(signalName);
+                    return signalName;
                 });
+    }
+
+    private static void cleanupSignal(String signalName) {
+        File signalFile = signalFile(signalName);
+        signalFile.delete();
     }
 
     @Test
@@ -112,6 +159,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
+        final String collectedValueSignal = "collectedValue";
         DemoIngester ingester = new DemoIngester(baseTableName);
         List<Put> puts = new ArrayList<>();
         List<String> expectedValues = new ArrayList<>();
@@ -132,11 +180,16 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                         List<String> checkpointed = getCheckpointedValues();
                         System.out.println(unCheckpointedValues + " " + checkpointed);
                         if (checkpointed.size() == expectedValues.size()) {
-                            assertArrayEquals(
-                                    "Wrong values were produced.",
-                                    expectedValues.toArray(),
-                                    checkpointed.toArray());
-                            signalSuccess();
+                            try {
+                                assertArrayEquals(
+                                        "Wrong values were produced.",
+                                        expectedValues.toArray(),
+                                        checkpointed.toArray());
+                                signalSuccess();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                signal(FAILURE_SIGNAL);
+                            }
                         }
                     }
 
@@ -144,10 +197,13 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     public void collectValue(String value) throws Exception {
 
                         if (getCheckpointedValues().contains(value)) {
+                            System.err.println("Unique value " + value + " was not seen only once");
+                            signal(FAILURE_SIGNAL);
                             throw new RuntimeException(
                                     "Unique value " + value + " was not seen only once");
                         }
                         checkForSuccess();
+                        signal(collectedValueSignal);
                     }
 
                     @Override
@@ -161,15 +217,24 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         Util.waitForClusterStart(miniCluster, true);
         try {
             Thread.sleep(8000);
-            for (Put put : puts) {
-                ingester.commitPut(put);
-                Thread.sleep(800);
+            int putsPerPackage = 5;
+            for (int i = 0; i < puts.size(); i += putsPerPackage) {
+                System.out.println("Sending next package ...");
+                for (int j = i; j < puts.size() && j < i + putsPerPackage; j++) {
+                    ingester.commitPut(puts.get(j));
+                }
+                // Assert that values have actually been sent over so there was an opportunity to
+                // checkpoint them
+                awaitSignalThrowOnFailure(collectedValueSignal, 120, TimeUnit.SECONDS);
+                Thread.sleep(3000);
+                cleanupSignal(collectedValueSignal);
             }
+            awaitSuccess(120, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
+            jobClient.cancel();
         }
-        getSuccess().get(120, TimeUnit.SECONDS);
-        jobClient.cancel();
     }
 
     private static DataStream<String> streamFromHBaseSource(
