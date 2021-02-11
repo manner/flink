@@ -16,9 +16,15 @@ public class HBaseRecordEmitter<T> implements RecordEmitter<HBaseEvent, T, HBase
 
     @Override
     public void emitRecord(
-            HBaseEvent element, SourceOutput<T> output, HBaseSourceSplitState splitState)
+            HBaseEvent event, SourceOutput<T> output, HBaseSourceSplitState splitState)
             throws Exception {
-        T deserializedPayload = deserializationSchema.deserialize(element.getPayload());
-        output.collect(deserializedPayload, element.getTimestamp());
+        System.out.println("EVENT: " + event);
+        if (!splitState.isAlreadyProcessedEvent(event)) {
+            splitState.notifyEmittedEvent(event);
+            T deserializedPayload = deserializationSchema.deserialize(event.getPayload());
+            output.collect(deserializedPayload, event.getTimestamp());
+        } else {
+            // Ignore event, was already processed
+        }
     }
 }

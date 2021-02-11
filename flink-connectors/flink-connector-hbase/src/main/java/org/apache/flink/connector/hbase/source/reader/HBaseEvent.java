@@ -11,6 +11,9 @@ public class HBaseEvent {
     private final String qualifier;
     private final byte[] payload;
     private final long timestamp;
+    /** Index of operation inside one wal entry. */
+    private final int index;
+
     private final long offset;
 
     public HBaseEvent(
@@ -21,6 +24,7 @@ public class HBaseEvent {
             String qualifier,
             byte[] payload,
             long timestamp,
+            int index,
             long offset) {
         this.type = type;
         this.rowId = rowId;
@@ -29,6 +33,7 @@ public class HBaseEvent {
         this.qualifier = qualifier;
         this.payload = payload;
         this.timestamp = timestamp;
+        this.index = index;
         this.offset = offset;
     }
 
@@ -40,6 +45,11 @@ public class HBaseEvent {
         return timestamp;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
+    @Override
     public String toString() {
         return type.name()
                 + " "
@@ -55,6 +65,13 @@ public class HBaseEvent {
                 + " "
                 + timestamp
                 + " "
+                + index
+                + " "
                 + offset;
+    }
+
+    public boolean isLaterThan(long timestamp, int index) {
+        return timestamp < this.getTimestamp()
+                || (timestamp == this.getTimestamp() && index < this.getIndex());
     }
 }

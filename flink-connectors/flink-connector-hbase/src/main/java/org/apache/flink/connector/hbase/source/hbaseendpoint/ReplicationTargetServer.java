@@ -6,22 +6,18 @@ import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ipc.HBaseRpcController;
 import org.apache.hadoop.hbase.ipc.PriorityFunction;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.RPCProtos.RequestHeader;
-import org.apache.hbase.thirdparty.com.google.common.collect.ArrayListMultimap;
-import org.apache.hbase.thirdparty.com.google.common.collect.Multimap;
 import org.apache.hbase.thirdparty.com.google.protobuf.Message;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
 import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 /** Bla. */
@@ -48,19 +44,20 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
             RpcController controller, AdminProtos.ReplicateWALEntryRequest request)
             throws ServiceException {
         List<AdminProtos.WALEntry> entries = request.getEntryList();
-        CellScanner cells = ((HBaseRpcController) controller).cellScanner();
+        CellScanner cellScanner = ((HBaseRpcController) controller).cellScanner();
 
         for (final AdminProtos.WALEntry entry : entries) {
             TableName tableName =
                     (entry.getKey().getWriteTime() < 0)
                             ? null
                             : TableName.valueOf(entry.getKey().getTableName().toByteArray());
-            Multimap<ByteBuffer, Cell> keyValuesPerRowKey = ArrayListMultimap.create();
+            // Multimap<ByteBuffer, Cell> keyValuesPerRowKey = ArrayListMultimap.create();
+            List<Cell> cells = new ArrayList<>();
 
             int count = entry.getAssociatedCellCount();
             for (int i = 0; i < count; i++) {
                 try {
-                    if (!cells.advance()) {
+                    if (!cellScanner.advance()) {
                         throw new ArrayIndexOutOfBoundsException(
                                 "Expected=" + count + ", index=" + i);
                     }
@@ -73,36 +70,36 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
                     continue;
                 }
 
-                Cell cell = cells.current();
-                KeyValue kv = KeyValueUtil.ensureKeyValue(cell);
-                ByteBuffer rowKey =
-                        ByteBuffer.wrap(
-                                cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+                Cell cell = cellScanner.current();
+                cells.add(cell);
 
-                keyValuesPerRowKey.put(rowKey, kv);
+                //                KeyValue kv = KeyValueUtil.ensureKeyValue(cell);
+                //                ByteBuffer rowKey =
+                //                        ByteBuffer.wrap(
+                //                                cell.getRowArray(), cell.getRowOffset(),
+                // cell.getRowLength());
+                //                keyValuesPerRowKey.put(rowKey, kv);
             }
-            for (final ByteBuffer rowKeyBuffer : keyValuesPerRowKey.keySet()) {
-                final List<Cell> keyValues = (List<Cell>) keyValuesPerRowKey.get(rowKeyBuffer);
 
-                final String table = tableName.toString();
-                final String row = new String(CellUtil.cloneRow(keyValues.get(0)));
-                final long timestamp = keyValues.get(0).getTimestamp();
+            final String table = tableName.toString();
 
-                for (Cell cell : keyValues) {
-                    final String cf = new String(CellUtil.cloneFamily(cell));
-                    final String qualifier = new String(CellUtil.cloneQualifier(cell));
-                    final byte[] payload = CellUtil.cloneValue(cell);
-                    final int offset = cell.getRowOffset(); // which offset is the right one?
-                    final Cell.Type type = cell.getType();
-                    HBaseEvent event =
-                            new HBaseEvent(
-                                    type, row, table, cf, qualifier, payload, timestamp, offset);
+            for (int i = 0; i < cells.size(); i++) {
+                Cell cell = cells.get(i);
+                final String row = new String(CellUtil.cloneRow(cell));
+                final String cf = new String(CellUtil.cloneFamily(cell));
+                final String qualifier = new String(CellUtil.cloneQualifier(cell));
+                final byte[] payload = CellUtil.cloneValue(cell);
+                final long timestamp = cell.getTimestamp();
+                final int offset = cell.getRowOffset(); // which offset is the right one?
+                final Cell.Type type = cell.getType();
+                HBaseEvent event =
+                        new HBaseEvent(
+                                type, row, table, cf, qualifier, payload, timestamp, i, offset);
 
-                    try {
-                        walEdits.put(0, event);
-                    } catch (InterruptedException exception) {
-                        System.err.println("Error adding to Queue: " + exception);
-                    }
+                try {
+                    walEdits.put(0, event);
+                } catch (InterruptedException exception) {
+                    System.err.println("Error adding to Queue: " + exception);
                 }
             }
         }
