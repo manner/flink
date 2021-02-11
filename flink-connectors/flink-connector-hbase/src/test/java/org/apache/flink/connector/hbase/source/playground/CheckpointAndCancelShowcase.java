@@ -1,33 +1,40 @@
 package org.apache.flink.connector.hbase.source.playground;
 
-import org.apache.flink.api.common.state.CheckpointListener;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.connector.hbase.testutil.FailureSink;
 import org.apache.flink.runtime.minicluster.MiniCluster;
 import org.apache.flink.runtime.minicluster.MiniClusterJobClient;
-import org.apache.flink.runtime.state.FunctionInitializationContext;
-import org.apache.flink.runtime.state.FunctionSnapshotContext;
-import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Iterator;
+import java.util.List;
 
 /** Playground. */
 public class CheckpointAndCancelShowcase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CheckpointAndCancelShowcase.class);
-
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.enableCheckpointing(1000);
+        env.enableCheckpointing(2000);
+        env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
+        env.setParallelism(1);
         DataStream<String> stream = env.fromCollection(new Numbers(), String.class);
 
-        stream.addSink(new FailOnCheckPoint<>(true));
+        FailureSink<String> failureSink =
+                new FailureSink<String>(true, 2500, TypeInformation.of(String.class)) {
+                    @Override
+                    public void collectValue(String value) throws Exception {
+                        List<String> checkpointed = getCheckpointedValues();
+                        System.out.println(unCheckpointedValues + " " + checkpointed);
+                        if (checkpointed.contains(value)) {
+                            System.err.println(("That was not exactly once!"));
+                        }
+                    }
+                };
+        stream.addSink(failureSink);
         MiniClusterJobClient jobClient = (MiniClusterJobClient) env.executeAsync();
         MiniCluster miniCluster = miniCluster(jobClient);
         System.out.println("Started execution ...");
@@ -65,38 +72,6 @@ public class CheckpointAndCancelShowcase {
             }
             System.out.println("Next called with i=" + i);
             return "" + (i++);
-        }
-    }
-
-    private static class FailOnCheckPoint<T>
-            implements SinkFunction<T>, CheckpointedFunction, CheckpointListener {
-
-        private final boolean isPrinting;
-
-        private FailOnCheckPoint(boolean isPrinting) {
-            this.isPrinting = isPrinting;
-        }
-
-        @Override
-        public void invoke(T value, Context context) throws Exception {
-            if (isPrinting) System.out.println(value);
-        }
-
-        @Override
-        public void notifyCheckpointComplete(long checkpointId) throws Exception {
-            System.out.println(
-                    "notifyCheckpointComplete has been called with checkpointId=" + checkpointId);
-            throw new RuntimeException("Abort after checkpoint to trigger restart");
-        }
-
-        @Override
-        public void snapshotState(FunctionSnapshotContext context) throws Exception {
-            // System.out.println("snapshotState has been called");
-        }
-
-        @Override
-        public void initializeState(FunctionInitializationContext context) throws Exception {
-            // System.out.println("initializeState has been called");
         }
     }
 
