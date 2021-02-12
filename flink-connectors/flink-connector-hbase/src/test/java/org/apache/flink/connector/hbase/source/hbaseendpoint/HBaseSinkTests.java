@@ -3,6 +3,7 @@ package org.apache.flink.connector.hbase.source.hbaseendpoint;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.sink.HBaseSink;
+import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
 import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
@@ -20,12 +21,17 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertArrayEquals;
 
 /** Test for {@link org.apache.flink.connector.hbase.sink.HBaseSink}. */
 public class HBaseSinkTests extends TestsWithTestHBaseCluster {
+
+    private static final String tableName = "test-table";
+    private static final String columnFamily = "info";
+    private static final String qualifier = "test";
 
     @Test
     public void testSimpleSink() throws Exception {
@@ -44,12 +50,8 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
                         WatermarkStrategy.noWatermarks(),
                         "numberSource");
 
-        String tableName = "test-table";
-        String columnFamily = "info";
-        String qualifier = "test";
-
         final HBaseSink<Long> hbaseSink =
-                new HBaseSink<>(tableName, columnFamily, qualifier, hbaseConfiguration);
+                new HBaseSink<>(tableName, new HBaseTestSerializer(), hbaseConfiguration);
         numberSource.sinkTo(hbaseSink);
         env.execute();
 
@@ -69,5 +71,27 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
             e.printStackTrace();
         }
         assertArrayEquals(expected, actual);
+    }
+
+    private static class HBaseTestSerializer implements HBaseSinkSerializer<Long>, Serializable {
+        @Override
+        public byte[] serializePayload(Long event) {
+            return Bytes.toBytes(event.toString());
+        }
+
+        @Override
+        public byte[] serializeColumnFamily(Long event) {
+            return Bytes.toBytes(columnFamily);
+        }
+
+        @Override
+        public byte[] serializeQualifier(Long event) {
+            return Bytes.toBytes(qualifier);
+        }
+
+        @Override
+        public byte[] serializeRowKey(Long event) {
+            return Bytes.toBytes(event.toString());
+        }
     }
 }
