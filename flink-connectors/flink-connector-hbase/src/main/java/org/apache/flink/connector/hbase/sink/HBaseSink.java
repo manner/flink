@@ -16,18 +16,15 @@ import java.util.Optional;
 public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriterState, Void> {
 
     private static org.apache.hadoop.conf.Configuration hbaseConfiguration;
-    private final String table;
-    private final String columnFamily;
-    private final String qualifier;
+    private final String tableName;
+    private final HBaseSinkSerializer<IN> sinkSerializer;
 
     public HBaseSink(
-            String table,
-            String columnFamily,
-            String qualifier,
+            String tableName,
+            HBaseSinkSerializer<IN> sinkSerializer,
             org.apache.hadoop.conf.Configuration hbaseConfiguration) {
-        this.table = table;
-        this.columnFamily = columnFamily;
-        this.qualifier = qualifier;
+        this.tableName = tableName;
+        this.sinkSerializer = sinkSerializer;
 
         HBaseSink.hbaseConfiguration = hbaseConfiguration;
     }
@@ -35,7 +32,7 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriter
     @Override
     public SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> createWriter(
             InitContext context, List<HBaseWriterState> states) throws IOException {
-        return new HBaseWriter<>(context, table, columnFamily, qualifier, hbaseConfiguration);
+        return new HBaseWriter<>(context, tableName, sinkSerializer, hbaseConfiguration);
     }
 
     @Override
