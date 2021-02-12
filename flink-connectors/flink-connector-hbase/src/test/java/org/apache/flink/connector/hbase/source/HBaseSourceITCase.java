@@ -89,7 +89,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 (String)
                         CompletableFuture.anyOf(
                                         awaitSignal(signalName), awaitSignal(FAILURE_SIGNAL))
-                                .get(120, TimeUnit.SECONDS);
+                                .get(timeout, timeUnit);
         if (result.equals(FAILURE_SIGNAL)) {
             throw new RuntimeException("Waiting for signal " + signalName + " yielded failure");
         }
