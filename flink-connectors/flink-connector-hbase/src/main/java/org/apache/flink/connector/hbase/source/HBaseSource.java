@@ -8,6 +8,7 @@ import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.hbase.source.enumerator.HBaseSourceEnumeratorCheckpointSerializer;
 import org.apache.flink.connector.hbase.source.enumerator.HBaseSplitEnumerator;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceReader;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
@@ -84,6 +85,6 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SimpleVersionedSerializer<Collection<HBaseSourceSplit>>
             getEnumeratorCheckpointSerializer() {
         System.out.println("getEnumeratorCheckpointSerializer");
-        return null;
+        return new HBaseSourceEnumeratorCheckpointSerializer();
     }
 }
