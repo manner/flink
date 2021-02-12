@@ -234,7 +234,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 Thread.sleep(3000);
                 cleanupSignal(collectedValueSignal);
             }
-            awaitSuccess(240, TimeUnit.SECONDS);
+            awaitSuccess(120, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {

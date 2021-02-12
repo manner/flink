@@ -22,6 +22,8 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
     private final long activateAfter;
     private final TypeInformation<T> typeInfo;
     private boolean active = false;
+    private boolean hasSeenAtLeastOneCheckpoint = false;
+    private boolean hasSeenAtLeastOneInput = false;
 
     protected final List<T> unCheckpointedValues = new ArrayList<>();
     protected transient ListState<T> checkpointedValues;
@@ -39,6 +41,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         }
         unCheckpointedValues.add(value);
         collectValue(value);
+        hasSeenAtLeastOneInput = true;
         throwFailureIfActive();
     }
 
@@ -51,6 +54,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         System.out.println(
                 "FailureSink.notifyCheckpointComplete has been called with checkpointId="
                         + checkpointId);
+        hasSeenAtLeastOneCheckpoint = true;
         throwFailureIfActive();
     }
 
@@ -69,6 +73,9 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         if (verbose) {
             System.out.println("FailureSink.initializeState has been called");
         }
+
+        hasSeenAtLeastOneCheckpoint = false;
+        hasSeenAtLeastOneInput = false;
 
         ListStateDescriptor<T> descriptor = new ListStateDescriptor<>("checkpointed", typeInfo);
 
@@ -92,9 +99,13 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         return new TimerTask() {
             @Override
             public void run() {
-                active = true;
-                if (verbose) {
-                    System.out.println("FailureSink activated");
+                if (hasSeenAtLeastOneCheckpoint && hasSeenAtLeastOneInput) {
+                    active = true;
+                    if (verbose) {
+                        System.out.println("FailureSink activated");
+                    }
+                } else {
+                    new Timer().schedule(activation(), activateAfter / 2);
                 }
             }
         };
