@@ -28,9 +28,11 @@ import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Test;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -78,5 +80,27 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
             lastTimeStamp = nextEvent.getTimestamp();
             lastIndex = nextEvent.getIndex();
         }
+    }
+
+    @Test
+    public void testUsingTheSameIdDoesNotShowAlreadyProcessedEventsAgain() throws Exception {
+        String id = UUID.randomUUID().toString().substring(0, 5);
+        DemoIngester ingester = new DemoIngester(baseTableName);
+
+        Tuple2<Put, String> firstPut = ingester.createOneColumnUniquePut();
+        HBaseConsumer firstConsumer = new HBaseConsumer(id, HBaseTestClusterUtil.getConfig());
+        firstConsumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
+        ingester.commitPut(firstPut.f0);
+        String firstResult = new String(firstConsumer.next().getPayload());
+        assertEquals(firstPut.f1, firstResult);
+        firstConsumer.close();
+
+        Tuple2<Put, String> secondPut = ingester.createOneColumnUniquePut();
+        HBaseConsumer secondConsumer = new HBaseConsumer(id, HBaseTestClusterUtil.getConfig());
+        secondConsumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
+        ingester.commitPut(secondPut.f0);
+        String secondResult = new String(secondConsumer.next().getPayload());
+        assertEquals(secondPut.f1, secondResult);
+        firstConsumer.close();
     }
 }
