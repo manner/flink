@@ -121,6 +121,7 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
                 }
             }
         }
+
         return AdminProtos.ReplicateWALEntryResponse.newBuilder().build();
     }
 
@@ -132,5 +133,12 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
     @Override
     public long getDeadline(RequestHeader header, Message param) {
         return 0;
+    }
+
+    @Override
+    public void stop(String why) {
+        // TODO this function should probably be implemented and close the rpc server, this is
+        // currently done in HBaseConsumer
+        super.stop(why);
     }
 }
