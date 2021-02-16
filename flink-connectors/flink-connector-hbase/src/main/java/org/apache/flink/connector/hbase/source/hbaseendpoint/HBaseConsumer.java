@@ -19,6 +19,7 @@
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
@@ -56,18 +57,23 @@ import java.util.UUID;
 /** Test Hbase Consumer. */
 public class HBaseConsumer {
 
-    private final String subscriptionName;
-    private final String replicationPeer;
     private static Configuration hbaseConf;
     private static RecoverableZooKeeper zooKeeper;
     private static String table;
+    private final String subscriptionName;
+    private final String replicationPeer;
     private final ReplicationTargetServer server;
 
-    public HBaseConsumer(Configuration hbaseConf)
+    public HBaseConsumer(Configuration config)
+            throws InterruptedException, ParserConfigurationException, SAXException,
+                    KeeperException, IOException {
+        this(HBaseConfigurationUtil.serializeConfiguration(config));
+    }
+
+    public HBaseConsumer(byte[] serializedConfig)
             throws ParserConfigurationException, SAXException, IOException, KeeperException,
                     InterruptedException {
-
-        this.hbaseConf = hbaseConf;
+        this.hbaseConf = HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
         this.subscriptionName = UUID.randomUUID().toString().substring(0, 5);
         this.replicationPeer = UUID.randomUUID().toString().substring(0, 5);
 
