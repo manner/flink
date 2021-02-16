@@ -20,11 +20,12 @@ package org.apache.flink.connector.hbase.source;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
+import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
 import org.apache.flink.connector.hbase.testutil.Util;
 import org.apache.flink.core.execution.JobClient;
@@ -76,16 +77,6 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         awaitSignalThrowOnFailure(SUCCESS_SIGNAL, timeout, timeUnit);
     }
 
-    @Before
-    public void makeSignalFolder() {
-        SIGNAL_FOLDER.mkdirs();
-    }
-
-    @After
-    public void cleanupSignalFolder() throws IOException {
-        FileUtils.deleteDirectory(SIGNAL_FOLDER);
-    }
-
     private static File signalFile(String signalName) {
         return SIGNAL_FOLDER.toPath().resolve(signalName + ".signal").toFile();
     }
@@ -133,6 +124,73 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     private static void cleanupSignal(String signalName) {
         File signalFile = signalFile(signalName);
         signalFile.delete();
+    }
+
+    private static DataStream<String> streamFromHBaseSource(
+            StreamExecutionEnvironment environment, String tableName)
+            throws ParserConfigurationException, SAXException, IOException {
+        HBaseStringDeserializationScheme deserializationScheme =
+                new HBaseStringDeserializationScheme();
+        HBaseSource<String> source =
+                new HBaseSource<>(
+                        null, deserializationScheme, tableName, HBaseTestClusterUtil.getConfig());
+        environment.setParallelism(1);
+        DataStream<String> stream =
+                environment.fromSource(
+                        source,
+                        WatermarkStrategy.noWatermarks(),
+                        "hbaseSourceITCase",
+                        deserializationScheme.getProducedType());
+        return stream;
+    }
+
+    private static <T> void expectFirstValuesToBe(
+            DataStream<T> stream, T[] expectedValues, String message) {
+
+        List<T> collectedValues = new ArrayList<>();
+        stream.flatMap(
+                new RichFlatMapFunction<T, Object>() {
+
+                    @Override
+                    public void flatMap(T value, Collector<Object> out) {
+                        System.out.println("Test collected: " + value);
+                        collectedValues.add(value);
+                        if (collectedValues.size() == expectedValues.length) {
+                            assertArrayEquals(message, expectedValues, collectedValues.toArray());
+                            throw new SuccessException();
+                        }
+                    }
+                });
+    }
+
+    private static void doAndWaitForSuccess(
+            StreamExecutionEnvironment env, Runnable action, int timeout) {
+        try {
+            JobClient jobClient = env.executeAsync();
+            MiniCluster miniCluster = Util.miniCluster((MiniClusterJobClient) jobClient);
+            Util.waitForClusterStart(miniCluster, true);
+
+            action.run();
+            jobClient.getJobExecutionResult().get(timeout, TimeUnit.SECONDS);
+            jobClient.cancel();
+            throw new RuntimeException("Waiting for the correct data timed out");
+        } catch (Exception exception) {
+            if (!causedBySuccess(exception)) {
+                throw new RuntimeException("Test failed", exception);
+            } else {
+                // Normal termination
+            }
+        }
+    }
+
+    @Before
+    public void makeSignalFolder() {
+        SIGNAL_FOLDER.mkdirs();
+    }
+
+    @After
+    public void cleanupSignalFolder() throws IOException {
+        FileUtils.deleteDirectory(SIGNAL_FOLDER);
     }
 
     @Test
@@ -260,70 +318,10 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         }
     }
 
-    private static DataStream<String> streamFromHBaseSource(
-            StreamExecutionEnvironment environment, String tableName)
-            throws ParserConfigurationException, SAXException, IOException {
-        HBaseStringDeserializationScheme deserializationScheme =
-                new HBaseStringDeserializationScheme();
-        HBaseSource<String> source =
-                new HBaseSource<>(
-                        null, deserializationScheme, tableName, HBaseTestClusterUtil.getConfig());
-        environment.setParallelism(1);
-        DataStream<String> stream =
-                environment.fromSource(
-                        source,
-                        WatermarkStrategy.noWatermarks(),
-                        "hbaseSourceITCase",
-                        deserializationScheme.getProducedType());
-        return stream;
-    }
-
-    private static <T> void expectFirstValuesToBe(
-            DataStream<T> stream, T[] expectedValues, String message) {
-
-        List<T> collectedValues = new ArrayList<>();
-        stream.flatMap(
-                new RichFlatMapFunction<T, Object>() {
-
-                    @Override
-                    public void flatMap(T value, Collector<Object> out) {
-                        System.out.println("Test collected: " + value);
-                        collectedValues.add(value);
-                        if (collectedValues.size() == expectedValues.length) {
-                            assertArrayEquals(message, expectedValues, collectedValues.toArray());
-                            throw new SuccessException();
-                        }
-                    }
-                });
-    }
-
-    private static void doAndWaitForSuccess(
-            StreamExecutionEnvironment env, Runnable action, int timeout) {
-        try {
-            JobClient jobClient = env.executeAsync();
-            MiniCluster miniCluster = Util.miniCluster((MiniClusterJobClient) jobClient);
-            Util.waitForClusterStart(miniCluster, true);
-
-            action.run();
-            jobClient.getJobExecutionResult().get(timeout, TimeUnit.SECONDS);
-            jobClient.cancel();
-            throw new RuntimeException("Waiting for the correct data timed out");
-        } catch (Exception exception) {
-            if (!causedBySuccess(exception)) {
-                throw new RuntimeException("Test failed", exception);
-            } else {
-                // Normal termination
-            }
-        }
-    }
-
     /** Bla. */
-    public static class HBaseStringDeserializationScheme
-            extends AbstractDeserializationSchema<String> {
-
-        @Override
-        public String deserialize(byte[] message) throws IOException {
-            return new String(message);
+    public static class HBaseStringDeserializationScheme extends HBaseSourceDeserializer<String> {
+        public String deserialize(HBaseEvent event) {
+            return new String(event.getPayload());
         }
     }
 }

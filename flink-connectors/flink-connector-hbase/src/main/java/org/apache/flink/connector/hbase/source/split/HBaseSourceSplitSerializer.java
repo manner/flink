@@ -21,8 +21,6 @@ package org.apache.flink.connector.hbase.source.split;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-import org.apache.hadoop.conf.Configuration;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -66,6 +64,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             String host = in.readUTF();
             String table = in.readUTF();
             String columnFamily = in.readUTF();
+
             long firstTimestamp = in.readLong();
             int firstIndex = in.readInt();
             return new HBaseSourceSplit(
@@ -73,7 +72,6 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
                     host,
                     table,
                     columnFamily,
-                    new Configuration(),
                     Tuple2.of(firstTimestamp, firstIndex)); // TODO find real configuration
         }
     }

@@ -67,6 +67,30 @@ public class HBaseEvent {
         return index;
     }
 
+    public Cell.Type getType() {
+        return type;
+    }
+
+    public String getRowId() {
+        return rowId;
+    }
+
+    public String getTable() {
+        return table;
+    }
+
+    public String getCf() {
+        return cf;
+    }
+
+    public String getQualifier() {
+        return qualifier;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
     @Override
     public String toString() {
         return type.name()

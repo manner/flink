@@ -22,6 +22,7 @@ import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.connector.hbase.sink.HBaseSinkCommittable;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -45,10 +46,11 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             Sink.InitContext context,
             String tableName,
             HBaseSinkSerializer<IN> sinkSerializer,
-            Configuration hbaseConfiguration) {
+            byte[] serializedConfig) {
         this.tableName = tableName;
         this.sinkSerializer = sinkSerializer;
-        this.hbaseConfiguration = hbaseConfiguration;
+        this.hbaseConfiguration =
+                HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
     }
 
     @Override

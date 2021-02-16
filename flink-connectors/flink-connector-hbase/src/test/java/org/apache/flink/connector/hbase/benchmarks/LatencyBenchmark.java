@@ -19,18 +19,18 @@
 package org.apache.flink.connector.hbase.benchmarks;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.connector.hbase.sink.HBaseSink;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.source.HBaseSource;
+import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 /** TODO docs. */
@@ -74,12 +74,10 @@ public class LatencyBenchmark {
     }
 
     /** HBaseStringDeserializationSchema. */
-    public static class HBaseStringDeserializationSchema
-            extends AbstractDeserializationSchema<String> {
+    public static class HBaseStringDeserializationSchema extends HBaseSourceDeserializer<String> {
 
-        @Override
-        public String deserialize(byte[] message) throws IOException {
-            return new String(message);
+        public String deserialize(HBaseEvent event) {
+            return new String(event.getPayload());
         }
     }
 
