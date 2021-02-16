@@ -24,7 +24,10 @@ import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.connector.hbase.sink.writer.HBaseWriter;
 import org.apache.flink.connector.hbase.sink.writer.HBaseWriterState;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
+
+import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,24 +36,24 @@ import java.util.Optional;
 /** HBaseSink. */
 public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriterState, Void> {
 
-    private static org.apache.hadoop.conf.Configuration hbaseConfiguration;
+    private final byte[] serializedConfig;
     private final String tableName;
     private final HBaseSinkSerializer<IN> sinkSerializer;
 
     public HBaseSink(
             String tableName,
             HBaseSinkSerializer<IN> sinkSerializer,
-            org.apache.hadoop.conf.Configuration hbaseConfiguration) {
+            Configuration hbaseConfiguration) {
         this.tableName = tableName;
         this.sinkSerializer = sinkSerializer;
 
-        HBaseSink.hbaseConfiguration = hbaseConfiguration;
+        this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
     }
 
     @Override
     public SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> createWriter(
             InitContext context, List<HBaseWriterState> states) throws IOException {
-        return new HBaseWriter<>(context, tableName, sinkSerializer, hbaseConfiguration);
+        return new HBaseWriter<>(context, tableName, sinkSerializer, serializedConfig);
     }
 
     @Override
