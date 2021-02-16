@@ -18,5 +18,7 @@
 
 package org.apache.flink.connector.hbase.sink.writer;
 
+import java.io.Serializable;
+
 /** HBaseWriterState. */
-public class HBaseWriterState {}
+public class HBaseWriterState implements Serializable {}

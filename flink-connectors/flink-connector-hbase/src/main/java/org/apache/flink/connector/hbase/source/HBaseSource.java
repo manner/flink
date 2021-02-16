@@ -18,19 +18,19 @@
 
 package org.apache.flink.connector.hbase.source;
 
-import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.source.enumerator.HBaseSourceEnumeratorCheckpointSerializer;
 import org.apache.flink.connector.hbase.source.enumerator.HBaseSplitEnumerator;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceReader;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import java.util.Collection;
@@ -38,26 +38,22 @@ import java.util.Collection;
 /** A connector for Hbase. */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
-    public static org.apache.hadoop.conf.Configuration tempHbaseConfig; // TODO remove asap
     private final String tableName;
 
     private final Boundedness boundedness;
 
-    private final DeserializationSchema<T> deserializationSchema;
-    private final transient org.apache.hadoop.conf.Configuration
-            hbaseConfiguration; // TODO find out why source needs to be serializable
+    private final HBaseSourceDeserializer<T> sourceDeserializer;
+    private final byte[] serializedConfig;
 
     public HBaseSource(
             Boundedness boundedness,
-            DeserializationSchema<T> deserializationSchema,
+            HBaseSourceDeserializer<T> sourceDeserializer,
             String table,
             org.apache.hadoop.conf.Configuration hbaseConfiguration) {
         this.boundedness = boundedness;
-        this.hbaseConfiguration = hbaseConfiguration;
-        this.deserializationSchema = deserializationSchema;
+        this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
+        this.sourceDeserializer = sourceDeserializer;
         this.tableName = table;
-
-        tempHbaseConfig = hbaseConfiguration;
     }
 
     @Override
@@ -69,7 +65,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
         System.out.println("createReader");
-        return new HBaseSourceReader<>(new Configuration(), deserializationSchema, readerContext);
+        return new HBaseSourceReader<>(serializedConfig, sourceDeserializer, readerContext);
     }
 
     @Override
@@ -80,7 +76,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
         System.out.println("restoreEnumerator");
 
         HBaseSplitEnumerator enumerator =
-                new HBaseSplitEnumerator(enumContext, tempHbaseConfig, tableName);
+                new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
         enumerator.addSplits(checkpoint);
         return enumerator;
     }
@@ -89,7 +85,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
         System.out.println("createEnumerator");
-        return new HBaseSplitEnumerator(enumContext, tempHbaseConfig, tableName);
+        return new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
     }
 
     @Override
