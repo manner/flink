@@ -176,7 +176,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     }
                     ingester.commitPut(put.f0);
                 },
-                120);
+                180);
     }
 
     @Test
