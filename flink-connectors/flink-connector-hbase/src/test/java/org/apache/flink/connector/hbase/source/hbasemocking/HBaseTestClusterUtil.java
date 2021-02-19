@@ -64,6 +64,7 @@ public class HBaseTestClusterUtil {
     }
 
     public static void startCluster() throws IOException {
+        System.out.println("Starting HBase test cluster ...");
         testFolder = Files.createTempDirectory(null).toString();
 
         // Fallback for windows users with space in user name, will not work if path contains space.
@@ -100,7 +101,7 @@ public class HBaseTestClusterUtil {
             cluster.waitForActiveAndReadyMaster(30 * 1000);
             try {
                 HBaseAdmin.available(hbaseConf);
-                System.out.println("Connected successfully");
+                System.out.println("HBase test cluster up and running ...");
             } catch (IOException e1) {
                 e1.printStackTrace();
                 Throwable e = e1;
@@ -119,7 +120,7 @@ public class HBaseTestClusterUtil {
     }
 
     public static void shutdownCluster() throws IOException {
-        System.out.println("Shutting down test cluster");
+        System.out.println("Shutting down HBase test cluster");
         cluster.shutdown();
         cluster.waitUntilShutDown();
         Paths.get(testFolder).toFile().delete();
