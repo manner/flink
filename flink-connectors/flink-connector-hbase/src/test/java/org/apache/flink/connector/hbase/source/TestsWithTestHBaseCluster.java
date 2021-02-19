@@ -34,8 +34,11 @@ import java.util.UUID;
  */
 public abstract class TestsWithTestHBaseCluster {
 
-    /** For debug purposes. Allows to run the test quickly without starting a fresh cluster */
-    public static final boolean USE_EXISTING_CLUSTER = false;
+    /**
+     * For local debug purposes. Allows to run the test quickly without starting a fresh cluster for
+     * each new test.
+     */
+    public static final boolean SHARE_CLUSTER = false;
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
@@ -54,24 +57,41 @@ public abstract class TestsWithTestHBaseCluster {
     }
 
     @BeforeClass
-    public static void setup() throws IOException {
-        if (!USE_EXISTING_CLUSTER) {
+    public static void setupSharedCluster() throws IOException {
+        if (SHARE_CLUSTER) {
             HBaseTestClusterUtil.startCluster();
+            assert HBaseTestClusterUtil.isClusterAlreadyRunning();
         }
-        assert HBaseTestClusterUtil.isClusterAlreadyRunning();
     }
 
     @AfterClass
-    public static void teardown() throws IOException {
-        if (!USE_EXISTING_CLUSTER) {
+    public static void teardownSharedCluster() throws IOException {
+        if (SHARE_CLUSTER) {
             HBaseTestClusterUtil.shutdownCluster();
         }
     }
 
     @After
     public void clearReplicationPeers() {
-        HBaseTestClusterUtil.clearReplicationPeers();
-        HBaseTestClusterUtil.clearTables();
+        if (SHARE_CLUSTER) {
+            HBaseTestClusterUtil.clearReplicationPeers();
+            HBaseTestClusterUtil.clearTables();
+        }
+    }
+
+    @Before
+    public void setupIndividualCluster() throws IOException {
+        if (!SHARE_CLUSTER) {
+            HBaseTestClusterUtil.startCluster();
+            assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+        }
+    }
+
+    @After
+    public void teardownIndividualCluster() throws IOException {
+        if (!SHARE_CLUSTER) {
+            HBaseTestClusterUtil.shutdownCluster();
+        }
     }
 
     protected static boolean causedBySuccess(Exception exception) {
