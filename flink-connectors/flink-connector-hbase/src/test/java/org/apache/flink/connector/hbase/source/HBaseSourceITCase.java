@@ -308,6 +308,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 // checkpoint them
                 awaitSignalThrowOnFailure(collectedValueSignal, 120, TimeUnit.SECONDS);
                 Thread.sleep(3000);
+                System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
             }
             awaitSuccess(120, TimeUnit.SECONDS);
