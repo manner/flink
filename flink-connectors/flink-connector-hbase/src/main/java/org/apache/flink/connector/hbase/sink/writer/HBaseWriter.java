@@ -38,19 +38,25 @@ import java.util.List;
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
-    private final Configuration hbaseConfiguration;
     private final HBaseSinkSerializer<IN> sinkSerializer;
-    private final String tableName;
+    private Connection connection;
+    private Table table;
 
     public HBaseWriter(
             Sink.InitContext context,
             String tableName,
             HBaseSinkSerializer<IN> sinkSerializer,
             byte[] serializedConfig) {
-        this.tableName = tableName;
+        System.out.println("Creating HBaseWriter");
         this.sinkSerializer = sinkSerializer;
-        this.hbaseConfiguration =
+        Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
+        try {
+            connection = ConnectionFactory.createConnection(hbaseConfiguration);
+            table = connection.getTable(TableName.valueOf(tableName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -60,12 +66,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                 sinkSerializer.serializeColumnFamily(element),
                 sinkSerializer.serializeQualifier(element),
                 sinkSerializer.serializePayload(element));
-        try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration)) {
-            Table table = connection.getTable(TableName.valueOf(tableName));
-            table.put(put);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        table.put(put);
     }
 
     @Override
@@ -79,5 +80,8 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        this.table.close();
+        this.connection.close();
+    }
 }
