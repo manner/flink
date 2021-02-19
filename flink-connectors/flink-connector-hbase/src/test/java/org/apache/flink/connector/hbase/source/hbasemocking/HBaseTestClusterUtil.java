@@ -43,6 +43,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
@@ -119,20 +123,27 @@ public class HBaseTestClusterUtil {
         }
     }
 
-    public static void shutdownCluster() throws IOException {
+    public static void shutdownCluster()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         System.out.println("Shutting down HBase test cluster");
         cluster.shutdown();
-        cluster.waitUntilShutDown();
+        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(120, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
     }
 
-    public static boolean isClusterAlreadyRunning() {
-        try (Connection connection = ConnectionFactory.createConnection(getConfig())) {
-            return true;
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            e.printStackTrace();
-            return false;
-        }
+    public static boolean isClusterAlreadyRunning()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        return CompletableFuture.supplyAsync(
+                        () -> {
+                            try (Connection connection =
+                                    ConnectionFactory.createConnection(getConfig())) {
+                                return true;
+                            } catch (ParserConfigurationException | IOException | SAXException e) {
+                                e.printStackTrace();
+                                return false;
+                            }
+                        })
+                .get(120, TimeUnit.SECONDS);
     }
 
     public static void clearReplicationPeers() {
