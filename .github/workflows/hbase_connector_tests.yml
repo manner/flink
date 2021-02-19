@@ -18,5 +18,9 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 11
+    - name: Maven Clean
+      run: mvn clean --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
     - name: Test with Maven
-      run: mvn clean test integration-test --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
+      run: mvn test --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
+    - name: Integration Test with Maven
+      run: mvn integration-test --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
