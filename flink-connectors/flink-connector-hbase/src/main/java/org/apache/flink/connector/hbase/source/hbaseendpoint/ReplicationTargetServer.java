@@ -41,7 +41,7 @@ import java.util.List;
 /** Bla. */
 public class ReplicationTargetServer extends AbstractRegionServer implements PriorityFunction {
 
-    private static final int QUEUE_CAPACITY = 10;
+    private static final int QUEUE_CAPACITY = 1000;
     private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
 
     public ReplicationTargetServer() {
