@@ -27,6 +27,8 @@ import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Abstract test class that provides that {@link
@@ -57,7 +59,8 @@ public abstract class TestsWithTestHBaseCluster {
     }
 
     @BeforeClass
-    public static void setupSharedCluster() throws IOException {
+    public static void setupSharedCluster()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (SHARE_CLUSTER) {
             HBaseTestClusterUtil.startCluster();
             assert HBaseTestClusterUtil.isClusterAlreadyRunning();
@@ -65,7 +68,8 @@ public abstract class TestsWithTestHBaseCluster {
     }
 
     @AfterClass
-    public static void teardownSharedCluster() throws IOException {
+    public static void teardownSharedCluster()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (SHARE_CLUSTER) {
             HBaseTestClusterUtil.shutdownCluster();
         }
@@ -80,7 +84,8 @@ public abstract class TestsWithTestHBaseCluster {
     }
 
     @Before
-    public void setupIndividualCluster() throws IOException {
+    public void setupIndividualCluster()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (!SHARE_CLUSTER) {
             HBaseTestClusterUtil.startCluster();
             assert HBaseTestClusterUtil.isClusterAlreadyRunning();
@@ -88,17 +93,19 @@ public abstract class TestsWithTestHBaseCluster {
     }
 
     @After
-    public void teardownIndividualCluster() throws IOException {
+    public void teardownIndividualCluster()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (!SHARE_CLUSTER) {
             HBaseTestClusterUtil.shutdownCluster();
         }
     }
 
     protected static boolean causedBySuccess(Exception exception) {
-        boolean success = false;
-        for (Throwable e = exception; !success && e != null; e = e.getCause()) {
-            success = success || e instanceof SuccessException;
+        for (Throwable e = exception; e != null; e = e.getCause()) {
+            if (e instanceof SuccessException) {
+                return true;
+            }
         }
-        return success;
+        return false;
     }
 }
