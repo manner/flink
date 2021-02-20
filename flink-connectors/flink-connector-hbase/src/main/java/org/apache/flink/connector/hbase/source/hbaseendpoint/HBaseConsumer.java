@@ -48,9 +48,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /** Consumer of HBase WAL edits. */
@@ -151,23 +149,6 @@ public class HBaseConsumer {
                         200,
                         null,
                         1);
-        try {
-            CompletableFuture.runAsync(
-                            () -> {
-                                while (!zooKeeper.getState().isConnected()) {
-                                    try {
-                                        Thread.sleep(1000);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                        System.err.println("Cannot connect to Zookeeper");
-                                    }
-                                }
-                            })
-                    .get(30, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            System.out.println("HBaseConsumer trying to connect to ZooKeeper timed out");
-            throw new RuntimeException("HBaseConsumer trying to connect to ZooKeeper timed out", e);
-        }
 
         System.out.println("Connected to Zookeeper");
 
