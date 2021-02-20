@@ -42,7 +42,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +59,8 @@ public class HBaseTestClusterUtil {
     private static MiniHBaseCluster cluster;
     private static Configuration hbaseConf;
     private static String testFolder;
+
+    private static TimerTask aliveChecker;
 
     public HBaseTestClusterUtil() {}
 
@@ -121,6 +127,26 @@ public class HBaseTestClusterUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        aliveChecker =
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        String timeStamp = new SimpleDateFormat("[HH:mm:ss]").format(new Date());
+                        try {
+                            if (isClusterAlreadyRunning()) {
+                                System.out.println(timeStamp + " ALIVE");
+                            } else {
+                                System.out.println(timeStamp + " DEAD");
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+        new Timer().scheduleAtFixedRate(aliveChecker, 1000, 1000);
     }
 
     public static void shutdownCluster()
@@ -129,21 +155,29 @@ public class HBaseTestClusterUtil {
         cluster.shutdown();
         CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
+        aliveChecker.cancel();
     }
 
     public static boolean isClusterAlreadyRunning()
-            throws InterruptedException, ExecutionException, TimeoutException {
-        return CompletableFuture.supplyAsync(
-                        () -> {
-                            try (Connection connection =
-                                    ConnectionFactory.createConnection(getConfig())) {
-                                return true;
-                            } catch (ParserConfigurationException | IOException | SAXException e) {
-                                e.printStackTrace();
-                                return false;
-                            }
-                        })
-                .get(10, TimeUnit.SECONDS);
+            throws InterruptedException, ExecutionException {
+        try {
+            return CompletableFuture.supplyAsync(
+                            () -> {
+                                try (Connection connection =
+                                        ConnectionFactory.createConnection(getConfig())) {
+                                    return true;
+                                } catch (ParserConfigurationException
+                                        | IOException
+                                        | SAXException e) {
+                                    e.printStackTrace();
+                                    return false;
+                                }
+                            })
+                    .get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            System.out.println("Trying to connect to HBase test cluster timed out");
+            return false;
+        }
     }
 
     public static void clearReplicationPeers() {
