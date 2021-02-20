@@ -166,6 +166,13 @@ public class HBaseConsumer {
                     .get(30, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             System.out.println("HBaseConsumer trying to connect to ZooKeeper timed out");
+
+            try (Connection connection = ConnectionFactory.createConnection(hbaseConf)) {
+                System.out.println("Test cluster is still running C");
+            } catch (IOException e2) {
+                System.out.println("Test cluster is not running C");
+            }
+
             throw new RuntimeException("HBaseConsumer trying to connect to ZooKeeper timed out", e);
         }
 
