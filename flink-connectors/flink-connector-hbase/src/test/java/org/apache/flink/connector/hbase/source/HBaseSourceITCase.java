@@ -246,12 +246,19 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 for (int j = i; j < puts.size() && j < i + putsPerPackage; j++) {
                     ingester.commitPut(puts.get(j));
                 }
+
+                assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+                System.out.println("Test cluster is still running A");
+
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
                 awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
                 Thread.sleep(3000);
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
+
+                assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+                System.out.println("Test cluster is still running B");
             }
             System.out.println("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
