@@ -143,7 +143,7 @@ public class HBaseTestClusterUtil {
                                 return false;
                             }
                         })
-                .get(240, TimeUnit.SECONDS);
+                .get(10, TimeUnit.SECONDS);
     }
 
     public static void clearReplicationPeers() {
