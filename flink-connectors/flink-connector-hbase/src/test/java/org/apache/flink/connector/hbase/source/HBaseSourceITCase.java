@@ -306,7 +306,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 }
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
-                awaitSignalThrowOnFailure(collectedValueSignal, 120, TimeUnit.SECONDS);
+                awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
                 Thread.sleep(3000);
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
