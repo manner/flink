@@ -39,7 +39,6 @@ import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 
 import java.io.IOException;
@@ -49,6 +48,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** Consumer of HBase WAL edits. */
 public class HBaseConsumer {
@@ -65,12 +68,14 @@ public class HBaseConsumer {
     private boolean isRunning = false;
 
     public HBaseConsumer(Configuration hbaseConf)
-            throws IOException, KeeperException, InterruptedException {
+            throws IOException, KeeperException, InterruptedException, TimeoutException,
+                    ExecutionException {
         this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
     }
 
     public HBaseConsumer(String peerId, Configuration hbaseConf)
-            throws IOException, KeeperException, InterruptedException {
+            throws IOException, KeeperException, InterruptedException, TimeoutException,
+                    ExecutionException {
 
         this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";
@@ -134,7 +139,8 @@ public class HBaseConsumer {
         }
     }
 
-    private RecoverableZooKeeper connectZooKeeper() throws IOException {
+    private RecoverableZooKeeper connectZooKeeper()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         RecoverableZooKeeper zooKeeper =
                 new RecoverableZooKeeper(
                         "localhost:" + getPort(),
@@ -145,15 +151,18 @@ public class HBaseConsumer {
                         200,
                         null,
                         1);
-        while ((ZooKeeper.States.CONNECTED).equals(zooKeeper.getState())) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.err.println("Cannot connect to Zookeeper");
-                return null;
-            }
-        }
+        CompletableFuture.runAsync(
+                        () -> {
+                            while (!zooKeeper.getState().isConnected()) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                    System.err.println("Cannot connect to Zookeeper");
+                                }
+                            }
+                        })
+                .get(120, TimeUnit.SECONDS);
 
         System.out.println("Connected to Zookeeper");
 
