@@ -185,7 +185,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         DemoIngester ingester = new DemoIngester(baseTableName);
         List<Put> puts = new ArrayList<>();
         List<String> expectedValues = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
             Tuple2<Put, String> put = ingester.createOneColumnUniquePut();
             puts.add(put.f0);
             expectedValues.add(put.f1);
