@@ -22,6 +22,6 @@ jobs:
     - name: Maven Clean
       run: mvn clean --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
     - name: Test with Maven
-      run: mvn test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
+      run: mvn test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true" "-Denforcer.skip=true"
     - name: Integration Test with Maven
-      run: mvn integration-test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
+      run: mvn integration-test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true" "-Denforcer.skip=true"
