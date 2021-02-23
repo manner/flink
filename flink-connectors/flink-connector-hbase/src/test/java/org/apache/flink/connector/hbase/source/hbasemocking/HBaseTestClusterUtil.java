@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.w3c.dom.Document;
@@ -38,6 +39,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,6 +49,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -55,10 +58,10 @@ import java.util.concurrent.TimeoutException;
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
 
-    public static final String CONFIG_PATH = "config.xml";
-    private static MiniHBaseCluster cluster;
-    private static Configuration hbaseConf;
-    private static String testFolder;
+    public final String configPath = "config" + UUID.randomUUID() + ".xml";
+    private MiniHBaseCluster cluster;
+    private Configuration hbaseConf;
+    private String testFolder;
 
     private static TimerTask aliveChecker;
 
@@ -67,13 +70,13 @@ public class HBaseTestClusterUtil {
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException, IOException {
         Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
-
-        startCluster();
+        HBaseTestClusterUtil hbaseTestClusterUtil = new HBaseTestClusterUtil();
+        hbaseTestClusterUtil.startCluster();
         DemoSchema schema = new DemoSchema();
-        schema.createSchema(getConfig());
+        schema.createSchema(hbaseTestClusterUtil.getConfig());
     }
 
-    public static void startCluster() throws IOException {
+    public void startCluster() throws IOException {
         System.out.println("Starting HBase test cluster ...");
         testFolder = Files.createTempDirectory(null).toString();
 
@@ -122,7 +125,7 @@ public class HBaseTestClusterUtil {
                 System.exit(1);
             }
 
-            hbaseConf.writeXml(new FileOutputStream(CONFIG_PATH));
+            hbaseConf.writeXml(new FileOutputStream(configPath));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -149,17 +152,18 @@ public class HBaseTestClusterUtil {
         new Timer().scheduleAtFixedRate(aliveChecker, 1000, 1000);
     }
 
-    public static void shutdownCluster()
+    public void shutdownCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         System.out.println("Shutting down HBase test cluster");
         cluster.shutdown();
+        aliveChecker.cancel();
+        new File(configPath).delete();
         CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
-        aliveChecker.cancel();
+        System.out.println("HBase test cluster shut down");
     }
 
-    public static boolean isClusterAlreadyRunning()
-            throws InterruptedException, ExecutionException {
+    public boolean isClusterAlreadyRunning() throws InterruptedException, ExecutionException {
         try {
             return CompletableFuture.supplyAsync(
                             () -> {
@@ -180,11 +184,7 @@ public class HBaseTestClusterUtil {
         }
     }
 
-    public static void clearReplicationPeers() {
-        ReplicationPeerClearer.clearPeers();
-    }
-
-    public static void clearTables() {
+    public void clearTables() {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             for (TableDescriptor table : admin.listTableDescriptors()) {
                 admin.disableTable(table.getTableName());
@@ -195,14 +195,24 @@ public class HBaseTestClusterUtil {
         }
     }
 
-    public static Configuration getConfig()
+    public void clearReplicationPeers() {
+        try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
+            for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
+                System.out.println("==== " + desc.getPeerId() + " ====");
+                System.out.println(desc);
+                admin.removeReplicationPeer(desc.getPeerId());
+            }
+        } catch (SAXException | IOException | ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Configuration getConfig()
             throws SAXException, IOException, ParserConfigurationException {
         Configuration hbaseConf = HBaseConfiguration.create();
 
         Document config =
-                DocumentBuilderFactory.newInstance()
-                        .newDocumentBuilder()
-                        .parse(HBaseTestClusterUtil.CONFIG_PATH);
+                DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configPath);
         NodeList nodes = config.getDocumentElement().getElementsByTagName("property");
         for (int i = 0; i < nodes.getLength(); i++) {
             Element e = (Element) nodes.item(i);

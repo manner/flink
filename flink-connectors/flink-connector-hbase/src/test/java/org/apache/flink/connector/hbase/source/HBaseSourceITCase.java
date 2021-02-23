@@ -24,7 +24,6 @@ import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
 import org.apache.flink.connector.hbase.testutil.Util;
 import org.apache.flink.core.execution.JobClient;
@@ -135,54 +134,54 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         signalFile.delete();
     }
 
-    //    @Test
-    //    public void testBasicPut() throws Exception {
-    //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    //        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-    //        DemoIngester ingester = new DemoIngester(baseTableName);
-    //        Tuple2<Put, String[]> put = ingester.createPut();
-    //        String[] expectedValues = put.f1;
-    //
-    //        expectFirstValuesToBe(
-    //                stream,
-    //                expectedValues,
-    //                "HBase source did not produce the right values after a basic put operation");
-    //        doAndWaitForSuccess(env, () -> ingester.commitPut(put.f0), 120);
-    //    }
-    //
-    //    @Test
-    //    public void testOnlyReplicateSpecifiedTable() throws Exception {
-    //        String secondTable = baseTableName + "-table2";
-    //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    //        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-    //        DemoIngester ingester = new DemoIngester(baseTableName);
-    //        DemoIngester ingester2 = new DemoIngester(secondTable);
-    //        Tuple2<Put, String[]> put = ingester.createPut();
-    //        Tuple2<Put, String[]> put2 = ingester2.createPut();
-    //        String[] expectedValues = put.f1;
-    //
-    //        expectFirstValuesToBe(
-    //                stream,
-    //                expectedValues,
-    //                "HBase source did not produce the values of the correct table");
-    //        doAndWaitForSuccess(
-    //                env,
-    //                () -> {
-    //                    ingester2.commitPut(put2.f0);
-    //                    try {
-    //                        Thread.sleep(2000);
-    //                    } catch (InterruptedException e) {
-    //                        e.printStackTrace();
-    //                    }
-    //                    ingester.commitPut(put.f0);
-    //                },
-    //                180);
-    //    }
+    @Test
+    public void testBasicPut() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        Tuple2<Put, String[]> put = ingester.createPut();
+        String[] expectedValues = put.f1;
+
+        expectFirstValuesToBe(
+                stream,
+                expectedValues,
+                "HBase source did not produce the right values after a basic put operation");
+        doAndWaitForSuccess(env, () -> ingester.commitPut(put.f0), 120);
+    }
+
+    @Test
+    public void testOnlyReplicateSpecifiedTable() throws Exception {
+        String secondTable = baseTableName + "-table2";
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester2 = new DemoIngester(secondTable, cluster.getConfig());
+        Tuple2<Put, String[]> put = ingester.createPut();
+        Tuple2<Put, String[]> put2 = ingester2.createPut();
+        String[] expectedValues = put.f1;
+
+        expectFirstValuesToBe(
+                stream,
+                expectedValues,
+                "HBase source did not produce the values of the correct table");
+        doAndWaitForSuccess(
+                env,
+                () -> {
+                    ingester2.commitPut(put2.f0);
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    ingester.commitPut(put.f0);
+                },
+                180);
+    }
 
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
         List<Put> puts = new ArrayList<>();
         List<String> expectedValues = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -247,7 +246,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     ingester.commitPut(puts.get(j));
                 }
 
-                assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+                assert cluster.isClusterAlreadyRunning();
                 System.out.println("Test cluster is still running A");
 
                 // Assert that values have actually been sent over so there was an opportunity to
@@ -257,7 +256,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
 
-                assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+                assert cluster.isClusterAlreadyRunning();
                 System.out.println("Test cluster is still running B");
             }
             System.out.println("Finished sending packages, awaiting success ...");
@@ -272,14 +271,13 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         System.out.println("End of test method reached");
     }
 
-    private static DataStream<String> streamFromHBaseSource(
+    private DataStream<String> streamFromHBaseSource(
             StreamExecutionEnvironment environment, String tableName)
             throws ParserConfigurationException, SAXException, IOException {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
-                new HBaseSource<>(
-                        null, deserializationScheme, tableName, HBaseTestClusterUtil.getConfig());
+                new HBaseSource<>(null, deserializationScheme, tableName, cluster.getConfig());
         environment.setParallelism(1);
         DataStream<String> stream =
                 environment.fromSource(
