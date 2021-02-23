@@ -123,7 +123,7 @@ public class HBaseTestClusterUtil {
                 System.exit(1);
             }
 
-            hbaseConf.writeXml(new FileOutputStream(CONFIG_PATH));
+            hbaseConf.writeXml(new FileOutputStream(configPath));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -133,6 +133,8 @@ public class HBaseTestClusterUtil {
     public void shutdownCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         System.out.println("Shutting down HBase test cluster");
+        clearTables();
+        clearReplicationPeers();
         cluster.shutdown();
         new File(configPath).delete();
         CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
