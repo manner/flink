@@ -135,49 +135,49 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         signalFile.delete();
     }
 
-    @Test
-    public void testBasicPut() throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName);
-        Tuple2<Put, String[]> put = ingester.createPut();
-        String[] expectedValues = put.f1;
-
-        expectFirstValuesToBe(
-                stream,
-                expectedValues,
-                "HBase source did not produce the right values after a basic put operation");
-        doAndWaitForSuccess(env, () -> ingester.commitPut(put.f0), 120);
-    }
-
-    @Test
-    public void testOnlyReplicateSpecifiedTable() throws Exception {
-        String secondTable = baseTableName + "-table2";
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName);
-        DemoIngester ingester2 = new DemoIngester(secondTable);
-        Tuple2<Put, String[]> put = ingester.createPut();
-        Tuple2<Put, String[]> put2 = ingester2.createPut();
-        String[] expectedValues = put.f1;
-
-        expectFirstValuesToBe(
-                stream,
-                expectedValues,
-                "HBase source did not produce the values of the correct table");
-        doAndWaitForSuccess(
-                env,
-                () -> {
-                    ingester2.commitPut(put2.f0);
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    ingester.commitPut(put.f0);
-                },
-                180);
-    }
+    //    @Test
+    //    public void testBasicPut() throws Exception {
+    //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    //        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
+    //        DemoIngester ingester = new DemoIngester(baseTableName);
+    //        Tuple2<Put, String[]> put = ingester.createPut();
+    //        String[] expectedValues = put.f1;
+    //
+    //        expectFirstValuesToBe(
+    //                stream,
+    //                expectedValues,
+    //                "HBase source did not produce the right values after a basic put operation");
+    //        doAndWaitForSuccess(env, () -> ingester.commitPut(put.f0), 120);
+    //    }
+    //
+    //    @Test
+    //    public void testOnlyReplicateSpecifiedTable() throws Exception {
+    //        String secondTable = baseTableName + "-table2";
+    //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    //        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
+    //        DemoIngester ingester = new DemoIngester(baseTableName);
+    //        DemoIngester ingester2 = new DemoIngester(secondTable);
+    //        Tuple2<Put, String[]> put = ingester.createPut();
+    //        Tuple2<Put, String[]> put2 = ingester2.createPut();
+    //        String[] expectedValues = put.f1;
+    //
+    //        expectFirstValuesToBe(
+    //                stream,
+    //                expectedValues,
+    //                "HBase source did not produce the values of the correct table");
+    //        doAndWaitForSuccess(
+    //                env,
+    //                () -> {
+    //                    ingester2.commitPut(put2.f0);
+    //                    try {
+    //                        Thread.sleep(2000);
+    //                    } catch (InterruptedException e) {
+    //                        e.printStackTrace();
+    //                    }
+    //                    ingester.commitPut(put.f0);
+    //                },
+    //                180);
+    //    }
 
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
