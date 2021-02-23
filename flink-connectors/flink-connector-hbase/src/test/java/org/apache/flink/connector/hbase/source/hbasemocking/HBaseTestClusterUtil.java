@@ -160,9 +160,15 @@ public class HBaseTestClusterUtil {
         clearReplicationPeers();
         cluster.shutdown();
         new File(configPath).delete();
-        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(60 * 15, TimeUnit.SECONDS);
-        Paths.get(testFolder).toFile().delete();
-        System.out.println("HBase test cluster shut down");
+        try {
+            CompletableFuture.runAsync(cluster::waitUntilShutDown).get(60 * 3, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            System.out.println(
+                    "Wating for HBase test cluster shutdown timed out - commencing anyway");
+        } finally {
+            Paths.get(testFolder).toFile().delete();
+            System.out.println("HBase test cluster shut down");
+        }
     }
 
     public boolean isClusterAlreadyRunning() throws InterruptedException, ExecutionException {
