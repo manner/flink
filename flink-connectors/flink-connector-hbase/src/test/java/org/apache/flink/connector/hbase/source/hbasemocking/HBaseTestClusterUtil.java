@@ -157,6 +157,7 @@ public class HBaseTestClusterUtil {
                     .get(10, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             System.out.println("Trying to connect to HBase test cluster timed out");
+            e.printStackTrace(System.out);
             return false;
         }
     }
