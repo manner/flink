@@ -158,7 +158,7 @@ public class HBaseTestClusterUtil {
         aliveChecker.cancel();
         cluster.shutdown();
         new File(configPath).delete();
-        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(360, TimeUnit.SECONDS);
+        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(60 * 15, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
         System.out.println("HBase test cluster shut down");
     }
