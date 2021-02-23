@@ -156,6 +156,8 @@ public class HBaseTestClusterUtil {
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         System.out.println("Shutting down HBase test cluster");
         aliveChecker.cancel();
+        clearTables();
+        clearReplicationPeers();
         cluster.shutdown();
         new File(configPath).delete();
         CompletableFuture.runAsync(cluster::waitUntilShutDown).get(60 * 15, TimeUnit.SECONDS);
