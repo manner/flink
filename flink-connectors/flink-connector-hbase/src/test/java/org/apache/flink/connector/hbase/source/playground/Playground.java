@@ -72,7 +72,7 @@ public class Playground {
                         Boundedness.BOUNDED,
                         deserializationSchema,
                         "sep-user-demo",
-                        HBaseTestClusterUtil.getConfig());
+                        new HBaseTestClusterUtil().getConfig());
 
         DataStream<String> stream =
                 env.fromSource(
@@ -89,6 +89,7 @@ public class Playground {
     /** Bla. */
     public static class CustomHBaseDeserializationSchema extends HBaseSourceDeserializer<String> {
 
+        @Override
         public String deserialize(HBaseEvent event) {
             return new String(event.getPayload());
         }

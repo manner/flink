@@ -22,7 +22,6 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 
 import org.apache.hadoop.hbase.client.Put;
@@ -41,15 +40,15 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testSetup() throws Exception {
-        new HBaseConsumer(HBaseTestClusterUtil.getConfig())
+        new HBaseConsumer(cluster.getConfig())
                 .startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
     }
 
     @Test
     public void testPutCreatesEvent() throws Exception {
-        HBaseConsumer consumer = new HBaseConsumer(HBaseTestClusterUtil.getConfig());
+        HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
         consumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
         ingester.commitPut(ingester.createPut().f0);
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         assertNotNull(result);
@@ -57,9 +56,9 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testTimestampsAndIndicesDefineStrictOrder() throws Exception {
-        HBaseConsumer consumer = new HBaseConsumer(HBaseTestClusterUtil.getConfig());
+        HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
         consumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
 
         int numPuts = 3;
         int putSize = 0;
@@ -85,10 +84,10 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
     @Test
     public void testUsingTheSameIdDoesNotShowAlreadyProcessedEventsAgain() throws Exception {
         String id = UUID.randomUUID().toString().substring(0, 5);
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
 
         Tuple2<Put, String> firstPut = ingester.createOneColumnUniquePut();
-        HBaseConsumer firstConsumer = new HBaseConsumer(id, HBaseTestClusterUtil.getConfig());
+        HBaseConsumer firstConsumer = new HBaseConsumer(id, cluster.getConfig());
         firstConsumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
         ingester.commitPut(firstPut.f0);
         String firstResult = new String(firstConsumer.next().getPayload());
@@ -96,7 +95,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
         firstConsumer.close();
 
         Tuple2<Put, String> secondPut = ingester.createOneColumnUniquePut();
-        HBaseConsumer secondConsumer = new HBaseConsumer(id, HBaseTestClusterUtil.getConfig());
+        HBaseConsumer secondConsumer = new HBaseConsumer(id, cluster.getConfig());
         secondConsumer.startReplication(baseTableName, DemoSchema.COLUMN_FAMILY_NAME);
         ingester.commitPut(secondPut.f0);
         String secondResult = new String(secondConsumer.next().getPayload());
