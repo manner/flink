@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 
 import java.io.IOException;
@@ -50,6 +49,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /** Consumer of HBase WAL edits. */
 public class HBaseConsumer {
@@ -139,7 +140,8 @@ public class HBaseConsumer {
         }
     }
 
-    private RecoverableZooKeeper connectZooKeeper() throws IOException {
+    private RecoverableZooKeeper connectZooKeeper()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
         RecoverableZooKeeper zooKeeper =
                 new RecoverableZooKeeper(
                         "localhost:" + getPort(),
@@ -150,15 +152,6 @@ public class HBaseConsumer {
                         200,
                         null,
                         1);
-        while ((ZooKeeper.States.CONNECTED).equals(zooKeeper.getState())) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.err.println("Cannot connect to Zookeeper");
-                return null;
-            }
-        }
 
         System.out.println("Connected to Zookeeper");
 

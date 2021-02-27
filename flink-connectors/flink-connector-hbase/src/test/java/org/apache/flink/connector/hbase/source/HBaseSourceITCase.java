@@ -240,7 +240,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
         List<Put> puts = new ArrayList<>();
         List<String> expectedValues = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
@@ -304,19 +304,30 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 for (int j = i; j < puts.size() && j < i + putsPerPackage; j++) {
                     ingester.commitPut(puts.get(j));
                 }
+
+                assert cluster.isClusterAlreadyRunning();
+                System.out.println("Test cluster is still running A");
+
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
-                awaitSignalThrowOnFailure(collectedValueSignal, 120, TimeUnit.SECONDS);
+                awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
                 Thread.sleep(3000);
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
+
+                assert cluster.isClusterAlreadyRunning();
+                System.out.println("Test cluster is still running B");
             }
+            System.out.println("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
+            System.out.println("Received success, ending test ...");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
+            System.out.println("Cancelling job client");
             jobClient.cancel();
         }
+        System.out.println("End of test method reached");
     }
 
     /** Bla. */
