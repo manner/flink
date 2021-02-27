@@ -29,9 +29,6 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,8 +39,6 @@ import java.util.UUID;
 /** DemoIngester for adding entries to the Hbase Test Cluster. */
 public class DemoIngester {
     private static final ObjectMapper jsonMapper = new ObjectMapper();
-    private List<String> names;
-    private List<String> domains;
 
     private static final byte[] infoCf = Bytes.toBytes("info");
 
@@ -52,23 +47,24 @@ public class DemoIngester {
     private static final byte[] emailCq = Bytes.toBytes("email");
     private static final byte[] ageCq = Bytes.toBytes("age");
     private static final byte[] payloadCq = Bytes.toBytes("payload");
+
+    private final Configuration conf;
+    private List<String> names;
+    private List<String> domains;
     private Table htable;
     private final DemoSchema schema;
 
     private final String tableName;
 
-    public static void main(String[] args) throws Exception {
-        new DemoIngester().run();
-    }
-
-    public DemoIngester(String tableName) {
+    public DemoIngester(String tableName, Configuration hbaseConfig) {
+        this.conf = hbaseConfig;
         this.schema = new DemoSchema(tableName);
         this.tableName = tableName;
         setup();
     }
 
-    public DemoIngester() {
-        this(DemoSchema.DEFAULT_TABLE_NAME);
+    public DemoIngester(Configuration hbaseConfig) {
+        this(DemoSchema.DEFAULT_TABLE_NAME, hbaseConfig);
     }
 
     public void run() throws Exception {
@@ -80,15 +76,10 @@ public class DemoIngester {
 
     public void setup() {
         try {
-            Configuration conf = HBaseTestClusterUtil.getConfig();
             this.schema.createSchema(conf);
             loadData();
             htable =
                     ConnectionFactory.createConnection(conf).getTable(TableName.valueOf(tableName));
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
