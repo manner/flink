@@ -23,6 +23,7 @@ import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
+import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
 import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
@@ -319,8 +320,36 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         }
     }
 
+    @Test
+    public void testBasicPutWhenMoreCFsThanThreads() throws Exception {
+        int parallelism = 1;
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(parallelism);
+        env.setMaxParallelism(parallelism);
+        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
+
+        String[] expectedValues = new String[] {"foo", "bar", "baz"};
+        assert expectedValues.length > parallelism;
+        Put put = new Put("rowkey".getBytes());
+        for (int i = 0; i < expectedValues.length; i++) {
+            put.addColumn(
+                    (DemoSchema.COLUMN_FAMILY_NAME + i).getBytes(),
+                    expectedValues[i].getBytes(),
+                    expectedValues[i].getBytes());
+        }
+        // TODO cluster.commitPut() ...
+
+        //        expectFirstValuesToBe(
+        //                stream,
+        //                expectedValues,
+        //                "HBase source did not produce the right values after a basic put
+        // operation");
+        //        doAndWaitForSuccess(env, () -> {}, 120);
+    }
+
     /** Bla. */
     public static class HBaseStringDeserializationScheme extends HBaseSourceDeserializer<String> {
+        @Override
         public String deserialize(HBaseEvent event) {
             return new String(event.getPayload());
         }
