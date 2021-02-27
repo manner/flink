@@ -42,6 +42,9 @@ public abstract class TestsWithTestHBaseCluster {
      */
     public static final boolean SHARE_CLUSTER = false;
 
+    private static final HBaseTestClusterUtil sharedCluster = new HBaseTestClusterUtil();
+    protected HBaseTestClusterUtil cluster;
+
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
 
@@ -62,8 +65,8 @@ public abstract class TestsWithTestHBaseCluster {
     public static void setupSharedCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (SHARE_CLUSTER) {
-            HBaseTestClusterUtil.startCluster();
-            assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+            sharedCluster.startCluster();
+            assert sharedCluster.isClusterAlreadyRunning();
         }
     }
 
@@ -71,15 +74,15 @@ public abstract class TestsWithTestHBaseCluster {
     public static void teardownSharedCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (SHARE_CLUSTER) {
-            HBaseTestClusterUtil.shutdownCluster();
+            sharedCluster.shutdownCluster();
         }
     }
 
     @After
     public void clearReplicationPeers() {
         if (SHARE_CLUSTER) {
-            HBaseTestClusterUtil.clearReplicationPeers();
-            HBaseTestClusterUtil.clearTables();
+            cluster.clearReplicationPeers();
+            cluster.clearTables();
         }
     }
 
@@ -87,8 +90,11 @@ public abstract class TestsWithTestHBaseCluster {
     public void setupIndividualCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (!SHARE_CLUSTER) {
-            HBaseTestClusterUtil.startCluster();
-            assert HBaseTestClusterUtil.isClusterAlreadyRunning();
+            cluster = new HBaseTestClusterUtil();
+            cluster.startCluster();
+            assert cluster.isClusterAlreadyRunning();
+        } else {
+            cluster = sharedCluster;
         }
     }
 
@@ -96,7 +102,7 @@ public abstract class TestsWithTestHBaseCluster {
     public void teardownIndividualCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (!SHARE_CLUSTER) {
-            HBaseTestClusterUtil.shutdownCluster();
+            cluster.shutdownCluster();
         }
     }
 

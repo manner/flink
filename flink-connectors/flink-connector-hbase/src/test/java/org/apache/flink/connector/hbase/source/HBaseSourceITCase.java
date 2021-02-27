@@ -24,7 +24,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
@@ -127,14 +126,13 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         signalFile.delete();
     }
 
-    private static DataStream<String> streamFromHBaseSource(
+    private DataStream<String> streamFromHBaseSource(
             StreamExecutionEnvironment environment, String tableName)
             throws ParserConfigurationException, SAXException, IOException {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
-                new HBaseSource<>(
-                        null, deserializationScheme, tableName, HBaseTestClusterUtil.getConfig());
+                new HBaseSource<>(null, deserializationScheme, tableName, cluster.getConfig());
         environment.setParallelism(1);
         DataStream<String> stream =
                 environment.fromSource(
@@ -198,7 +196,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public void testBasicPut() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
         Tuple2<Put, String[]> put = ingester.createPut();
         String[] expectedValues = put.f1;
 
@@ -214,8 +212,8 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         String secondTable = baseTableName + "-table2";
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName);
-        DemoIngester ingester2 = new DemoIngester(secondTable);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester2 = new DemoIngester(secondTable, cluster.getConfig());
         Tuple2<Put, String[]> put = ingester.createPut();
         Tuple2<Put, String[]> put2 = ingester2.createPut();
         String[] expectedValues = put.f1;
@@ -241,7 +239,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
-        DemoIngester ingester = new DemoIngester(baseTableName);
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
         List<Put> puts = new ArrayList<>();
         List<String> expectedValues = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
@@ -305,19 +303,24 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 for (int j = i; j < puts.size() && j < i + putsPerPackage; j++) {
                     ingester.commitPut(puts.get(j));
                 }
+
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
-                awaitSignalThrowOnFailure(collectedValueSignal, 120, TimeUnit.SECONDS);
+                awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
                 Thread.sleep(3000);
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
             }
+            System.out.println("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
+            System.out.println("Received success, ending test ...");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
+            System.out.println("Cancelling job client");
             jobClient.cancel();
         }
+        System.out.println("End of test method reached");
     }
 
     @Test
