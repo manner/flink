@@ -127,7 +127,7 @@ public class HBaseTestClusterUtil {
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         System.out.println("Shutting down HBase test cluster");
         cluster.shutdown();
-        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
+        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(120, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
     }
 
@@ -143,7 +143,7 @@ public class HBaseTestClusterUtil {
                                 return false;
                             }
                         })
-                .get(240, TimeUnit.SECONDS);
+                .get(120, TimeUnit.SECONDS);
     }
 
     public static void clearReplicationPeers() {
