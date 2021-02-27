@@ -31,7 +31,7 @@ public class ClusterStartTest {
 
     @BeforeClass
     public static void setup() throws IOException {
-        HBaseTestClusterUtil.startCluster();
+        new HBaseTestClusterUtil().startCluster();
     }
 
     @AfterClass
