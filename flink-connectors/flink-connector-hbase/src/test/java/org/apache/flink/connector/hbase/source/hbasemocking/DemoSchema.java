@@ -19,11 +19,12 @@
 package org.apache.flink.connector.hbase.source.hbasemocking;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 
@@ -49,16 +50,34 @@ public class DemoSchema {
     }
 
     public void createSchema(Configuration hbaseConf) throws IOException {
-        Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
-        if (!admin.tableExists(TableName.valueOf(tableName))) {
-            HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableName));
-
-            HColumnDescriptor infoCf = new HColumnDescriptor(COLUMN_FAMILY_NAME);
-            infoCf.setScope(1);
-            tableDescriptor.addFamily(infoCf);
-
-            admin.createTable(tableDescriptor);
+        try (Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin()) {
+            TableName tableName = TableName.valueOf(this.tableName);
+            if (!admin.tableExists(tableName)) {
+                TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(tableName);
+                ColumnFamilyDescriptorBuilder cfBuilder =
+                        ColumnFamilyDescriptorBuilder.newBuilder(Bytes.toBytes(COLUMN_FAMILY_NAME));
+                cfBuilder.setScope(1);
+                tableBuilder.setColumnFamily(cfBuilder.build());
+                admin.createTable(tableBuilder.build());
+            }
         }
-        admin.close();
+    }
+
+    public void createMultiCFSchema(Configuration hbaseConf, int numColumnFamilies)
+            throws IOException {
+        try (Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin()) {
+            TableName tableName = TableName.valueOf(this.tableName);
+            if (!admin.tableExists(tableName)) {
+                TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(tableName);
+                for (int i = 0; i < numColumnFamilies; i++) {
+                    ColumnFamilyDescriptorBuilder cfBuilder =
+                            ColumnFamilyDescriptorBuilder.newBuilder(
+                                    Bytes.toBytes(COLUMN_FAMILY_NAME + i));
+                    cfBuilder.setScope(1);
+                    tableBuilder.setColumnFamily(cfBuilder.build());
+                }
+                admin.createTable(tableBuilder.build());
+            }
+        }
     }
 }
