@@ -49,8 +49,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 /** Consumer of HBase WAL edits. */
 public class HBaseConsumer {
@@ -140,8 +138,7 @@ public class HBaseConsumer {
         }
     }
 
-    private RecoverableZooKeeper connectZooKeeper()
-            throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    private RecoverableZooKeeper connectZooKeeper() throws IOException {
         RecoverableZooKeeper zooKeeper =
                 new RecoverableZooKeeper(
                         "localhost:" + getPort(),

@@ -24,7 +24,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
@@ -127,14 +126,13 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         signalFile.delete();
     }
 
-    private static DataStream<String> streamFromHBaseSource(
+    private DataStream<String> streamFromHBaseSource(
             StreamExecutionEnvironment environment, String tableName)
             throws ParserConfigurationException, SAXException, IOException {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
-                new HBaseSource<>(
-                        null, deserializationScheme, tableName, HBaseTestClusterUtil.getConfig());
+                new HBaseSource<>(null, deserializationScheme, tableName, cluster.getConfig());
         environment.setParallelism(1);
         DataStream<String> stream =
                 environment.fromSource(
@@ -306,18 +304,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     ingester.commitPut(puts.get(j));
                 }
 
-                assert cluster.isClusterAlreadyRunning();
-                System.out.println("Test cluster is still running A");
-
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
                 awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
                 Thread.sleep(3000);
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
-
-                assert cluster.isClusterAlreadyRunning();
-                System.out.println("Test cluster is still running B");
             }
             System.out.println("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
@@ -330,7 +322,6 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         }
         System.out.println("End of test method reached");
     }
-
 
     @Test
     public void testBasicPutWhenMoreCFsThanThreads() throws Exception {
