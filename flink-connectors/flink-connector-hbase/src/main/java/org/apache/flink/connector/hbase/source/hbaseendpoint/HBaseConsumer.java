@@ -54,28 +54,30 @@ import java.util.UUID;
 /** Consumer of HBase WAL edits. */
 public class HBaseConsumer {
 
-  
     private final String clusterKey;
     /** The id under which the replication target is made known to the source cluster. */
     private final String replicationPeerId;
-  
+
     private Configuration hbaseConf;
     private RecoverableZooKeeper zooKeeper;
     private final ReplicationTargetServer server;
     private RpcServer rpcServer;
 
     private boolean isRunning = false;
-  
-    public HBaseConsumer(Configuration hbaseConf)
-            throws InterruptedException, ParserConfigurationException, SAXException,
-                    KeeperException, IOException {
-        this(UUID.randomUUID().toString().substring(0, 5), HBaseConfigurationUtil.serializeConfiguration(hbaseConf));
+
+    public HBaseConsumer(byte[] serializedConfig)
+            throws IOException, KeeperException, InterruptedException {
+        this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null));
     }
-  
-    public HBaseConsumer((String peerId, byte[] serializedConfig)
-            throws ParserConfigurationException, SAXException, IOException, KeeperException,
-                    InterruptedException {
-        this.hbaseConf = HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
+
+    public HBaseConsumer(Configuration hbaseConf)
+            throws InterruptedException, KeeperException, IOException {
+        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
+    }
+
+    public HBaseConsumer(String peerId, Configuration hbaseConf)
+            throws IOException, KeeperException, InterruptedException {
+        this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";
         this.replicationPeerId = peerId;
 
