@@ -73,6 +73,7 @@ public class HBaseSplitEnumerator
             for (ColumnFamilyDescriptor colFamDe : colFamDes) {
                 splits.add(
                         new HBaseSourceSplit(
+                                // TODO find better id pattern
                                 String.format("1234%s", new String(colFamDe.getName())),
                                 "localhost",
                                 table,
