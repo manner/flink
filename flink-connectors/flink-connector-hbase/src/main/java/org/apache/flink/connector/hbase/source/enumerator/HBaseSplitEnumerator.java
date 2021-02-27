@@ -22,6 +22,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -46,21 +47,25 @@ public class HBaseSplitEnumerator
     private final SplitEnumeratorContext<HBaseSourceSplit> context;
     private final Queue<HBaseSourceSplit> remainingSplits;
     private final String table;
-    private final Configuration hbaseConfiguration;
+    private final byte[] serializedConfig;
 
     public HBaseSplitEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> context,
-            Configuration hbaseConfiguration,
+            byte[] serializedConfig,
             String table) {
         this.context = context;
         this.remainingSplits = new ArrayDeque<>();
         this.table = table;
-        this.hbaseConfiguration = hbaseConfiguration;
+
+        this.serializedConfig = serializedConfig;
+        System.out.println("Constructed HBase Split enumerator");
     }
 
     @Override
     public void start() {
-        try (Connection connection = ConnectionFactory.createConnection(this.hbaseConfiguration);
+        Configuration hbaseConfiguration =
+                HBaseConfigurationUtil.deserializeConfiguration(this.serializedConfig, null);
+        try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration);
                 Admin admin = connection.getAdmin()) {
             ColumnFamilyDescriptor[] colFamDes =
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
@@ -71,8 +76,7 @@ public class HBaseSplitEnumerator
                                 String.format("1234%s", new String(colFamDe.getName())),
                                 "localhost",
                                 table,
-                                new String(colFamDe.getName()),
-                                hbaseConfiguration));
+                                new String(colFamDe.getName())));
             }
 
             addSplits(splits);

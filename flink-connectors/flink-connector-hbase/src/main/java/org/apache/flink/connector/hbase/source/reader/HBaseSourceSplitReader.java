@@ -22,7 +22,6 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
-import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseConsumer;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 
@@ -44,10 +43,11 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
 
     @Nullable private String currentSplitId;
 
-    public HBaseSourceSplitReader() {
+    public HBaseSourceSplitReader(byte[] serializedConfig) {
         System.out.println("constructing Split Reader");
         try {
-            this.hbaseConsumer = new HBaseConsumer(HBaseSource.tempHbaseConfig);
+
+            this.hbaseConsumer = new HBaseConsumer(serializedConfig);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }

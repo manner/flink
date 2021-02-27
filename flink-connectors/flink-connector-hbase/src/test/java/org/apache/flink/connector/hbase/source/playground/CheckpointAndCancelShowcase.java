@@ -68,6 +68,13 @@ public class CheckpointAndCancelShowcase {
         System.out.println("Terminated ...");
     }
 
+    private static MiniCluster miniCluster(MiniClusterJobClient jobClient)
+            throws IllegalAccessException, NoSuchFieldException {
+        Field field = MiniClusterJobClient.class.getDeclaredField("miniCluster");
+        field.setAccessible(true);
+        return (MiniCluster) field.get(jobClient);
+    }
+
     private static class Numbers implements Iterator<String>, Serializable {
 
         private int i = 0;
@@ -91,12 +98,5 @@ public class CheckpointAndCancelShowcase {
             System.out.println("Next called with i=" + i);
             return "" + (i++);
         }
-    }
-
-    private static MiniCluster miniCluster(MiniClusterJobClient jobClient)
-            throws IllegalAccessException, NoSuchFieldException {
-        Field field = MiniClusterJobClient.class.getDeclaredField("miniCluster");
-        field.setAccessible(true);
-        return (MiniCluster) field.get(jobClient);
     }
 }

@@ -19,6 +19,7 @@
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
@@ -65,16 +66,18 @@ public class HBaseConsumer {
 
     private boolean isRunning = false;
 
+    public HBaseConsumer(byte[] serializedConfig)
+            throws IOException, KeeperException, InterruptedException {
+        this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null));
+    }
+
     public HBaseConsumer(Configuration hbaseConf)
-            throws IOException, KeeperException, InterruptedException, TimeoutException,
-                    ExecutionException {
+            throws InterruptedException, KeeperException, IOException {
         this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
     }
 
     public HBaseConsumer(String peerId, Configuration hbaseConf)
-            throws IOException, KeeperException, InterruptedException, TimeoutException,
-                    ExecutionException {
-
+            throws IOException, KeeperException, InterruptedException {
         this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";
         this.replicationPeerId = peerId;
