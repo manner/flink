@@ -311,16 +311,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 System.out.println("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
             }
-            System.out.println("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
-            System.out.println("Received success, ending test ...");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            System.out.println("Cancelling job client");
             jobClient.cancel();
         }
-        System.out.println("End of test method reached");
     }
 
     /** Bla. */
