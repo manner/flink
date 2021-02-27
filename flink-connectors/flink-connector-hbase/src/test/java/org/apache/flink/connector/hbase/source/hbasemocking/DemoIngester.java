@@ -1,9 +1,11 @@
 /*
- * Copyright 2012 NGDATA nv
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -110,6 +112,14 @@ public class DemoIngester {
         put.addColumn(infoCf, payloadCq, jsonMapper.writeValueAsBytes(payload));
         return Tuple2.of(
                 put, new String[] {name, email, age, jsonMapper.writeValueAsString(payload)});
+    }
+
+    public Tuple2<Put, String> createOneColumnUniquePut() {
+        String uuid = UUID.randomUUID().toString();
+        byte[] rowkey = Bytes.toBytes(uuid);
+        Put put = new Put(rowkey);
+        put.addColumn(infoCf, nameCq, Bytes.toBytes(uuid));
+        return Tuple2.of(put, uuid);
     }
 
     public void commitPut(Put put) {

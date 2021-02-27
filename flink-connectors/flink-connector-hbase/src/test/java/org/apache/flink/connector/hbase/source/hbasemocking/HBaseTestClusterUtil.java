@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.flink.connector.hbase.source.hbasemocking;
 
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +43,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
@@ -46,6 +68,7 @@ public class HBaseTestClusterUtil {
     }
 
     public static void startCluster() throws IOException {
+        System.out.println("Starting HBase test cluster ...");
         testFolder = Files.createTempDirectory(null).toString();
 
         // Fallback for windows users with space in user name, will not work if path contains space.
@@ -82,7 +105,7 @@ public class HBaseTestClusterUtil {
             cluster.waitForActiveAndReadyMaster(30 * 1000);
             try {
                 HBaseAdmin.available(hbaseConf);
-                System.out.println("Connected successfully");
+                System.out.println("HBase test cluster up and running ...");
             } catch (IOException e1) {
                 e1.printStackTrace();
                 Throwable e = e1;
@@ -100,20 +123,27 @@ public class HBaseTestClusterUtil {
         }
     }
 
-    public static void shutdownCluster() throws IOException {
-        System.out.println("Shutting down test cluster");
+    public static void shutdownCluster()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
+        System.out.println("Shutting down HBase test cluster");
         cluster.shutdown();
-        cluster.waitUntilShutDown();
+        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(120, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
     }
 
-    public static boolean isClusterAlreadyRunning() {
-        try (Connection connection = ConnectionFactory.createConnection(getConfig())) {
-            return true;
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            e.printStackTrace();
-            return false;
-        }
+    public static boolean isClusterAlreadyRunning()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        return CompletableFuture.supplyAsync(
+                        () -> {
+                            try (Connection connection =
+                                    ConnectionFactory.createConnection(getConfig())) {
+                                return true;
+                            } catch (ParserConfigurationException | IOException | SAXException e) {
+                                e.printStackTrace();
+                                return false;
+                            }
+                        })
+                .get(120, TimeUnit.SECONDS);
     }
 
     public static void clearReplicationPeers() {

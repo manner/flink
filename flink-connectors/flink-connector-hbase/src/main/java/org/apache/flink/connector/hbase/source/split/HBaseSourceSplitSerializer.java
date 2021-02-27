@@ -1,5 +1,24 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.flink.connector.hbase.source.split;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import org.apache.hadoop.conf.Configuration;
@@ -24,12 +43,15 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
 
     @Override
     public byte[] serialize(HBaseSourceSplit split) throws IOException {
+        System.out.println("Splitserializer.serialize");
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
             out.writeUTF(split.getColumnFamily());
+            out.writeLong(split.getFirstEventStamp().f0);
+            out.writeInt(split.getFirstEventStamp().f1);
             out.flush();
             return baos.toByteArray();
         }
@@ -37,14 +59,22 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
 
     @Override
     public HBaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
+        System.out.println("Splitserializer.deserialize");
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {
             String id = in.readUTF();
             String host = in.readUTF();
             String table = in.readUTF();
             String columnFamily = in.readUTF();
+            long firstTimestamp = in.readLong();
+            int firstIndex = in.readInt();
             return new HBaseSourceSplit(
-                    id, host, table, columnFamily, new Configuration()); // TODO find real configuration
+                    id,
+                    host,
+                    table,
+                    columnFamily,
+                    new Configuration(),
+                    Tuple2.of(firstTimestamp, firstIndex)); // TODO find real configuration
         }
     }
 }

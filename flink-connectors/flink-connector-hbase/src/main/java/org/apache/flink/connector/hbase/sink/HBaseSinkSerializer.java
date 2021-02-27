@@ -16,31 +16,15 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.hbase.source;
+package org.apache.flink.connector.hbase.sink;
 
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
+/** TODO docs. */
+public interface HBaseSinkSerializer<T> {
+    byte[] serializePayload(T event);
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+    byte[] serializeColumnFamily(T event);
 
-import java.io.IOException;
+    byte[] serializeQualifier(T event);
 
-/** This class is only used to start a (reusable) test cluster from the test root. */
-@Deprecated
-public class ClusterStartTest {
-
-    @BeforeClass
-    public static void setup() throws IOException {
-        HBaseTestClusterUtil.startCluster();
-    }
-
-    @AfterClass
-    public static void teardown() {}
-
-    public void startCluster() throws Exception {
-        System.out.println("Pass");
-        while (true) {
-            Thread.sleep(30000);
-        }
-    }
+    byte[] serializeRowKey(T event);
 }
