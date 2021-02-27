@@ -36,7 +36,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
@@ -59,7 +58,7 @@ public class HBaseSplitEnumerator
         this.table = table;
 
         this.serializedConfig = serializedConfig;
-        System.out.println("BAAABAA Construct: " + Arrays.toString(serializedConfig));
+        System.out.println("Constructed HBase Split enumerator");
     }
 
     @Override
