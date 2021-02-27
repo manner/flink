@@ -48,11 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -190,7 +186,7 @@ public class HBaseTestClusterUtil {
             e.printStackTrace();
         }
     }
-  
+
     public void commitPut(String tableName, Put put) {
         try (Table htable =
                 ConnectionFactory.createConnection(getConfig())
