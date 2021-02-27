@@ -44,11 +44,6 @@ public class DemoSchema {
         this(DEFAULT_TABLE_NAME);
     }
 
-    public void main(String[] args) throws Exception {
-        Configuration conf = HBaseTestClusterUtil.getConfig();
-        createSchema(conf);
-    }
-
     public void createSchema(Configuration hbaseConf) throws IOException {
         try (Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin()) {
             TableName tableName = TableName.valueOf(this.tableName);
