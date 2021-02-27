@@ -22,6 +22,7 @@ import org.apache.flink.api.connector.source.SourceSplit;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.io.Serializable;
+import java.util.List;
 
 /** A {@link SourceSplit} for a Hbase. */
 public class HBaseSourceSplit implements SourceSplit, Serializable {
@@ -34,24 +35,24 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     private final String table;
 
-    private final String columnFamily;
+    private final List<String> columnFamilys;
 
     private final Tuple2<Long, Integer> firstEventStamp;
 
-    public HBaseSourceSplit(String id, String host, String table, String columnFamily) {
-        this(id, host, table, columnFamily, Tuple2.of(-1L, -1));
+    public HBaseSourceSplit(String id, String host, String table, List<String> columnFamilys) {
+        this(id, host, table, columnFamilys, Tuple2.of(-1L, -1));
     }
 
     public HBaseSourceSplit(
             String id,
             String host,
             String table,
-            String columnFamily,
+            List<String> columnFamilys,
             Tuple2<Long, Integer> firstEventStamp) {
         this.id = id;
         this.host = host;
         this.table = table;
-        this.columnFamily = columnFamily;
+        this.columnFamilys = columnFamilys;
         this.firstEventStamp = firstEventStamp;
     }
 
@@ -63,8 +64,8 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
         return host;
     }
 
-    public String getColumnFamily() {
-        return columnFamily;
+    public List<String> getColumnFamilys() {
+        return columnFamilys;
     }
 
     @Override
@@ -83,6 +84,6 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     public HBaseSourceSplit withStamp(long lastTimeStamp, int lastIndex) {
         return new HBaseSourceSplit(
-                id, host, table, columnFamily, Tuple2.of(lastTimeStamp, lastIndex));
+                id, host, table, columnFamilys, Tuple2.of(lastTimeStamp, lastIndex));
     }
 }

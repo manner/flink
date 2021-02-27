@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * The {@link org.apache.flink.core.io.SimpleVersionedSerializer serializer} for {@link
@@ -47,7 +48,10 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
-            out.writeUTF(split.getColumnFamily());
+            out.writeInt(split.getColumnFamilys().size());
+            for(String cF: split.getColumnFamilys()) {
+                out.writeUTF(cF);
+            }
             out.writeLong(split.getFirstEventStamp().f0);
             out.writeInt(split.getFirstEventStamp().f1);
             out.flush();
@@ -63,7 +67,11 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             String id = in.readUTF();
             String host = in.readUTF();
             String table = in.readUTF();
-            String columnFamily = in.readUTF();
+            ArrayList<String> columnFamilys = new ArrayList<>();
+            int noOfCfs = in.readInt();
+            for (int i = 0; i < noOfCfs; i++) {
+                columnFamilys.add(in.readUTF());
+            }
 
             long firstTimestamp = in.readLong();
             int firstIndex = in.readInt();
@@ -71,7 +79,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
                     id,
                     host,
                     table,
-                    columnFamily,
+                    columnFamilys,
                     Tuple2.of(firstTimestamp, firstIndex)); // TODO find real configuration
         }
     }
