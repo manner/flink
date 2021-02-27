@@ -71,7 +71,7 @@ public class Playground {
                 new HBaseSource<>(
                         Boundedness.BOUNDED,
                         deserializationSchema,
-                        "sep-user-demo",
+                        "test-table",
                         new HBaseTestClusterUtil().getConfig());
 
         DataStream<String> stream =

@@ -155,12 +155,12 @@ public class HBaseConsumer {
         return zooKeeper;
     }
 
-    public void startReplication(String table, String columnFamily) {
+    public void startReplication(String table, List<String> columnFamilys) {
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
                 Admin admin = connection.getAdmin(); ) {
 
             // clearExistingReplication(admin);
-            ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamily);
+            ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilys);
             if (admin.listReplicationPeers().stream()
                     .map(ReplicationPeerDescription::getPeerId)
                     .anyMatch(replicationPeerId::equals)) {
@@ -189,10 +189,10 @@ public class HBaseConsumer {
                         });
     }
 
-    private ReplicationPeerConfig createPeerConfig(String table, String columnFamily) {
+    private ReplicationPeerConfig createPeerConfig(String table,  List<String> columnFamilys) {
         HashMap tableMap = new HashMap<>();
         ArrayList<String> cFs = new ArrayList<>();
-        cFs.add(columnFamily);
+        cFs.addAll(columnFamilys);
         tableMap.put(TableName.valueOf(table), cFs);
         return ReplicationPeerConfig.newBuilder()
                 .setClusterKey("localhost:" + getPort() + ":" + getBaseString() + "/" + clusterKey)

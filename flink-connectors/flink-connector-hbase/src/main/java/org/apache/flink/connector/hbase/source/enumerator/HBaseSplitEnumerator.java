@@ -70,18 +70,52 @@ public class HBaseSplitEnumerator
             ColumnFamilyDescriptor[] colFamDes =
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
-            for (ColumnFamilyDescriptor colFamDe : colFamDes) {
+
+            int parallelism = context.currentParallelism();
+            int colFamilys = colFamDes.length;
+
+            if (parallelism > colFamilys) {
+                for (ColumnFamilyDescriptor colFamDe : colFamDes) {
+                    splits.add(
+                            new HBaseSourceSplit(
+                                    String.format("1234%s", new String(colFamDe.getName())),
+                                    "localhost",
+                                    table,
+                                    new ArrayList<>(List.of(colFamDe.getNameAsString()))));
+                }
+            }
+            else {
+                int splitsPerReader = colFamilys / parallelism;
+                int remainingColumns = colFamilys % parallelism;
+
+                for (int i = 0; i < parallelism -1; i++) {
+                    ArrayList<String> colFamilysForSplit = new ArrayList<>();
+                    for (int j = 0; j < splitsPerReader; j++){
+                        colFamilysForSplit.add(colFamDes[i + j].getNameAsString());
+                    }
+
+                    splits.add(
+                            new HBaseSourceSplit(
+                                    String.format("1234%s", colFamilysForSplit.get(0)),
+                                    "localhost",
+                                    table,
+                                    colFamilysForSplit));
+                }
+                ArrayList<String> colFamilysForLastSplit = new ArrayList<>();
+                for (int i = 0; i < splitsPerReader + remainingColumns; i++){
+                    colFamilysForLastSplit.add(colFamDes[colFamDes.length -i -1 ].getNameAsString());
+                }
                 splits.add(
                         new HBaseSourceSplit(
-                                // TODO find better id pattern
-                                String.format("1234%s", new String(colFamDe.getName())),
+                                String.format("1234%s", colFamilysForLastSplit.get(0)),
                                 "localhost",
                                 table,
-                                new String(colFamDe.getName())));
+                                colFamilysForLastSplit));
             }
 
             addSplits(splits);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
