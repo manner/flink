@@ -23,11 +23,15 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.w3c.dom.Document;
@@ -157,6 +161,17 @@ public class HBaseTestClusterUtil {
                 admin.deleteTable(table.getTableName());
             }
         } catch (ParserConfigurationException | IOException | SAXException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void commitPut(String tableName, Put put) {
+        try (Table htable =
+                ConnectionFactory.createConnection(getConfig())
+                        .getTable(TableName.valueOf(tableName)); ) {
+            htable.put(put);
+            System.out.println("Added row " + Bytes.toString(put.getRow()));
+        } catch (IOException | SAXException | ParserConfigurationException e) {
             e.printStackTrace();
         }
     }
