@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.ipc.FifoRpcScheduler;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServerFactory;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper;
@@ -41,70 +42,64 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-/** Test Hbase Consumer. */
+/** Consumer of HBase WAL edits. */
 public class HBaseConsumer {
 
-    private static Configuration hbaseConf;
-    private static RecoverableZooKeeper zooKeeper;
-    private static String table;
-    private final String subscriptionName;
-    private final String replicationPeer;
-    private final ReplicationTargetServer server;
+    private final String clusterKey;
+    /** The id under which the replication target is made known to the source cluster. */
+    private final String replicationPeerId;
 
-    public HBaseConsumer(Configuration config)
-            throws InterruptedException, ParserConfigurationException, SAXException,
-                    KeeperException, IOException {
-        this(HBaseConfigurationUtil.serializeConfiguration(config));
-    }
+    private Configuration hbaseConf;
+    private RecoverableZooKeeper zooKeeper;
+    private final ReplicationTargetServer server;
+    private RpcServer rpcServer;
+
+    private boolean isRunning = false;
 
     public HBaseConsumer(byte[] serializedConfig)
-            throws ParserConfigurationException, SAXException, IOException, KeeperException,
-                    InterruptedException {
-        this.hbaseConf = HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
-        this.subscriptionName = UUID.randomUUID().toString().substring(0, 5);
-        this.replicationPeer = UUID.randomUUID().toString().substring(0, 5);
+            throws IOException, KeeperException, InterruptedException {
+        this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null));
+    }
+
+    public HBaseConsumer(Configuration hbaseConf)
+            throws InterruptedException, KeeperException, IOException {
+        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
+    }
+
+    public HBaseConsumer(String peerId, Configuration hbaseConf)
+            throws IOException, KeeperException, InterruptedException {
+        this.hbaseConf = hbaseConf;
+        this.clusterKey = peerId + "_clusterKey";
+        this.replicationPeerId = peerId;
 
         // Setup
         zooKeeper = connectZooKeeper();
         server = createServer();
-
-        //        tryReplication();
     }
 
-    private static String getBaseString() {
+    private String getBaseString() {
         return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
     }
 
-    private static String getPort() {
+    private String getPort() {
         return hbaseConf.get("hbase.zookeeper.property.clientPort");
     }
 
-    private static int findFreePort() throws IOException {
-        try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-        }
-    }
-
-    private static void createZKPath(
-            final String path, byte[] data, List<ACL> acl, CreateMode createMode)
+    private void createZKPath(final String path, byte[] data, List<ACL> acl, CreateMode createMode)
             throws KeeperException, InterruptedException {
         createZKPath(path, data, acl, createMode, 5);
     }
 
-    private static void createZKPath(
+    private void createZKPath(
             final String path, byte[] data, List<ACL> acl, CreateMode createMode, int retries)
             throws KeeperException, InterruptedException {
         try {
@@ -124,7 +119,24 @@ public class HBaseConsumer {
     }
 
     public HBaseEvent next() {
+        if (!isRunning) {
+            // Protects from infinite waiting
+            throw new RuntimeException("Consumer is not running");
+        }
         return server.next();
+    }
+
+    public void close() {
+        isRunning = false;
+        try {
+            zooKeeper.close();
+            System.out.println("Closed connection to ZooKeeper");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            rpcServer.stop();
+            System.out.println("Closed HBase replication target server");
+        }
     }
 
     private RecoverableZooKeeper connectZooKeeper() throws IOException {
@@ -156,38 +168,47 @@ public class HBaseConsumer {
     public void startReplication(String table, String columnFamily) {
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
                 Admin admin = connection.getAdmin(); ) {
-            // System.out.println( "PRINTING in  " + REPLICATION_PEER + " :   " +
-            // admin.listReplicationPeers());
-            admin.listReplicationPeers().stream()
-                    .filter(peer -> peer.getPeerId().equals(replicationPeer))
-                    .forEach(
-                            peer -> {
-                                try {
-                                    admin.removeReplicationPeer(peer.getPeerId());
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            });
-            HashMap tableMap = new HashMap<>();
-            ArrayList<String> cFs = new ArrayList<>();
-            cFs.add(columnFamily);
-            tableMap.put(TableName.valueOf(table), cFs);
-            ReplicationPeerConfig peerConfig =
-                    ReplicationPeerConfig.newBuilder()
-                            .setClusterKey(
-                                    "localhost:"
-                                            + getPort()
-                                            + ":"
-                                            + getBaseString()
-                                            + "/"
-                                            + subscriptionName)
-                            .setReplicateAllUserTables(false)
-                            .setTableCFsMap(tableMap)
-                            .build();
-            admin.addReplicationPeer(replicationPeer, peerConfig);
+
+            // clearExistingReplication(admin);
+            ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamily);
+            if (admin.listReplicationPeers().stream()
+                    .map(ReplicationPeerDescription::getPeerId)
+                    .anyMatch(replicationPeerId::equals)) {
+                admin.updateReplicationPeerConfig(replicationPeerId, peerConfig);
+            } else {
+                admin.addReplicationPeer(replicationPeerId, peerConfig);
+            }
+            isRunning = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /** Instead of clearing existing replication under the same id, the config should be updated. */
+    @Deprecated
+    private void clearExistingReplication(Admin admin) throws IOException {
+        admin.listReplicationPeers().stream()
+                .filter(peer -> peer.getPeerId().equals(replicationPeerId))
+                .forEach(
+                        peer -> {
+                            try {
+                                admin.removeReplicationPeer(peer.getPeerId());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+    }
+
+    private ReplicationPeerConfig createPeerConfig(String table, String columnFamily) {
+        HashMap tableMap = new HashMap<>();
+        ArrayList<String> cFs = new ArrayList<>();
+        cFs.add(columnFamily);
+        tableMap.put(TableName.valueOf(table), cFs);
+        return ReplicationPeerConfig.newBuilder()
+                .setClusterKey("localhost:" + getPort() + ":" + getBaseString() + "/" + clusterKey)
+                .setReplicateAllUserTables(false)
+                .setTableCFsMap(tableMap)
+                .build();
     }
 
     private ReplicationTargetServer createServer()
@@ -204,7 +225,7 @@ public class HBaseConsumer {
                         AdminProtos.AdminService.newReflectiveBlockingService(server),
                         org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService
                                 .BlockingInterface.class);
-        RpcServer rpcServer =
+        rpcServer =
                 RpcServerFactory.createRpcServer(
                         server,
                         name,
@@ -215,20 +236,20 @@ public class HBaseConsumer {
                                 hbaseConf,
                                 hbaseConf.getInt("hbase.regionserver.handler.count", 10)));
 
-        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(subscriptionName));
+        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
         createZKPath(
-                getBaseString() + "/" + subscriptionName,
+                getBaseString() + "/" + clusterKey,
                 null,
                 ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
         createZKPath(
-                getBaseString() + "/" + subscriptionName + "/rs",
+                getBaseString() + "/" + clusterKey + "/rs",
                 null,
                 ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
 
         createZKPath(
-                getBaseString() + "/" + subscriptionName + "/hbaseid",
+                getBaseString() + "/" + clusterKey + "/hbaseid",
                 Bytes.toBytes(uuid.toString()),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
@@ -241,7 +262,7 @@ public class HBaseConsumer {
         ZKWatcher zkWatcher = new ZKWatcher(hbaseConf, serverName.toString(), null);
         rpcServer.start();
         zooKeeper.create(
-                getBaseString() + "/" + subscriptionName + "/rs/" + serverName.getServerName(),
+                getBaseString() + "/" + clusterKey + "/rs/" + serverName.getServerName(),
                 null,
                 ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
