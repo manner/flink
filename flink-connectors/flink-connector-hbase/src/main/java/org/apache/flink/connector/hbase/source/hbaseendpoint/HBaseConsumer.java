@@ -19,6 +19,7 @@
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
@@ -53,26 +54,28 @@ import java.util.UUID;
 /** Consumer of HBase WAL edits. */
 public class HBaseConsumer {
 
+  
     private final String clusterKey;
     /** The id under which the replication target is made known to the source cluster. */
     private final String replicationPeerId;
-
+  
     private Configuration hbaseConf;
     private RecoverableZooKeeper zooKeeper;
     private final ReplicationTargetServer server;
     private RpcServer rpcServer;
 
     private boolean isRunning = false;
-
+  
     public HBaseConsumer(Configuration hbaseConf)
-            throws IOException, KeeperException, InterruptedException {
-        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
+            throws InterruptedException, ParserConfigurationException, SAXException,
+                    KeeperException, IOException {
+        this(UUID.randomUUID().toString().substring(0, 5), HBaseConfigurationUtil.serializeConfiguration(hbaseConf));
     }
-
-    public HBaseConsumer(String peerId, Configuration hbaseConf)
-            throws IOException, KeeperException, InterruptedException {
-
-        this.hbaseConf = hbaseConf;
+  
+    public HBaseConsumer((String peerId, byte[] serializedConfig)
+            throws ParserConfigurationException, SAXException, IOException, KeeperException,
+                    InterruptedException {
+        this.hbaseConf = HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
         this.clusterKey = peerId + "_clusterKey";
         this.replicationPeerId = peerId;
 

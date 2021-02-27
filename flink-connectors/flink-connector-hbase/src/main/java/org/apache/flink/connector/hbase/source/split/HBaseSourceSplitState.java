@@ -52,7 +52,7 @@ public class HBaseSourceSplitState {
     }
 
     public boolean isAlreadyProcessedEvent(HBaseEvent event) {
-        System.out.println("Testing, last stamp is " + lastTimeStamp + "-" + lastIndex);
+        //        System.out.println("Testing, last stamp is " + lastTimeStamp + "-" + lastIndex);
         return !event.isLaterThan(lastTimeStamp, lastIndex);
     }
 }
