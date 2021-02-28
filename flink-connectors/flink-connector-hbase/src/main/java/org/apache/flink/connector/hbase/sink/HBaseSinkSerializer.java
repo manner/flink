@@ -18,8 +18,10 @@
 
 package org.apache.flink.connector.hbase.sink;
 
+import java.io.Serializable;
+
 /** TODO docs. */
-public interface HBaseSinkSerializer<T> {
+public interface HBaseSinkSerializer<T> extends Serializable {
     byte[] serializePayload(T event);
 
     byte[] serializeColumnFamily(T event);
