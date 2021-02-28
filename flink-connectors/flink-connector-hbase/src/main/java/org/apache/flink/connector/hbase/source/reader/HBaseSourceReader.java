@@ -49,7 +49,7 @@ public class HBaseSourceReader<T>
 
     @Override
     protected HBaseSourceSplitState initializedState(HBaseSourceSplit split) {
-        System.out.println("initializedState");
+        System.out.println("SourceReader initializedState");
         return new HBaseSourceSplitState(split);
     }
 
