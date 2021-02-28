@@ -132,7 +132,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
-                new HBaseSource<>(null, deserializationScheme, tableName, cluster.getConfig());
+                new HBaseSource<>(deserializationScheme, tableName, cluster.getConfig());
         environment.setParallelism(1);
         DataStream<String> stream =
                 environment.fromSource(

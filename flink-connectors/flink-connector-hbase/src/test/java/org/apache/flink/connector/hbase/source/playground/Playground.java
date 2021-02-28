@@ -19,7 +19,6 @@
 package org.apache.flink.connector.hbase.source.playground;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
@@ -69,7 +68,6 @@ public class Playground {
 
         HBaseSource<String> source =
                 new HBaseSource<>(
-                        Boundedness.BOUNDED,
                         deserializationSchema,
                         "test-table",
                         new HBaseTestClusterUtil().getConfig());
