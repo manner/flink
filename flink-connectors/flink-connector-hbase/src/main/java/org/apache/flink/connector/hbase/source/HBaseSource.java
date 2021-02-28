@@ -40,17 +40,13 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
 
     private final String tableName;
 
-    private final Boundedness boundedness;
-
     private final HBaseSourceDeserializer<T> sourceDeserializer;
     private final byte[] serializedConfig;
 
     public HBaseSource(
-            Boundedness boundedness,
             HBaseSourceDeserializer<T> sourceDeserializer,
             String table,
             org.apache.hadoop.conf.Configuration hbaseConfiguration) {
-        this.boundedness = boundedness;
         this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
         this.sourceDeserializer = sourceDeserializer;
         this.tableName = table;
@@ -58,7 +54,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
 
     @Override
     public Boundedness getBoundedness() {
-        return boundedness;
+        return Boundedness.CONTINUOUS_UNBOUNDED;
     }
 
     @Override
