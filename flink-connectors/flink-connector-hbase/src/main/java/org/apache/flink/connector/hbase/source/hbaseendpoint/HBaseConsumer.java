@@ -86,6 +86,7 @@ public class HBaseConsumer {
     }
 
     private String getBaseString() {
+        // TODO hbasesep.* will never be resolved
         return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
     }
 
@@ -189,7 +190,7 @@ public class HBaseConsumer {
                         });
     }
 
-    private ReplicationPeerConfig createPeerConfig(String table,  List<String> columnFamilys) {
+    private ReplicationPeerConfig createPeerConfig(String table, List<String> columnFamilys) {
         HashMap tableMap = new HashMap<>();
         ArrayList<String> cFs = new ArrayList<>();
         cFs.addAll(columnFamilys);
