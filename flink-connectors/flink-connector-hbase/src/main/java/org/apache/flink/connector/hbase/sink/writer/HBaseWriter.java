@@ -48,6 +48,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     private Connection connection;
     private Table table;
     private long lastTimeStamp;
+    private TimerTask batchSendTimer;
 
     public HBaseWriter(
             Sink.InitContext context,
@@ -70,26 +71,33 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     }
 
     private void startBatchSendTimer() {
-        TimerTask batchSend =
+        batchSendTimer =
                 new TimerTask() {
                     @Override
                     public void run() {
                         long diff = System.currentTimeMillis() - lastTimeStamp;
                         if (diff > MAX_LATENCY) {
-                            try {
-                                table.put(buffer);
-                                buffer.clear();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            flushBuffer();
                         }
                     }
                 };
-        new Timer().scheduleAtFixedRate(batchSend, MAX_LATENCY, MAX_LATENCY);
+        new Timer().scheduleAtFixedRate(batchSendTimer, MAX_LATENCY, MAX_LATENCY);
+    }
+
+    private void flushBuffer() {
+        if (buffer.size() == 0) {
+            return;
+        }
+        try {
+            table.put(buffer);
+            buffer.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void write(IN element, Context context) throws IOException {
+    public void write(IN element, Context context) {
         Put put = new Put(sinkSerializer.serializeRowKey(element));
         put.addColumn(
                 sinkSerializer.serializeColumnFamily(element),
@@ -98,8 +106,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
         buffer.add(put);
         lastTimeStamp = System.currentTimeMillis();
         if (buffer.size() >= QUEUE_LIMIT) {
-            table.put(buffer);
-            buffer.clear();
+            flushBuffer();
         }
     }
 
@@ -115,6 +122,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
 
     @Override
     public void close() throws Exception {
+        flushBuffer();
         this.table.close();
         this.connection.close();
     }
