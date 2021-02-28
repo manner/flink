@@ -49,7 +49,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
             out.writeInt(split.getColumnFamilys().size());
-            for(String cF: split.getColumnFamilys()) {
+            for (String cF : split.getColumnFamilys()) {
                 out.writeUTF(cF);
             }
             out.writeLong(split.getFirstEventStamp().f0);
