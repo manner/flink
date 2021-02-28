@@ -41,7 +41,7 @@ import java.util.TimerTask;
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
-    private static final int QUEUE_LIMIT = 1000;
+    private static final int QUEUE_LIMIT = 10000;
     private static final int MAX_LATENCY = 1000;
     private final HBaseSinkSerializer<IN> sinkSerializer;
     private final List<Put> buffer;
