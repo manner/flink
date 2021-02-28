@@ -41,8 +41,8 @@ import java.util.TimerTask;
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
-    private static final int QUEUE_LIMIT = 10000;
-    private static final int MAX_LATENCY = 1000;
+    private static final int QUEUE_LIMIT = 1000;
+    private static final int MAX_LATENCY_MS = 1000;
     private final HBaseSinkSerializer<IN> sinkSerializer;
     private final List<Put> buffer;
     private Connection connection;
@@ -76,12 +76,12 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                     @Override
                     public void run() {
                         long diff = System.currentTimeMillis() - lastTimeStamp;
-                        if (diff > MAX_LATENCY) {
+                        if (diff > MAX_LATENCY_MS) {
                             flushBuffer();
                         }
                     }
                 };
-        new Timer().scheduleAtFixedRate(batchSendTimer, MAX_LATENCY, MAX_LATENCY);
+        new Timer().scheduleAtFixedRate(batchSendTimer, MAX_LATENCY_MS, MAX_LATENCY_MS);
     }
 
     private void flushBuffer() {
@@ -123,6 +123,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     @Override
     public void close() throws Exception {
         flushBuffer();
+        batchSendTimer.cancel();
         this.table.close();
         this.connection.close();
     }
