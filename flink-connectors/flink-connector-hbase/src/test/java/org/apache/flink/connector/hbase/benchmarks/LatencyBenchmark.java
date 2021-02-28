@@ -19,7 +19,6 @@
 package org.apache.flink.connector.hbase.benchmarks;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.connector.hbase.sink.HBaseSink;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.source.HBaseSource;
@@ -43,7 +42,6 @@ public class LatencyBenchmark {
 
         HBaseSource<String> source =
                 new HBaseSource<>(
-                        Boundedness.CONTINUOUS_UNBOUNDED,
                         new HBaseStringDeserializationSchema(),
                         tableName + "-in",
                         new Configuration());
@@ -76,6 +74,7 @@ public class LatencyBenchmark {
     /** HBaseStringDeserializationSchema. */
     public static class HBaseStringDeserializationSchema extends HBaseSourceDeserializer<String> {
 
+        @Override
         public String deserialize(HBaseEvent event) {
             return new String(event.getPayload());
         }
