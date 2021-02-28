@@ -35,15 +35,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
-    private static final int QUEUE_LIMIT = 100;
+    private static final int QUEUE_LIMIT = 1000;
+    private static final int MAX_LATENCY = 1000;
     private final HBaseSinkSerializer<IN> sinkSerializer;
+    private final List<Put> buffer;
     private Connection connection;
     private Table table;
-    private List<Put> buffer;
+    private long lastTimeStamp;
 
     public HBaseWriter(
             Sink.InitContext context,
@@ -61,6 +65,27 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        startBatchSendTimer();
+    }
+
+    private void startBatchSendTimer() {
+        TimerTask batchSend =
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        long diff = System.currentTimeMillis() - lastTimeStamp;
+                        if (diff > MAX_LATENCY) {
+                            try {
+                                table.put(buffer);
+                                buffer.clear();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                };
+        new Timer().scheduleAtFixedRate(batchSend, MAX_LATENCY, MAX_LATENCY);
     }
 
     @Override
@@ -71,6 +96,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                 sinkSerializer.serializeQualifier(element),
                 sinkSerializer.serializePayload(element));
         buffer.add(put);
+        lastTimeStamp = System.currentTimeMillis();
         if (buffer.size() >= QUEUE_LIMIT) {
             table.put(buffer);
             buffer.clear();
