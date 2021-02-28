@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
@@ -78,19 +79,19 @@ public class HBaseSplitEnumerator
                 for (ColumnFamilyDescriptor colFamDe : colFamDes) {
                     splits.add(
                             new HBaseSourceSplit(
+                                    // TODO find better pattern than 1234
                                     String.format("1234%s", new String(colFamDe.getName())),
                                     "localhost",
                                     table,
-                                    new ArrayList<>(List.of(colFamDe.getNameAsString()))));
+                                    new ArrayList<>(Arrays.asList(colFamDe.getNameAsString()))));
                 }
-            }
-            else {
+            } else {
                 int splitsPerReader = colFamilys / parallelism;
                 int remainingColumns = colFamilys % parallelism;
 
-                for (int i = 0; i < parallelism -1; i++) {
+                for (int i = 0; i < parallelism - 1; i++) {
                     ArrayList<String> colFamilysForSplit = new ArrayList<>();
-                    for (int j = 0; j < splitsPerReader; j++){
+                    for (int j = 0; j < splitsPerReader; j++) {
                         colFamilysForSplit.add(colFamDes[i + j].getNameAsString());
                     }
 
@@ -102,8 +103,9 @@ public class HBaseSplitEnumerator
                                     colFamilysForSplit));
                 }
                 ArrayList<String> colFamilysForLastSplit = new ArrayList<>();
-                for (int i = 0; i < splitsPerReader + remainingColumns; i++){
-                    colFamilysForLastSplit.add(colFamDes[colFamDes.length -i -1 ].getNameAsString());
+                for (int i = 0; i < splitsPerReader + remainingColumns; i++) {
+                    colFamilysForLastSplit.add(
+                            colFamDes[colFamDes.length - i - 1].getNameAsString());
                 }
                 splits.add(
                         new HBaseSourceSplit(
@@ -114,8 +116,7 @@ public class HBaseSplitEnumerator
             }
 
             addSplits(splits);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
