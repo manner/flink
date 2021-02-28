@@ -42,15 +42,15 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
     @Test
     public void testSetup() throws Exception {
         new HBaseConsumer(cluster.getConfig())
-                .startReplication(baseTableName,
-                        Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
+                .startReplication(
+                        baseTableName, Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
     }
 
     @Test
     public void testPutCreatesEvent() throws Exception {
         HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
-        consumer.startReplication(baseTableName,
-                Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
+        consumer.startReplication(
+                baseTableName, Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
         DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
         ingester.commitPut(ingester.createPut().f0);
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
@@ -60,8 +60,8 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
     @Test
     public void testTimestampsAndIndicesDefineStrictOrder() throws Exception {
         HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
-        consumer.startReplication(baseTableName,
-                Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
+        consumer.startReplication(
+                baseTableName, Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
         DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
 
         int numPuts = 3;
@@ -92,8 +92,8 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
         Tuple2<Put, String> firstPut = ingester.createOneColumnUniquePut();
         HBaseConsumer firstConsumer = new HBaseConsumer(id, cluster.getConfig());
-        firstConsumer.startReplication(baseTableName,
-                Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
+        firstConsumer.startReplication(
+                baseTableName, Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
         ingester.commitPut(firstPut.f0);
         String firstResult = new String(firstConsumer.next().getPayload());
         assertEquals(firstPut.f1, firstResult);
@@ -101,8 +101,8 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
         Tuple2<Put, String> secondPut = ingester.createOneColumnUniquePut();
         HBaseConsumer secondConsumer = new HBaseConsumer(id, cluster.getConfig());
-        secondConsumer.startReplication(baseTableName,
-                Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
+        secondConsumer.startReplication(
+                baseTableName, Collections.singletonList(DemoSchema.COLUMN_FAMILY_NAME));
         ingester.commitPut(secondPut.f0);
         String secondResult = new String(secondConsumer.next().getPayload());
         assertEquals(secondPut.f1, secondResult);
