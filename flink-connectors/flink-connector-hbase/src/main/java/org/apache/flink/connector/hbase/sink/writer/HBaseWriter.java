@@ -32,15 +32,18 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
+    private static final int QUEUE_LIMIT = 100;
     private final HBaseSinkSerializer<IN> sinkSerializer;
     private Connection connection;
     private Table table;
+    private List<Put> buffer;
 
     public HBaseWriter(
             Sink.InitContext context,
@@ -49,6 +52,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             byte[] serializedConfig) {
         System.out.println("Creating HBaseWriter");
         this.sinkSerializer = sinkSerializer;
+        this.buffer = new ArrayList<>();
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
         try {
@@ -66,7 +70,11 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                 sinkSerializer.serializeColumnFamily(element),
                 sinkSerializer.serializeQualifier(element),
                 sinkSerializer.serializePayload(element));
-        table.put(put);
+        buffer.add(put);
+        if (buffer.size() >= QUEUE_LIMIT) {
+            table.put(buffer);
+            buffer.clear();
+        }
     }
 
     @Override
