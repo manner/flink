@@ -47,7 +47,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     private final List<Put> buffer;
     private Connection connection;
     private Table table;
-    private long lastFlushTimeStamp;
+    private long lastFlushTimeStamp = 0;
     private TimerTask batchSendTimer;
 
     public HBaseWriter(
@@ -81,7 +81,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                         }
                     }
                 };
-        new Timer().scheduleAtFixedRate(batchSendTimer, MAX_LATENCY_MS, MAX_LATENCY_MS);
+        new Timer().scheduleAtFixedRate(batchSendTimer, 0, MAX_LATENCY_MS / 2);
     }
 
     private void flushBuffer() {
