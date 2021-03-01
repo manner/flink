@@ -47,7 +47,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     private final List<Put> buffer;
     private Connection connection;
     private Table table;
-    private long lastTimeStamp;
+    private long lastFlushTimeStamp;
     private TimerTask batchSendTimer;
 
     public HBaseWriter(
@@ -75,7 +75,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                 new TimerTask() {
                     @Override
                     public void run() {
-                        long diff = System.currentTimeMillis() - lastTimeStamp;
+                        long diff = System.currentTimeMillis() - lastFlushTimeStamp;
                         if (diff > MAX_LATENCY_MS) {
                             flushBuffer();
                         }
@@ -85,6 +85,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     }
 
     private void flushBuffer() {
+        lastFlushTimeStamp = System.currentTimeMillis();
         if (buffer.size() == 0) {
             return;
         }
@@ -104,7 +105,6 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                 sinkSerializer.serializeQualifier(element),
                 sinkSerializer.serializePayload(element));
         buffer.add(put);
-        lastTimeStamp = System.currentTimeMillis();
         if (buffer.size() >= QUEUE_LIMIT) {
             flushBuffer();
         }
