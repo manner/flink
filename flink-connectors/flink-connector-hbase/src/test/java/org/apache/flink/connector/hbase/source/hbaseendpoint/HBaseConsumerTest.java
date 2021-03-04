@@ -19,8 +19,8 @@
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 
 import org.junit.Test;
 

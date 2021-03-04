@@ -18,7 +18,7 @@
 
 package org.apache.flink.connector.hbase.source;
 
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
+import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -30,10 +30,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-/**
- * Abstract test class that provides that {@link
- * org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil} is up and running.
- */
+/** Abstract test class that provides that {@link HBaseTestClusterUtil} is up and running. */
 public abstract class TestsWithTestHBaseCluster {
 
     public static final int DEFAULT_CF_COUNT = 4;

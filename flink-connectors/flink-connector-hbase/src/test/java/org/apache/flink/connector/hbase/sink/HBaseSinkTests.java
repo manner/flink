@@ -16,12 +16,10 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.hbase.source.hbaseendpoint;
+package org.apache.flink.connector.hbase.sink;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
-import org.apache.flink.connector.hbase.sink.HBaseSink;
-import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
