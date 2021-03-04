@@ -21,9 +21,9 @@ package org.apache.flink.connector.hbase.source.playground;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.HBaseSource;
-import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
+import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
