@@ -57,7 +57,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             byte[] serializedConfig) {
         System.out.println("Creating HBaseWriter");
         this.sinkSerializer = sinkSerializer;
-        this.buffer = new ArrayList<>();
+        this.buffer = new ArrayList<>(QUEUE_LIMIT);
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
         try {
