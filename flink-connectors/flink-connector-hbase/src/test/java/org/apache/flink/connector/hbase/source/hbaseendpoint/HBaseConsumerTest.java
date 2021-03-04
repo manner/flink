@@ -52,7 +52,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
         HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
         consumer.startReplication(
                 baseTableName, Collections.singletonList(HBaseTestClusterUtil.COLUMN_FAMILY_NAME));
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
         ingester.commitPut(ingester.createPut().f0);
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         assertNotNull(result);
@@ -63,7 +63,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
         HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
         consumer.startReplication(
                 baseTableName, Collections.singletonList(HBaseTestClusterUtil.COLUMN_FAMILY_NAME));
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
 
         int numPuts = 3;
         int putSize = 0;
@@ -89,7 +89,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
     @Test
     public void testUsingTheSameIdDoesNotShowAlreadyProcessedEventsAgain() throws Exception {
         String id = UUID.randomUUID().toString().substring(0, 5);
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
 
         Tuple2<Put, String> firstPut = ingester.createOneColumnUniquePut();
         HBaseConsumer firstConsumer = new HBaseConsumer(id, cluster.getConfig());

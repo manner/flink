@@ -23,12 +23,14 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,23 +50,17 @@ public class DemoIngester {
     private static final byte[] ageCq = Bytes.toBytes("age");
     private static final byte[] payloadCq = Bytes.toBytes("payload");
 
-    private final Configuration conf;
+    private final HBaseTestClusterUtil cluster;
     private List<String> names;
     private List<String> domains;
     private Table htable;
-    private final DemoSchema schema;
 
     private final String tableName;
 
-    public DemoIngester(String tableName, Configuration hbaseConfig) {
-        this.conf = hbaseConfig;
-        this.schema = new DemoSchema(tableName);
+    public DemoIngester(String tableName, HBaseTestClusterUtil cluster) {
+        this.cluster = cluster;
         this.tableName = tableName;
         setup();
-    }
-
-    public DemoIngester(Configuration hbaseConfig) {
-        this(DemoSchema.DEFAULT_TABLE_NAME, hbaseConfig);
     }
 
     public void run() throws Exception {
@@ -76,11 +72,16 @@ public class DemoIngester {
 
     public void setup() {
         try {
-            this.schema.createSchema(conf);
+            cluster.makeTable(tableName);
             loadData();
             htable =
-                    ConnectionFactory.createConnection(conf).getTable(TableName.valueOf(tableName));
+                    ConnectionFactory.createConnection(cluster.getConfig())
+                            .getTable(TableName.valueOf(tableName));
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
             e.printStackTrace();
         }
     }
