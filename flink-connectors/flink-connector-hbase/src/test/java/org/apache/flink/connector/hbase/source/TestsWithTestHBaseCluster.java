@@ -36,6 +36,8 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class TestsWithTestHBaseCluster {
 
+    public static final int DEFAULT_CF_COUNT = 4;
+
     /**
      * For local debug purposes. Allows to run the test quickly without starting a fresh cluster for
      * each new test.
@@ -113,5 +115,13 @@ public abstract class TestsWithTestHBaseCluster {
             }
         }
         return false;
+    }
+
+    protected static String[] uniqueValues(int count) {
+        String[] values = new String[count];
+        for (int i = 0; i < count; i++) {
+            values[i] = UUID.randomUUID().toString();
+        }
+        return values;
     }
 }
