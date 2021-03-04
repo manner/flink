@@ -163,7 +163,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    cluster.put(secondTable, DEFAULT_CF_COUNT, expectedValues);
+                    cluster.put(baseTableName, DEFAULT_CF_COUNT, expectedValues);
                 },
                 180);
     }
@@ -172,6 +172,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
         String[] expectedValues = uniqueValues(20);
+        cluster.makeTable(baseTableName);
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.enableCheckpointing(2000);
