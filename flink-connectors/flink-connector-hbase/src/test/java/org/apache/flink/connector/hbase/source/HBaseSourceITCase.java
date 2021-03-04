@@ -132,7 +132,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public void testBasicPut() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
         Tuple2<Put, String[]> put = ingester.createPut();
         String[] expectedValues = put.f1;
 
@@ -148,8 +148,8 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         String secondTable = baseTableName + "-table2";
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
-        DemoIngester ingester2 = new DemoIngester(secondTable, cluster.getConfig());
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
+        DemoIngester ingester2 = new DemoIngester(secondTable, cluster);
         Tuple2<Put, String[]> put = ingester.createPut();
         Tuple2<Put, String[]> put2 = ingester2.createPut();
         String[] expectedValues = put.f1;
@@ -175,7 +175,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster.getConfig());
+        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
         List<Put> puts = new ArrayList<>();
         List<String> expectedValues = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
