@@ -35,7 +35,6 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.FileUtils;
 
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.After;
@@ -45,86 +44,23 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
+import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignalThrowOnFailure;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSuccess;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.cleanupFolder;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.cleanupSignal;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.makeFolder;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.signal;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.signalFailure;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.signalSuccess;
 import static org.junit.Assert.assertArrayEquals;
 
 /** Tests the most basic use cases of the source with a mocked HBase system. */
 public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
-
-    private static final File SIGNAL_FOLDER = new File("signal");
-
-    private static final String SUCCESS_SIGNAL = "success";
-    private static final String FAILURE_SIGNAL = "failure";
-
-    private static void signalSuccess() {
-        signal(SUCCESS_SIGNAL);
-    }
-
-    private static void signalFailure() {
-        signal(FAILURE_SIGNAL);
-    }
-
-    private static void awaitSuccess(long timeout, TimeUnit timeUnit)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        awaitSignalThrowOnFailure(SUCCESS_SIGNAL, timeout, timeUnit);
-    }
-
-    private static File signalFile(String signalName) {
-        return SIGNAL_FOLDER.toPath().resolve(signalName + ".signal").toFile();
-    }
-
-    private static void signal(String signalName) {
-        File signalFile = signalFile(signalName);
-        try {
-            signalFile.createNewFile();
-            System.out.println("Created signal file at " + signalFile.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void awaitSignalThrowOnFailure(
-            String signalName, long timeout, TimeUnit timeUnit)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        String result =
-                (String)
-                        CompletableFuture.anyOf(
-                                        awaitSignal(signalName), awaitSignal(FAILURE_SIGNAL))
-                                .get(timeout, timeUnit);
-        if (result.equals(FAILURE_SIGNAL)) {
-            throw new RuntimeException("Waiting for signal " + signalName + " yielded failure");
-        }
-    }
-
-    private static CompletableFuture<String> awaitSignal(String signalName)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        File signalFile = signalFile(signalName);
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    while (!signalFile.exists()) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    cleanupSignal(signalName);
-                    return signalName;
-                });
-    }
-
-    private static void cleanupSignal(String signalName) {
-        File signalFile = signalFile(signalName);
-        signalFile.delete();
-    }
 
     private DataStream<String> streamFromHBaseSource(
             StreamExecutionEnvironment environment, String tableName)
@@ -184,12 +120,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
     @Before
     public void makeSignalFolder() {
-        SIGNAL_FOLDER.mkdirs();
+        makeFolder();
     }
 
     @After
     public void cleanupSignalFolder() throws IOException {
-        FileUtils.deleteDirectory(SIGNAL_FOLDER);
+        cleanupFolder();
     }
 
     @Test
