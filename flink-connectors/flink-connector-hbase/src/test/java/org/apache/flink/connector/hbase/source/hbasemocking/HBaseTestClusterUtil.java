@@ -60,7 +60,10 @@ import java.util.concurrent.TimeoutException;
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
 
-    public static final String COLUMN_FAMILY_NAME = "info";
+    public static final String COLUMN_FAMILY_BASE = "info";
+    public static final String DEFAULT_COLUMN_FAMILY = COLUMN_FAMILY_BASE + 0;
+    public static final String QUALIFIER_BASE = "qualifier";
+    public static final String DEFAULT_QUALIFIER = QUALIFIER_BASE + 0;
 
     public final String configPath = "config" + UUID.randomUUID() + ".xml";
     private MiniHBaseCluster cluster;
@@ -196,20 +199,20 @@ public class HBaseTestClusterUtil {
 
     /**
      * Creates a table for given name with given number of column families. Column family names
-     * start with {@link HBaseTestClusterUtil#COLUMN_FAMILY_NAME} and are indexed, if more than one
+     * start with {@link HBaseTestClusterUtil#COLUMN_FAMILY_BASE} and are indexed, if more than one
      * is requested
      */
     public void makeTable(String tableName, int numColumnFamilies) {
+        assert numColumnFamilies >= 1;
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             TableName tableNameObj = TableName.valueOf(tableName);
             if (!admin.tableExists(tableNameObj)) {
                 TableDescriptorBuilder tableBuilder =
                         TableDescriptorBuilder.newBuilder(tableNameObj);
                 for (int i = 0; i < numColumnFamilies; i++) {
-                    String columnFamilyIdentifier = "" + (numColumnFamilies > 1 ? i : "");
                     ColumnFamilyDescriptorBuilder cfBuilder =
                             ColumnFamilyDescriptorBuilder.newBuilder(
-                                    Bytes.toBytes(COLUMN_FAMILY_NAME + columnFamilyIdentifier));
+                                    Bytes.toBytes(COLUMN_FAMILY_BASE + i));
                     cfBuilder.setScope(1);
                     tableBuilder.setColumnFamily(cfBuilder.build());
                 }
@@ -226,6 +229,50 @@ public class HBaseTestClusterUtil {
                         .getTable(TableName.valueOf(tableName)); ) {
             htable.put(put);
             System.out.println("Added row " + Bytes.toString(put.getRow()));
+        } catch (IOException | SAXException | ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void put(String tableName, String value) {
+        try (Table htable =
+                ConnectionFactory.createConnection(getConfig())
+                        .getTable(TableName.valueOf(tableName))) {
+            String uuid = UUID.randomUUID().toString();
+            byte[] rowkey = Bytes.toBytes(uuid);
+            byte[] columnFamily = DEFAULT_COLUMN_FAMILY.getBytes();
+            byte[] qualifier = DEFAULT_QUALIFIER.getBytes();
+            byte[] payload = value.getBytes();
+            Put put = new Put(rowkey).addColumn(columnFamily, qualifier, payload);
+            htable.put(put);
+            System.out.println("Added row " + uuid);
+        } catch (IOException | SAXException | ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void put(String tableName, int numColumnFamilies, String... values) {
+        assert numColumnFamilies >= 1;
+        assert values.length >= numColumnFamilies;
+        try (Table htable =
+                ConnectionFactory.createConnection(getConfig())
+                        .getTable(TableName.valueOf(tableName))) {
+
+            String rowKey = UUID.randomUUID().toString();
+            Put put = new Put(rowKey.getBytes());
+            int index = 0;
+            for (int cf = 0; cf < numColumnFamilies; cf++) {
+                int cq = 0;
+                for (; index + cq < values.length * (cf + 1) / numColumnFamilies; cq++) {
+                    put.addColumn(
+                            (COLUMN_FAMILY_BASE + cf).getBytes(),
+                            (QUALIFIER_BASE + cq).getBytes(),
+                            values[index + cq].getBytes());
+                }
+                index += cq;
+            }
+            htable.put(put);
+            System.out.println("Added row " + rowKey);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             e.printStackTrace();
         }

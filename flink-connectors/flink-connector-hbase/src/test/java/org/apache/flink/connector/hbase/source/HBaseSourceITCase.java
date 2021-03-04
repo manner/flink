@@ -21,8 +21,6 @@ package org.apache.flink.connector.hbase.source;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.connector.hbase.source.hbasemocking.DemoIngester;
 import org.apache.flink.connector.hbase.source.hbasemocking.HBaseTestClusterUtil;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
@@ -132,15 +130,15 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public void testBasicPut() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
-        Tuple2<Put, String[]> put = ingester.createPut();
-        String[] expectedValues = put.f1;
+        cluster.makeTable(baseTableName, DEFAULT_CF_COUNT);
+        String[] expectedValues = uniqueValues(2 * DEFAULT_CF_COUNT);
 
         expectFirstValuesToBe(
                 stream,
                 expectedValues,
                 "HBase source did not produce the right values after a basic put operation");
-        doAndWaitForSuccess(env, () -> ingester.commitPut(put.f0), 120);
+        doAndWaitForSuccess(
+                env, () -> cluster.put(baseTableName, DEFAULT_CF_COUNT, expectedValues), 120);
     }
 
     @Test
@@ -148,11 +146,9 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         String secondTable = baseTableName + "-table2";
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
-        DemoIngester ingester2 = new DemoIngester(secondTable, cluster);
-        Tuple2<Put, String[]> put = ingester.createPut();
-        Tuple2<Put, String[]> put2 = ingester2.createPut();
-        String[] expectedValues = put.f1;
+        cluster.makeTable(baseTableName, DEFAULT_CF_COUNT);
+        cluster.makeTable(secondTable, DEFAULT_CF_COUNT);
+        String[] expectedValues = uniqueValues(DEFAULT_CF_COUNT);
 
         expectFirstValuesToBe(
                 stream,
@@ -161,13 +157,13 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         doAndWaitForSuccess(
                 env,
                 () -> {
-                    ingester2.commitPut(put2.f0);
+                    cluster.put(secondTable, DEFAULT_CF_COUNT, uniqueValues(DEFAULT_CF_COUNT));
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    ingester.commitPut(put.f0);
+                    cluster.put(secondTable, DEFAULT_CF_COUNT, expectedValues);
                 },
                 180);
     }
@@ -175,14 +171,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
-        DemoIngester ingester = new DemoIngester(baseTableName, cluster);
-        List<Put> puts = new ArrayList<>();
-        List<String> expectedValues = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            Tuple2<Put, String> put = ingester.createOneColumnUniquePut();
-            puts.add(put.f0);
-            expectedValues.add(put.f1);
-        }
+        String[] expectedValues = uniqueValues(20);
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.enableCheckpointing(2000);
@@ -194,11 +183,11 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     private void checkForSuccess() {
                         List<String> checkpointed = getCheckpointedValues();
                         System.out.println(unCheckpointedValues + " " + checkpointed);
-                        if (checkpointed.size() == expectedValues.size()) {
+                        if (checkpointed.size() == expectedValues.length) {
                             try {
                                 assertArrayEquals(
                                         "Wrong values were produced.",
-                                        expectedValues.toArray(),
+                                        expectedValues,
                                         checkpointed.toArray());
                                 signalSuccess();
                             } catch (Exception e) {
@@ -234,10 +223,10 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         try {
             Thread.sleep(8000);
             int putsPerPackage = 5;
-            for (int i = 0; i < puts.size(); i += putsPerPackage) {
+            for (int i = 0; i < expectedValues.length; i += putsPerPackage) {
                 System.out.println("Sending next package ...");
-                for (int j = i; j < puts.size() && j < i + putsPerPackage; j++) {
-                    ingester.commitPut(puts.get(j));
+                for (int j = i; j < expectedValues.length && j < i + putsPerPackage; j++) {
+                    cluster.put(baseTableName, expectedValues[j]);
                 }
 
                 // Assert that values have actually been sent over so there was an opportunity to
@@ -273,7 +262,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         Put put = new Put("rowkey".getBytes());
         for (int i = 0; i < expectedValues.length; i++) {
             put.addColumn(
-                    (HBaseTestClusterUtil.COLUMN_FAMILY_NAME + i).getBytes(),
+                    (HBaseTestClusterUtil.COLUMN_FAMILY_BASE + i).getBytes(),
                     expectedValues[i].getBytes(),
                     expectedValues[i].getBytes());
         }
