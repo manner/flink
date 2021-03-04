@@ -31,7 +31,6 @@ import java.io.IOException;
 /** Adding DemoSchema to Hbase Test Cluster. */
 public class DemoSchema {
 
-    public static final String COLUMN_FAMILY_NAME = "info";
     public static final String DEFAULT_TABLE_NAME = "test-table";
 
     public final String tableName;
@@ -50,7 +49,8 @@ public class DemoSchema {
             if (!admin.tableExists(tableName)) {
                 TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(tableName);
                 ColumnFamilyDescriptorBuilder cfBuilder =
-                        ColumnFamilyDescriptorBuilder.newBuilder(Bytes.toBytes(COLUMN_FAMILY_NAME));
+                        ColumnFamilyDescriptorBuilder.newBuilder(
+                                Bytes.toBytes(HBaseTestClusterUtil.COLUMN_FAMILY_NAME));
                 cfBuilder.setScope(1);
                 tableBuilder.setColumnFamily(cfBuilder.build());
                 admin.createTable(tableBuilder.build());
@@ -67,7 +67,7 @@ public class DemoSchema {
                 for (int i = 0; i < numColumnFamilies; i++) {
                     ColumnFamilyDescriptorBuilder cfBuilder =
                             ColumnFamilyDescriptorBuilder.newBuilder(
-                                    Bytes.toBytes(COLUMN_FAMILY_NAME + i));
+                                    Bytes.toBytes(HBaseTestClusterUtil.COLUMN_FAMILY_NAME + i));
                     cfBuilder.setScope(1);
                     tableBuilder.setColumnFamily(cfBuilder.build());
                 }
