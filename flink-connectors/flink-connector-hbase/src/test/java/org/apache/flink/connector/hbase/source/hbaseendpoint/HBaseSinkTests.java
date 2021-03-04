@@ -23,7 +23,6 @@ import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.sink.HBaseSink;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
-import org.apache.flink.connector.hbase.source.hbasemocking.DemoSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -52,8 +51,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
 
     @Test
     public void testSimpleSink() throws Exception {
-        DemoSchema schema = new DemoSchema();
-        schema.createSchema(cluster.getConfig());
+        cluster.makeTable(baseTableName);
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         Configuration hbaseConfiguration = cluster.getConfig();

@@ -74,8 +74,7 @@ public class HBaseTestClusterUtil {
         Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
         HBaseTestClusterUtil hbaseTestClusterUtil = new HBaseTestClusterUtil();
         hbaseTestClusterUtil.startCluster();
-        DemoSchema schema = new DemoSchema();
-        schema.createSchema(hbaseTestClusterUtil.getConfig());
+        hbaseTestClusterUtil.makeTable("tableName");
     }
 
     public void startCluster() throws IOException {
@@ -191,6 +190,15 @@ public class HBaseTestClusterUtil {
         }
     }
 
+    public void makeTable(String tableName) {
+        makeTable(tableName, 1);
+    }
+
+    /**
+     * Creates a table for given name with given number of column families. Column family names
+     * start with {@link HBaseTestClusterUtil#COLUMN_FAMILY_NAME} and are indexed, if more than one
+     * is requested
+     */
     public void makeTable(String tableName, int numColumnFamilies) {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             TableName tableNameObj = TableName.valueOf(tableName);
@@ -198,9 +206,10 @@ public class HBaseTestClusterUtil {
                 TableDescriptorBuilder tableBuilder =
                         TableDescriptorBuilder.newBuilder(tableNameObj);
                 for (int i = 0; i < numColumnFamilies; i++) {
+                    String columnFamilyIdentifier = "" + (numColumnFamilies > 1 ? i : "");
                     ColumnFamilyDescriptorBuilder cfBuilder =
                             ColumnFamilyDescriptorBuilder.newBuilder(
-                                    Bytes.toBytes(COLUMN_FAMILY_NAME + i));
+                                    Bytes.toBytes(COLUMN_FAMILY_NAME + columnFamilyIdentifier));
                     cfBuilder.setScope(1);
                     tableBuilder.setColumnFamily(cfBuilder.build());
                 }
