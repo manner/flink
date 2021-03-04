@@ -25,12 +25,14 @@ import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
@@ -57,6 +59,8 @@ import java.util.concurrent.TimeoutException;
 
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
+
+    public static final String COLUMN_FAMILY_NAME = "info";
 
     public final String configPath = "config" + UUID.randomUUID() + ".xml";
     private MiniHBaseCluster cluster;
@@ -181,6 +185,26 @@ public class HBaseTestClusterUtil {
                 System.out.println("==== " + desc.getPeerId() + " ====");
                 System.out.println(desc);
                 admin.removeReplicationPeer(desc.getPeerId());
+            }
+        } catch (SAXException | IOException | ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void makeTable(String tableName, int numColumnFamilies) {
+        try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
+            TableName tableNameObj = TableName.valueOf(tableName);
+            if (!admin.tableExists(tableNameObj)) {
+                TableDescriptorBuilder tableBuilder =
+                        TableDescriptorBuilder.newBuilder(tableNameObj);
+                for (int i = 0; i < numColumnFamilies; i++) {
+                    ColumnFamilyDescriptorBuilder cfBuilder =
+                            ColumnFamilyDescriptorBuilder.newBuilder(
+                                    Bytes.toBytes(COLUMN_FAMILY_NAME + i));
+                    cfBuilder.setScope(1);
+                    tableBuilder.setColumnFamily(cfBuilder.build());
+                }
+                admin.createTable(tableBuilder.build());
             }
         } catch (SAXException | IOException | ParserConfigurationException e) {
             e.printStackTrace();
