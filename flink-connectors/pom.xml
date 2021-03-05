@@ -42,6 +42,7 @@ under the License.
 		<module>flink-connector-elasticsearch5</module>
 		<module>flink-connector-elasticsearch6</module>
 		<module>flink-connector-elasticsearch7</module>
+		<module>flink-connector-hbase</module>
 		<module>flink-connector-hbase-base</module>
 		<module>flink-connector-hbase-1.4</module>
 		<module>flink-connector-hbase-2.2</module>
@@ -57,8 +58,7 @@ under the License.
 		<module>flink-connector-base</module>
 		<module>flink-file-sink-common</module>
 		<module>flink-connector-files</module>
-        <module>flink-connector-hbase</module>
-    </modules>
+	</modules>
 
 	<!-- override these root dependencies as 'provided', so they don't end up
 		in the jars-with-dependencies (uber jars) of connectors and
