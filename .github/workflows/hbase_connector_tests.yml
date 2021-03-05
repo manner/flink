@@ -1,0 +1,27 @@
+name: HBase Connector Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+     matrix:
+          os: [ubuntu-latest] #, macos-latest]
+          java-version: [8, 11]
+     fail-fast : false
+          
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Java ${{ matrix.java-version }}
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java-version }}
+    - name: Maven Clean
+      run: mvn clean --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
+    - name: Test with Maven
+      run: mvn test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
+    - name: Integration Test with Maven
+      run: mvn integration-test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml "-Dspotless.check.skip=true"
