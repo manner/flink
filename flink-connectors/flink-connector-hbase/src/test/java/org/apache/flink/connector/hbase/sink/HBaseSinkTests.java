@@ -21,6 +21,7 @@ package org.apache.flink.connector.hbase.sink;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
+import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -36,7 +37,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.stream.LongStream;
 
@@ -44,10 +44,6 @@ import static org.junit.Assert.assertArrayEquals;
 
 /** Test for {@link org.apache.flink.connector.hbase.sink.HBaseSink}. */
 public class HBaseSinkTests extends TestsWithTestHBaseCluster {
-
-    private static final String tableName = "test-table";
-    private static final String columnFamily = "info";
-    private static final String qualifier = "test";
 
     @Test
     public void testSimpleSink() throws Exception {
@@ -66,7 +62,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
                         "numberSource");
 
         final HBaseSink<Long> hbaseSink =
-                new HBaseSink<>(tableName, new HBaseTestSerializer(), hbaseConfiguration);
+                new HBaseSink<>(baseTableName, new HBaseTestSerializer(), hbaseConfiguration);
         numberSource.sinkTo(hbaseSink);
         env.execute();
 
@@ -74,17 +70,19 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         long[] actual = new long[end - start + 1];
 
         try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration)) {
-            Table table = connection.getTable(TableName.valueOf(tableName));
+            Table table = connection.getTable(TableName.valueOf(baseTableName));
             for (int i = start; i <= end; i++) {
                 Get get = new Get(Bytes.toBytes(String.valueOf(i)));
                 Result r = table.get(get);
-                byte[] value = r.getValue(columnFamily.getBytes(), qualifier.getBytes());
+                byte[] value =
+                        r.getValue(
+                                HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY.getBytes(),
+                                HBaseTestClusterUtil.DEFAULT_QUALIFIER.getBytes());
                 long l = Long.parseLong(new String(value));
                 actual[i - start] = l;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
         assertArrayEquals(expected, actual);
     }
 
@@ -96,12 +94,12 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
 
         @Override
         public byte[] serializeColumnFamily(Long event) {
-            return Bytes.toBytes(columnFamily);
+            return Bytes.toBytes(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY);
         }
 
         @Override
         public byte[] serializeQualifier(Long event) {
-            return Bytes.toBytes(qualifier);
+            return Bytes.toBytes(HBaseTestClusterUtil.DEFAULT_QUALIFIER);
         }
 
         @Override
@@ -113,6 +111,5 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         public Class<? extends Mutation> serializeRowType(Long event) {
             return Put.class;
         }
-
     }
 }
