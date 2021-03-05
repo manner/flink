@@ -28,6 +28,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 
@@ -44,7 +46,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     private static final int QUEUE_LIMIT = 1000;
     private static final int MAX_LATENCY_MS = 1000;
     private final HBaseSinkSerializer<IN> sinkSerializer;
-    private final List<Put> buffer;
+    private final List<Mutation> buffer;
     private Connection connection;
     private Table table;
     private long lastFlushTimeStamp = 0;
@@ -55,7 +57,6 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             String tableName,
             HBaseSinkSerializer<IN> sinkSerializer,
             byte[] serializedConfig) {
-        System.out.println("Creating HBaseWriter");
         this.sinkSerializer = sinkSerializer;
         this.buffer = new ArrayList<>(QUEUE_LIMIT);
         Configuration hbaseConfiguration =
@@ -90,21 +91,33 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             return;
         }
         try {
-            table.put(buffer);
+            table.batch(buffer, null);
             buffer.clear();
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void write(IN element, Context context) {
-        Put put = new Put(sinkSerializer.serializeRowKey(element));
-        put.addColumn(
-                sinkSerializer.serializeColumnFamily(element),
-                sinkSerializer.serializeQualifier(element),
-                sinkSerializer.serializePayload(element));
-        buffer.add(put);
+        Class<? extends Mutation> mutationClass = sinkSerializer.serializeRowType(element);
+        if (mutationClass.isAssignableFrom(Put.class)) {
+            Put put = new Put(sinkSerializer.serializeRowKey(element));
+            put.addColumn(
+                    sinkSerializer.serializeColumnFamily(element),
+                    sinkSerializer.serializeQualifier(element),
+                    sinkSerializer.serializePayload(element));
+            buffer.add(put);
+        } else if (mutationClass.isAssignableFrom(Delete.class)) {
+            Delete delete = new Delete(sinkSerializer.serializeRowKey(element));
+            delete.addColumn(
+                    sinkSerializer.serializeColumnFamily(element),
+                    sinkSerializer.serializeQualifier(element));
+            buffer.add(delete);
+        } else {
+            throw new UnsupportedOperationException("row type not supported");
+        }
+
         if (buffer.size() >= QUEUE_LIMIT) {
             flushBuffer();
         }
@@ -124,7 +137,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     public void close() throws Exception {
         flushBuffer();
         batchSendTimer.cancel();
-        this.table.close();
-        this.connection.close();
+        table.close();
+        connection.close();
     }
 }
