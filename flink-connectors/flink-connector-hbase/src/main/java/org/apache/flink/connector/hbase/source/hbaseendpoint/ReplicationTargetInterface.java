@@ -10,7 +10,7 @@ import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
  * replication ({@link AdminProtos.AdminService.BlockingInterface#replicateWALEntry(RpcController,
  * AdminProtos.ReplicateWALEntryRequest)}) to keep implementing class small.
  */
-public interface ReplicationEndpointInterface extends AdminProtos.AdminService.BlockingInterface {
+public interface ReplicationTargetInterface extends AdminProtos.AdminService.BlockingInterface {
 
     @Override
     public default AdminProtos.ClearCompactionQueuesResponse clearCompactionQueues(

@@ -18,10 +18,13 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -29,6 +32,7 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.ipc.FifoRpcScheduler;
+import org.apache.hadoop.hbase.ipc.HBaseRpcController;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServerFactory;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
@@ -37,7 +41,8 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService.BlockingInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper;
-import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
+import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
+import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -52,7 +57,10 @@ import java.util.List;
 import java.util.UUID;
 
 /** Consumer of HBase WAL edits. */
-public class HBaseConsumer {
+public class HBaseConsumer implements ReplicationTargetInterface {
+
+    // TODO
+    String hostName = "localhost";
 
     private final String clusterKey;
     /** The id under which the replication target is made known to the source cluster. */
@@ -60,10 +68,12 @@ public class HBaseConsumer {
 
     private final Configuration hbaseConf;
     private final RecoverableZooKeeper zooKeeper;
-    private final ReplicationTargetServer replicationEndpoint;
-    private RpcServer rpcServer;
+    private final RpcServer rpcServer;
 
     private boolean isRunning = false;
+
+    private static final int QUEUE_CAPACITY = 1000;
+    private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
 
     public HBaseConsumer(byte[] serializedConfig)
             throws IOException, KeeperException, InterruptedException {
@@ -80,43 +90,84 @@ public class HBaseConsumer {
         this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";
         this.replicationPeerId = peerId;
+        this.walEdits = new FutureCompletingBlockingQueue<>(QUEUE_CAPACITY);
 
         // Setup
-        zooKeeper = connectZooKeeper();
-        replicationEndpoint = createServer();
+        zooKeeper = connectToZooKeeper();
+        rpcServer = createServer();
+        registerAtZooKeeper();
     }
 
-    private String getBaseString() {
-        // TODO hbasesep.* will never be resolved
-        return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
+    private RecoverableZooKeeper connectToZooKeeper() throws IOException {
+        RecoverableZooKeeper zooKeeper =
+                new RecoverableZooKeeper(
+                        "localhost:" + getZookeeperPort(),
+                        20000,
+                        event -> System.out.println("Watcher processed: " + event),
+                        5,
+                        200,
+                        200,
+                        null,
+                        1);
+
+        System.out.println("Connected to Zookeeper");
+
+        return zooKeeper;
     }
 
-    private String getPort() {
-        return hbaseConf.get("hbase.zookeeper.property.clientPort");
+    private RpcServer createServer() throws IOException {
+        Server server = new EmptyHBaseServer(hbaseConf);
+        InetSocketAddress initialIsa = new InetSocketAddress(hostName, 0);
+        String name = "regionserver/" + initialIsa.toString();
+
+        RpcServer.BlockingServiceAndInterface bsai =
+                new RpcServer.BlockingServiceAndInterface(
+                        AdminProtos.AdminService.newReflectiveBlockingService(this),
+                        BlockingInterface.class);
+        RpcServer rpcServer =
+                RpcServerFactory.createRpcServer(
+                        server,
+                        name,
+                        Arrays.asList(bsai),
+                        initialIsa,
+                        hbaseConf,
+                        new FifoRpcScheduler(
+                                hbaseConf,
+                                hbaseConf.getInt("hbase.regionserver.handler.count", 10)));
+
+        rpcServer.start();
+        return rpcServer;
     }
 
-    private void createZKPath(final String path, byte[] data, List<ACL> acl, CreateMode createMode)
-            throws KeeperException, InterruptedException {
-        createZKPath(path, data, acl, createMode, 5);
-    }
+    private void registerAtZooKeeper() throws KeeperException, InterruptedException {
+        createZKPath(
+                getBaseString() + "/" + clusterKey,
+                null,
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        createZKPath(
+                getBaseString() + "/" + clusterKey + "/rs",
+                null,
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
 
-    private void createZKPath(
-            final String path, byte[] data, List<ACL> acl, CreateMode createMode, int retries)
-            throws KeeperException, InterruptedException {
-        try {
-            if (zooKeeper.exists(path, false) == null) {
-                zooKeeper.create(path, data, acl, createMode);
-            }
-        } catch (KeeperException e) {
-            System.err.println("Error creating ZK path: " + e.getMessage());
-            if (retries > 0) {
-                System.err.printf("Retry ... (%d retries left)", retries);
-                createZKPath(path, data, acl, createMode, retries - 1);
-            } else {
-                System.err.println("Abort");
-                throw e;
-            }
-        }
+        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
+        createZKPath(
+                getBaseString() + "/" + clusterKey + "/hbaseid",
+                Bytes.toBytes(uuid.toString()),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        ServerName serverName =
+                ServerName.valueOf(
+                        hostName,
+                        rpcServer.getListenerAddress().getPort(),
+                        System.currentTimeMillis());
+        zooKeeper.create(
+                getBaseString() + "/" + clusterKey + "/rs/" + serverName.getServerName(),
+                null,
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.EPHEMERAL);
     }
 
     public HBaseEvent next() {
@@ -124,7 +175,13 @@ public class HBaseConsumer {
             // Protects from infinite waiting
             throw new RuntimeException("Consumer is not running");
         }
-        return replicationEndpoint.next();
+
+        try {
+            return walEdits.take();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(
+                    "HBase replication endpoint couldn't retrieve element from queue", e);
+        }
     }
 
     public void close() {
@@ -140,29 +197,15 @@ public class HBaseConsumer {
         }
     }
 
-    private RecoverableZooKeeper connectZooKeeper() throws IOException {
-        RecoverableZooKeeper zooKeeper =
-                new RecoverableZooKeeper(
-                        "localhost:" + getPort(),
-                        20000,
-                        event -> System.out.println("Watcher processed: " + event),
-                        5,
-                        200,
-                        200,
-                        null,
-                        1);
-
-        System.out.println("Connected to Zookeeper");
-
-        return zooKeeper;
-    }
-
-    public void startReplication(String table, List<String> columnFamilys) {
+    public void startReplication(String table, List<String> columnFamilies) {
+        if (isRunning) {
+            throw new RuntimeException("HBase replication endpoint is already running");
+        }
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
                 Admin admin = connection.getAdmin()) {
 
             // clearExistingReplication(admin);
-            ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilys);
+            ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilies);
             if (admin.listReplicationPeers().stream()
                     .map(ReplicationPeerDescription::getPeerId)
                     .anyMatch(replicationPeerId::equals)) {
@@ -191,73 +234,81 @@ public class HBaseConsumer {
                         });
     }
 
+    @Override
+    public AdminProtos.ReplicateWALEntryResponse replicateWALEntry(
+            RpcController controller, AdminProtos.ReplicateWALEntryRequest request)
+            throws ServiceException {
+        List<AdminProtos.WALEntry> entries = request.getEntryList();
+        CellScanner cellScanner = ((HBaseRpcController) controller).cellScanner();
+
+        for (final AdminProtos.WALEntry entry : entries) {
+            final String table =
+                    TableName.valueOf(entry.getKey().getTableName().toByteArray()).toString();
+            final int count = entry.getAssociatedCellCount();
+
+            for (int i = 0; i < count; i++) {
+                try {
+                    if (!cellScanner.advance()) {
+                        throw new ArrayIndexOutOfBoundsException(
+                                "Expected walentry to have "
+                                        + count
+                                        + "elements, but cell scanner did not have cell for index"
+                                        + i);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Cell cell = cellScanner.current();
+                HBaseEvent event = HBaseEvent.fromCell(table, cell, i);
+
+                try {
+                    walEdits.put(0, event);
+                } catch (InterruptedException exception) {
+                    System.err.println("Error adding to Queue: " + exception);
+                }
+            }
+        }
+
+        return AdminProtos.ReplicateWALEntryResponse.newBuilder().build();
+    }
+
     private ReplicationPeerConfig createPeerConfig(String table, List<String> columnFamilys) {
         HashMap tableMap = new HashMap<>();
         ArrayList<String> cFs = new ArrayList<>();
         cFs.addAll(columnFamilys);
         tableMap.put(TableName.valueOf(table), cFs);
         return ReplicationPeerConfig.newBuilder()
-                .setClusterKey("localhost:" + getPort() + ":" + getBaseString() + "/" + clusterKey)
+                .setClusterKey(
+                        "localhost:"
+                                + getZookeeperPort()
+                                + ":"
+                                + getBaseString()
+                                + "/"
+                                + clusterKey)
                 .setReplicateAllUserTables(false)
                 .setTableCFsMap(tableMap)
                 .build();
     }
 
-    private ReplicationTargetServer createServer()
-            throws KeeperException, InterruptedException, IOException {
-        ReplicationTargetServer replicationInterface = new ReplicationTargetServer();
-        Server server = new AbstractRegionServer();
+    private String getZookeeperPort() {
+        return hbaseConf.get("hbase.zookeeper.property.clientPort");
+    }
 
-        String hostName = "localhost";
-        InetSocketAddress initialIsa = new InetSocketAddress(hostName, 0);
-        String name = "regionserver/" + initialIsa.toString();
+    private String getBaseString() {
+        // TODO hbasesep.* will never be resolved
+        return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
+    }
 
-        RpcServer.BlockingServiceAndInterface bsai =
-                new RpcServer.BlockingServiceAndInterface(
-                        AdminProtos.AdminService.newReflectiveBlockingService(replicationInterface),
-                        BlockingInterface.class);
-        rpcServer =
-                RpcServerFactory.createRpcServer(
-                        server,
-                        name,
-                        Arrays.asList(bsai),
-                        initialIsa,
-                        hbaseConf,
-                        new FifoRpcScheduler(
-                                hbaseConf,
-                                hbaseConf.getInt("hbase.regionserver.handler.count", 10)));
-
-        UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
-        createZKPath(
-                getBaseString() + "/" + clusterKey,
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        createZKPath(
-                getBaseString() + "/" + clusterKey + "/rs",
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-
-        createZKPath(
-                getBaseString() + "/" + clusterKey + "/hbaseid",
-                Bytes.toBytes(uuid.toString()),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-
-        ServerName serverName =
-                ServerName.valueOf(
-                        hostName,
-                        rpcServer.getListenerAddress().getPort(),
-                        System.currentTimeMillis());
-        ZKWatcher zkWatcher = new ZKWatcher(hbaseConf, serverName.toString(), null);
-        rpcServer.start();
-        zooKeeper.create(
-                getBaseString() + "/" + clusterKey + "/rs/" + serverName.getServerName(),
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
-
-        return replicationInterface;
+    private void createZKPath(final String path, byte[] data, List<ACL> acl, CreateMode createMode)
+            throws KeeperException, InterruptedException {
+        try {
+            if (zooKeeper.exists(path, false) == null) {
+                zooKeeper.create(path, data, acl, createMode);
+            }
+        } catch (KeeperException e) {
+            System.err.println("Error creating ZK path: " + e.getMessage());
+            throw e;
+        }
     }
 }

@@ -21,7 +21,6 @@ package org.apache.flink.connector.hbase.source.hbaseendpoint;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ChoreService;
 import org.apache.hadoop.hbase.CoordinatedStateManager;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.ClusterConnection;
@@ -34,22 +33,22 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
- * Scaffold for any class that wants to act as region server. Keeps all unneeded interface methods
- * out of the actual implementing classes. <br>
- * Implements {@link Server} to enable the creation of {@link org.apache.hadoop.hbase.ipc.RpcServer}
- * via {@link org.apache.hadoop.hbase.ipc.RpcServerFactory#createRpcServer(Server, String, List,
- * InetSocketAddress, Configuration, RpcScheduler)}
+ * Minimal implementation of {@link Server} to enable the creation of {@link
+ * org.apache.hadoop.hbase.ipc.RpcServer} via {@link
+ * org.apache.hadoop.hbase.ipc.RpcServerFactory#createRpcServer(Server, String, List,
+ * InetSocketAddress, Configuration, RpcScheduler)}.
  */
-public class AbstractRegionServer implements Server {
+public class EmptyHBaseServer implements Server {
 
-    // Server interface
+    private final Configuration configuration;
+
+    public EmptyHBaseServer(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     @Override
     public Configuration getConfiguration() {
-        return HBaseConfiguration.create();
-        // TODO
-        //        throw new UnsupportedOperationException(
-        //                "Operation \"getConfiguration\" not implemented in class " + getClass());
+        return configuration;
     }
 
     @Override

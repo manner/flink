@@ -19,6 +19,7 @@
 package org.apache.flink.connector.hbase.source.reader;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 
 /** HBaseEvent. */
 public class HBaseEvent {
@@ -33,6 +34,17 @@ public class HBaseEvent {
     private final int index;
 
     private final long offset;
+
+    public static HBaseEvent fromCell(String table, Cell cell, int index) {
+        final String row = new String(CellUtil.cloneRow(cell));
+        final String cf = new String(CellUtil.cloneFamily(cell));
+        final String qualifier = new String(CellUtil.cloneQualifier(cell));
+        final byte[] payload = CellUtil.cloneValue(cell);
+        final long timestamp = cell.getTimestamp();
+        final int offset = cell.getRowOffset(); // which offset is the right one?
+        final Cell.Type type = cell.getType();
+        return new HBaseEvent(type, row, table, cf, qualifier, payload, timestamp, index, offset);
+    }
 
     public HBaseEvent(
             Cell.Type type,
