@@ -276,7 +276,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         doAndWaitForSuccess(env, () -> {}, 120);
     }
 
-    /** Bla. */
+    /** Simple Deserialization Scheme to get event payloads as String. */
     public static class HBaseStringDeserializationScheme extends HBaseSourceDeserializer<String> {
         @Override
         public String deserialize(HBaseEvent event) {
