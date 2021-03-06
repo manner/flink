@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService.BlockingInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper;
+import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
 import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 import org.apache.zookeeper.CreateMode;
@@ -100,15 +101,16 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
 
     private RecoverableZooKeeper connectToZooKeeper() throws IOException {
         RecoverableZooKeeper zooKeeper =
-                new RecoverableZooKeeper(
-                        "localhost:" + getZookeeperPort(),
-                        20000,
-                        event -> System.out.println("Watcher processed: " + event),
-                        5,
-                        200,
-                        200,
-                        null,
-                        1);
+                ZKUtil.connect(hbaseConf, "localhost:" + getZookeeperPort(), null);
+        //                new RecoverableZooKeeper(
+        //                        "localhost:" + getZookeeperPort(),
+        //                        2,
+        //                        event -> System.out.println("Watcher processed: " + event),
+        //                        8,
+        //                        1000,
+        //                        2000,
+        //                        null,
+        //                        1);
 
         System.out.println("Connected to Zookeeper");
 
@@ -301,14 +303,13 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private void createZKPath(final String path, byte[] data, List<ACL> acl, CreateMode createMode)
-            throws KeeperException, InterruptedException {
+            throws InterruptedException {
         try {
             if (zooKeeper.exists(path, false) == null) {
                 zooKeeper.create(path, data, acl, createMode);
             }
         } catch (KeeperException e) {
-            System.err.println("Error creating ZK path: " + e.getMessage());
-            throw e;
+            throw new RuntimeException("Error creating ZK path in Hbase replication endpoint", e);
         }
     }
 }
