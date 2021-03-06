@@ -33,12 +33,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/** Tests for {@link org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseConsumer}. */
-public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
+/** Tests for {@link HBaseEndpoint}. */
+public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testSetup() throws Exception {
-        new HBaseConsumer(cluster.getConfig())
+        new HBaseEndpoint(cluster.getConfig())
                 .startReplication(
                         baseTableName,
                         Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
@@ -46,7 +46,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testPutCreatesEvent() throws Exception {
-        HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
+        HBaseEndpoint consumer = new HBaseEndpoint(cluster.getConfig());
         consumer.startReplication(
                 baseTableName,
                 Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
@@ -58,7 +58,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testTimestampsAndIndicesDefineStrictOrder() throws Exception {
-        HBaseConsumer consumer = new HBaseConsumer(cluster.getConfig());
+        HBaseEndpoint consumer = new HBaseEndpoint(cluster.getConfig());
         consumer.startReplication(
                 baseTableName,
                 Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
@@ -89,7 +89,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
         String id = UUID.randomUUID().toString().substring(0, 5);
 
         String firstValue = UUID.randomUUID().toString();
-        HBaseConsumer firstConsumer = new HBaseConsumer(id, cluster.getConfig());
+        HBaseEndpoint firstConsumer = new HBaseEndpoint(id, cluster.getConfig());
         firstConsumer.startReplication(
                 baseTableName,
                 Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
@@ -99,7 +99,7 @@ public class HBaseConsumerTest extends TestsWithTestHBaseCluster {
         firstConsumer.close();
 
         String secondValue = UUID.randomUUID().toString();
-        HBaseConsumer secondConsumer = new HBaseConsumer(id, cluster.getConfig());
+        HBaseEndpoint secondConsumer = new HBaseEndpoint(id, cluster.getConfig());
         secondConsumer.startReplication(
                 baseTableName,
                 Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));

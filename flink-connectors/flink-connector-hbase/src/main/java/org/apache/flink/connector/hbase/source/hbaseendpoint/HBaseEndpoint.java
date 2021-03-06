@@ -57,7 +57,7 @@ import java.util.List;
 import java.util.UUID;
 
 /** Consumer of HBase WAL edits. */
-public class HBaseConsumer implements ReplicationTargetInterface {
+public class HBaseEndpoint implements ReplicationTargetInterface {
 
     // TODO
     String hostName = "localhost";
@@ -75,17 +75,17 @@ public class HBaseConsumer implements ReplicationTargetInterface {
     private static final int QUEUE_CAPACITY = 1000;
     private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
 
-    public HBaseConsumer(byte[] serializedConfig)
+    public HBaseEndpoint(byte[] serializedConfig)
             throws IOException, KeeperException, InterruptedException {
         this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null));
     }
 
-    public HBaseConsumer(Configuration hbaseConf)
+    public HBaseEndpoint(Configuration hbaseConf)
             throws InterruptedException, KeeperException, IOException {
         this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
     }
 
-    public HBaseConsumer(String peerId, Configuration hbaseConf)
+    public HBaseEndpoint(String peerId, Configuration hbaseConf)
             throws IOException, KeeperException, InterruptedException {
         this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";

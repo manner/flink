@@ -22,7 +22,7 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
-import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseConsumer;
+import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseEndpoint;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 
 import javax.annotation.Nullable;
@@ -39,7 +39,7 @@ import java.util.Set;
 public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSourceSplit> {
 
     private final Queue<HBaseSourceSplit> splits;
-    private final HBaseConsumer hbaseConsumer;
+    private final HBaseEndpoint hbaseEndpoint;
 
     @Nullable private String currentSplitId;
 
@@ -47,7 +47,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         System.out.println("constructing Split Reader");
         try {
 
-            this.hbaseConsumer = new HBaseConsumer(serializedConfig);
+            this.hbaseEndpoint = new HBaseEndpoint(serializedConfig);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
@@ -60,7 +60,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         if (nextSplit != null) {
             currentSplitId = nextSplit.splitId();
         }
-        HBaseEvent nextValue = hbaseConsumer.next();
+        HBaseEvent nextValue = hbaseEndpoint.next();
         List<HBaseEvent> records = Collections.singletonList(nextValue);
         return new HbaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
     }
@@ -70,7 +70,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         if (splitsChanges instanceof SplitsAddition) {
             HBaseSourceSplit split = splitsChanges.splits().get(0);
             try {
-                this.hbaseConsumer.startReplication(split.getTable(), split.getColumnFamilys());
+                this.hbaseEndpoint.startReplication(split.getTable(), split.getColumnFamilys());
             } catch (Exception e) {
                 throw new RuntimeException("failed HBase consumer", e);
             }
