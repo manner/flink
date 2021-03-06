@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.ClearCompactionQueuesRequest;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.ClearCompactionQueuesResponse;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.ClearRegionBlockCacheRequest;
@@ -77,10 +78,7 @@ import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 import java.io.IOException;
 
 /** Bla. */
-public class AbstractRegionServer
-        implements org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService
-                        .BlockingInterface,
-                Server {
+public class AbstractRegionServer implements AdminService.BlockingInterface, Server {
 
     @Override
     public Configuration getConfiguration() {
@@ -92,183 +90,215 @@ public class AbstractRegionServer
     @Override
     public ClearCompactionQueuesResponse clearCompactionQueues(
             RpcController arg0, ClearCompactionQueuesRequest arg1) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"clearCompactionQueues\" not implemented in class " + getClass());
     }
 
     @Override
     public GetRegionInfoResponse getRegionInfo(
             RpcController controller, GetRegionInfoRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getRegionInfo\" not implemented in class " + getClass());
     }
 
     @Override
     public GetStoreFileResponse getStoreFile(RpcController controller, GetStoreFileRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getStoreFile\" not implemented in class " + getClass());
     }
 
     @Override
     public GetOnlineRegionResponse getOnlineRegion(
             RpcController controller, GetOnlineRegionRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getOnlineRegion\" not implemented in class " + getClass());
     }
 
     @Override
     public OpenRegionResponse openRegion(RpcController controller, OpenRegionRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"openRegion\" not implemented in class " + getClass());
     }
 
     @Override
     public WarmupRegionResponse warmupRegion(RpcController controller, WarmupRegionRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"warmupRegion\" not implemented in class " + getClass());
     }
 
     @Override
     public CloseRegionResponse closeRegion(RpcController controller, CloseRegionRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"closeRegion\" not implemented in class " + getClass());
     }
 
     @Override
     public FlushRegionResponse flushRegion(RpcController controller, FlushRegionRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"flushRegion\" not implemented in class " + getClass());
     }
 
     @Override
     public CompactionSwitchResponse compactionSwitch(
             RpcController controller, CompactionSwitchRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"compactionSwitch\" not implemented in class " + getClass());
     }
 
     @Override
     public CompactRegionResponse compactRegion(
             RpcController controller, CompactRegionRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"compactRegion\" not implemented in class " + getClass());
     }
 
     @Override
     public ReplicateWALEntryResponse replicateWALEntry(
             RpcController controller, ReplicateWALEntryRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"replicateWALEntry\" not implemented in class " + getClass());
     }
 
     @Override
     public ReplicateWALEntryResponse replay(
             RpcController controller, ReplicateWALEntryRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"replay\" not implemented in class " + getClass());
     }
 
     @Override
     public RollWALWriterResponse rollWALWriter(
             RpcController controller, RollWALWriterRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"rollWALWriter\" not implemented in class " + getClass());
     }
 
     @Override
     public GetServerInfoResponse getServerInfo(
             RpcController controller, GetServerInfoRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getServerInfo\" not implemented in class " + getClass());
     }
 
     @Override
     public StopServerResponse stopServer(RpcController controller, StopServerRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"stopServer\" not implemented in class " + getClass());
     }
 
     @Override
     public UpdateFavoredNodesResponse updateFavoredNodes(
             RpcController controller, UpdateFavoredNodesRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"updateFavoredNodes\" not implemented in class " + getClass());
     }
 
     @Override
     public UpdateConfigurationResponse updateConfiguration(
             RpcController controller, UpdateConfigurationRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"updateConfiguration\" not implemented in class " + getClass());
     }
 
     @Override
     public GetRegionLoadResponse getRegionLoad(
             RpcController controller, GetRegionLoadRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getRegionLoad\" not implemented in class " + getClass());
     }
 
     @Override
     public ClearRegionBlockCacheResponse clearRegionBlockCache(
             RpcController controller, ClearRegionBlockCacheRequest request)
             throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"clearRegionBlockCache\" not implemented in class " + getClass());
     }
 
     @Override
     public ExecuteProceduresResponse executeProcedures(
             RpcController controller, ExecuteProceduresRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"executeProcedures\" not implemented in class " + getClass());
     }
 
     @Override
     public GetSpaceQuotaSnapshotsResponse getSpaceQuotaSnapshots(
             RpcController arg0, GetSpaceQuotaSnapshotsRequest arg1) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getSpaceQuotaSnapshots\" not implemented in class " + getClass());
     }
 
     @Override
     public void abort(String why, Throwable e) {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"abort\" not implemented in class " + getClass());
     }
 
     @Override
     public boolean isAborted() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"isAborted\" not implemented in class " + getClass());
     }
 
     @Override
     public void stop(String why) {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"stop\" not implemented in class " + getClass());
     }
 
     @Override
     public boolean isStopped() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"isStopped\" not implemented in class " + getClass());
     }
 
     @Override
     public ZKWatcher getZooKeeper() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getZooKeeper\" not implemented in class " + getClass());
     }
 
     @Override
     public Connection getConnection() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getConnection\" not implemented in class " + getClass());
     }
 
     @Override
     public Connection createConnection(Configuration conf) throws IOException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"createConnection\" not implemented in class " + getClass());
     }
 
     @Override
     public ClusterConnection getClusterConnection() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getClusterConnection\" not implemented in class " + getClass());
     }
 
     @Override
     public ServerName getServerName() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getServerName\" not implemented in class " + getClass());
     }
 
     @Override
     public CoordinatedStateManager getCoordinatedStateManager() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getCoordinatedStateManager\" not implemented in class " + getClass());
     }
 
     @Override
     public ChoreService getChoreService() {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getChoreService\" not implemented in class " + getClass());
     }
 
     ////////////////////////////////////////////
@@ -276,18 +306,21 @@ public class AbstractRegionServer
     @Override
     public SlowLogResponses getSlowLogResponses(
             RpcController controller, SlowLogResponseRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getSlowLogResponses\" not implemented in class " + getClass());
     }
 
     @Override
     public SlowLogResponses getLargeLogResponses(
             RpcController controller, SlowLogResponseRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"getLargeLogResponses\" not implemented in class " + getClass());
     }
 
     @Override
     public ClearSlowLogResponses clearSlowLogsResponses(
             RpcController controller, ClearSlowLogResponseRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Just a dummy");
+        throw new UnsupportedOperationException(
+                "Operation \"clearSlowLogsResponses\" not implemented in class " + getClass());
     }
 }
