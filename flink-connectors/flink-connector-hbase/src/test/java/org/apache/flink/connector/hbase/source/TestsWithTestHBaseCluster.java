@@ -81,6 +81,7 @@ public abstract class TestsWithTestHBaseCluster {
     public void clearReplicationPeers() {
         if (SHARE_CLUSTER) {
             cluster.clearReplicationPeers();
+            assert cluster.getReplicationPeers().size() == 0;
             cluster.clearTables();
         }
     }

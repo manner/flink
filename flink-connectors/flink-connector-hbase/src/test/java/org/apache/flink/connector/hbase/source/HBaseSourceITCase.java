@@ -45,6 +45,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignalThrowOnFailure;
@@ -63,11 +64,17 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     private DataStream<String> streamFromHBaseSource(
             StreamExecutionEnvironment environment, String tableName)
             throws ParserConfigurationException, SAXException, IOException {
+        return streamFromHBaseSource(environment, tableName, 1);
+    }
+
+    private DataStream<String> streamFromHBaseSource(
+            StreamExecutionEnvironment environment, String tableName, int parallelism)
+            throws ParserConfigurationException, SAXException, IOException {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
                 new HBaseSource<>(deserializationScheme, tableName, cluster.getConfig());
-        environment.setParallelism(1);
+        environment.setParallelism(parallelism);
         DataStream<String> stream =
                 environment.fromSource(
                         source,
@@ -250,12 +257,32 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     }
 
     @Test
+    public void testMultipleSplitReadersAreCreated() throws Exception {
+        int parallelism = 4;
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        streamFromHBaseSource(env, baseTableName, parallelism).print();
+        cluster.makeTable(baseTableName, parallelism);
+        JobClient jobClient = env.executeAsync();
+        CompletableFuture.runAsync(
+                        () -> {
+                            while (cluster.getReplicationPeers().size() != parallelism) {
+                                try {
+                                    System.out.println(cluster.getReplicationPeers().size());
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
+                .get(90, TimeUnit.SECONDS);
+        jobClient.cancel();
+    }
+
+    @Test
     public void testBasicPutWhenMoreCFsThanThreads() throws Exception {
         int parallelism = 1;
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(parallelism);
-        env.setMaxParallelism(parallelism);
-        DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
+        DataStream<String> stream = streamFromHBaseSource(env, baseTableName, parallelism);
 
         String[] expectedValues = new String[] {"foo", "bar", "baz", "boo"};
         assert expectedValues.length > parallelism;

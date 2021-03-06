@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -191,6 +192,15 @@ public class HBaseTestClusterUtil {
             }
         } catch (SAXException | IOException | ParserConfigurationException e) {
             e.printStackTrace();
+        }
+    }
+
+    public List<ReplicationPeerDescription> getReplicationPeers() {
+        try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
+            return admin.listReplicationPeers();
+        } catch (SAXException | IOException | ParserConfigurationException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
