@@ -226,7 +226,7 @@ public class HBaseTestClusterUtil {
     public void commitPut(String tableName, Put put) {
         try (Table htable =
                 ConnectionFactory.createConnection(getConfig())
-                        .getTable(TableName.valueOf(tableName)); ) {
+                        .getTable(TableName.valueOf(tableName))) {
             htable.put(put);
             System.out.println("Added row " + Bytes.toString(put.getRow()));
         } catch (IOException | SAXException | ParserConfigurationException e) {

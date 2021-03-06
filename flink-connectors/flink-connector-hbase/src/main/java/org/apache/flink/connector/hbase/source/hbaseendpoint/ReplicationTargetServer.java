@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Bla. */
-public class ReplicationTargetServer extends AbstractRegionServer implements PriorityFunction {
+public class ReplicationTargetServer implements PriorityFunction, ReplicationEndpointInterface {
 
     private static final int QUEUE_CAPACITY = 1000;
     private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
@@ -133,12 +133,5 @@ public class ReplicationTargetServer extends AbstractRegionServer implements Pri
     @Override
     public long getDeadline(RequestHeader header, Message param) {
         return 0;
-    }
-
-    @Override
-    public void stop(String why) {
-        // TODO this function should probably be implemented and close the rpc server, this is
-        // currently done in HBaseConsumer
-        super.stop(why);
     }
 }

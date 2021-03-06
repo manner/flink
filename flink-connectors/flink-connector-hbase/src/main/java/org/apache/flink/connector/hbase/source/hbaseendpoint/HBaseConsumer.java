@@ -22,9 +22,9 @@ import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.ipc.RpcServerFactory;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService.BlockingInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
@@ -57,9 +58,9 @@ public class HBaseConsumer {
     /** The id under which the replication target is made known to the source cluster. */
     private final String replicationPeerId;
 
-    private Configuration hbaseConf;
-    private RecoverableZooKeeper zooKeeper;
-    private final ReplicationTargetServer server;
+    private final Configuration hbaseConf;
+    private final RecoverableZooKeeper zooKeeper;
+    private final ReplicationTargetServer replicationEndpoint;
     private RpcServer rpcServer;
 
     private boolean isRunning = false;
@@ -82,7 +83,7 @@ public class HBaseConsumer {
 
         // Setup
         zooKeeper = connectZooKeeper();
-        server = createServer();
+        replicationEndpoint = createServer();
     }
 
     private String getBaseString() {
@@ -123,7 +124,7 @@ public class HBaseConsumer {
             // Protects from infinite waiting
             throw new RuntimeException("Consumer is not running");
         }
-        return server.next();
+        return replicationEndpoint.next();
     }
 
     public void close() {
@@ -158,7 +159,7 @@ public class HBaseConsumer {
 
     public void startReplication(String table, List<String> columnFamilys) {
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
-                Admin admin = connection.getAdmin(); ) {
+                Admin admin = connection.getAdmin()) {
 
             // clearExistingReplication(admin);
             ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilys);
@@ -203,9 +204,9 @@ public class HBaseConsumer {
     }
 
     private ReplicationTargetServer createServer()
-            throws KeeperException, InterruptedException, ZooKeeperConnectionException,
-                    IOException {
-        ReplicationTargetServer server = new ReplicationTargetServer();
+            throws KeeperException, InterruptedException, IOException {
+        ReplicationTargetServer replicationInterface = new ReplicationTargetServer();
+        Server server = new AbstractRegionServer();
 
         String hostName = "localhost";
         InetSocketAddress initialIsa = new InetSocketAddress(hostName, 0);
@@ -213,9 +214,8 @@ public class HBaseConsumer {
 
         RpcServer.BlockingServiceAndInterface bsai =
                 new RpcServer.BlockingServiceAndInterface(
-                        AdminProtos.AdminService.newReflectiveBlockingService(server),
-                        org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService
-                                .BlockingInterface.class);
+                        AdminProtos.AdminService.newReflectiveBlockingService(replicationInterface),
+                        BlockingInterface.class);
         rpcServer =
                 RpcServerFactory.createRpcServer(
                         server,
@@ -258,6 +258,6 @@ public class HBaseConsumer {
                 ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
 
-        return server;
+        return replicationInterface;
     }
 }
