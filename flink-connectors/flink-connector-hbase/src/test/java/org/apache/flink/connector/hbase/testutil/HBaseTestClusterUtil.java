@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
@@ -234,7 +235,7 @@ public class HBaseTestClusterUtil {
         }
     }
 
-    public void put(String tableName, String value) {
+    public String put(String tableName, String value) {
         try (Table htable =
                 ConnectionFactory.createConnection(getConfig())
                         .getTable(TableName.valueOf(tableName))) {
@@ -246,6 +247,21 @@ public class HBaseTestClusterUtil {
             Put put = new Put(rowkey).addColumn(columnFamily, qualifier, payload);
             htable.put(put);
             System.out.println("Added row " + uuid);
+            return uuid;
+        } catch (IOException | SAXException | ParserConfigurationException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void delete(String tableName, String rowKey, String columnFamily, String qualifier) {
+        try (Table htable =
+                ConnectionFactory.createConnection(getConfig())
+                        .getTable(TableName.valueOf(tableName))) {
+            Delete delete = new Delete(rowKey.getBytes());
+            delete.addColumn(columnFamily.getBytes(), qualifier.getBytes());
+            htable.delete(delete);
+            System.out.println("Deleted row " + rowKey);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             e.printStackTrace();
         }

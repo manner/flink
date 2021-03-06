@@ -22,6 +22,7 @@ import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 
+import org.apache.hadoop.hbase.Cell;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -46,14 +47,37 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testPutCreatesEvent() throws Exception {
+        cluster.makeTable(baseTableName);
         HBaseEndpoint consumer = new HBaseEndpoint(cluster.getConfig());
         consumer.startReplication(
                 baseTableName,
                 Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
-        cluster.makeTable(baseTableName);
         cluster.put(baseTableName, "foobar");
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         assertNotNull(result);
+        assertEquals(Cell.Type.Put, result.getType());
+    }
+
+    @Test
+    public void testDeleteCreatesEvent() throws Exception {
+        cluster.makeTable(baseTableName);
+        HBaseEndpoint consumer = new HBaseEndpoint(cluster.getConfig());
+        consumer.startReplication(
+                baseTableName,
+                Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+
+        String rowKey = cluster.put(baseTableName, "foobar");
+        cluster.delete(
+                baseTableName,
+                rowKey,
+                HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY,
+                HBaseTestClusterUtil.DEFAULT_QUALIFIER);
+
+        CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
+        HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
+
+        assertNotNull(result);
+        assertEquals(Cell.Type.Delete, result.getType());
     }
 
     @Test
