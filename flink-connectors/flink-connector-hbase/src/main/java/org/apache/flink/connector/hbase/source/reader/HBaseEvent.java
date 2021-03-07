@@ -33,19 +33,6 @@ public class HBaseEvent {
     /** Index of operation inside one wal entry. */
     private final int index;
 
-    private final long offset;
-
-    public static HBaseEvent fromCell(String table, Cell cell, int index) {
-        final String row = new String(CellUtil.cloneRow(cell));
-        final String cf = new String(CellUtil.cloneFamily(cell));
-        final String qualifier = new String(CellUtil.cloneQualifier(cell));
-        final byte[] payload = CellUtil.cloneValue(cell);
-        final long timestamp = cell.getTimestamp();
-        final int offset = cell.getRowOffset(); // which offset is the right one?
-        final Cell.Type type = cell.getType();
-        return new HBaseEvent(type, row, table, cf, qualifier, payload, timestamp, index, offset);
-    }
-
     public HBaseEvent(
             Cell.Type type,
             String rowId,
@@ -54,8 +41,7 @@ public class HBaseEvent {
             String qualifier,
             byte[] payload,
             long timestamp,
-            int index,
-            long offset) {
+            int index) {
         this.type = type;
         this.rowId = rowId;
         this.table = table;
@@ -64,7 +50,16 @@ public class HBaseEvent {
         this.payload = payload;
         this.timestamp = timestamp;
         this.index = index;
-        this.offset = offset;
+    }
+
+    public static HBaseEvent fromCell(String table, Cell cell, int index) {
+        final String row = new String(CellUtil.cloneRow(cell));
+        final String cf = new String(CellUtil.cloneFamily(cell));
+        final String qualifier = new String(CellUtil.cloneQualifier(cell));
+        final byte[] payload = CellUtil.cloneValue(cell);
+        final long timestamp = cell.getTimestamp();
+        final Cell.Type type = cell.getType();
+        return new HBaseEvent(type, row, table, cf, qualifier, payload, timestamp, index);
     }
 
     public byte[] getPayload() {
@@ -99,10 +94,6 @@ public class HBaseEvent {
         return qualifier;
     }
 
-    public long getOffset() {
-        return offset;
-    }
-
     @Override
     public String toString() {
         return type.name()
@@ -119,9 +110,7 @@ public class HBaseEvent {
                 + " "
                 + timestamp
                 + " "
-                + index
-                + " "
-                + offset;
+                + index;
     }
 
     public boolean isLaterThan(long timestamp, int index) {
