@@ -69,7 +69,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         if (splitsChanges instanceof SplitsAddition) {
             HBaseSourceSplit split = splitsChanges.splits().get(0);
             try {
-                this.hbaseEndpoint.startReplication(split.getTable(), split.getColumnFamilys());
+                this.hbaseEndpoint.startReplication(split.getTable(), split.getColumnFamilies());
             } catch (Exception e) {
                 throw new RuntimeException("failed HBase consumer", e);
             }

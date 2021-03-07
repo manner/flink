@@ -47,8 +47,8 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
-            out.writeInt(split.getColumnFamilys().size());
-            for (String cF : split.getColumnFamilys()) {
+            out.writeInt(split.getColumnFamilies().size());
+            for (String cF : split.getColumnFamilies()) {
                 out.writeUTF(cF);
             }
             out.writeLong(split.getFirstEventStamp().f0);
@@ -65,10 +65,10 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             String id = in.readUTF();
             String host = in.readUTF();
             String table = in.readUTF();
-            ArrayList<String> columnFamilys = new ArrayList<>();
+            ArrayList<String> columnFamilies = new ArrayList<>();
             int noOfCfs = in.readInt();
             for (int i = 0; i < noOfCfs; i++) {
-                columnFamilys.add(in.readUTF());
+                columnFamilies.add(in.readUTF());
             }
 
             long firstTimestamp = in.readLong();
@@ -77,7 +77,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
                     id,
                     host,
                     table,
-                    columnFamilys,
+                    columnFamilies,
                     Tuple2.of(firstTimestamp, firstIndex)); // TODO find real configuration
         }
     }

@@ -71,9 +71,9 @@ public class HBaseSplitEnumerator
             List<HBaseSourceSplit> splits = new ArrayList<>();
 
             int parallelism = context.currentParallelism();
-            int colFamilys = colFamDes.length;
+            int colFamilies = colFamDes.length;
 
-            if (parallelism > colFamilys) {
+            if (parallelism > colFamilies) {
                 for (ColumnFamilyDescriptor colFamDe : colFamDes) {
                     splits.add(
                             new HBaseSourceSplit(
@@ -84,33 +84,33 @@ public class HBaseSplitEnumerator
                                     new ArrayList<>(Arrays.asList(colFamDe.getNameAsString()))));
                 }
             } else {
-                int splitsPerReader = colFamilys / parallelism;
-                int remainingColumns = colFamilys % parallelism;
+                int splitsPerReader = colFamilies / parallelism;
+                int remainingColumns = colFamilies % parallelism;
 
                 for (int i = 0; i < parallelism - 1; i++) {
-                    ArrayList<String> colFamilysForSplit = new ArrayList<>();
+                    ArrayList<String> colFamiliesForSplit = new ArrayList<>();
                     for (int j = 0; j < splitsPerReader; j++) {
-                        colFamilysForSplit.add(colFamDes[i + j].getNameAsString());
+                        colFamiliesForSplit.add(colFamDes[i + j].getNameAsString());
                     }
 
                     splits.add(
                             new HBaseSourceSplit(
-                                    String.format("1234%s", colFamilysForSplit.get(0)),
+                                    String.format("1234%s", colFamiliesForSplit.get(0)),
                                     "localhost",
                                     table,
-                                    colFamilysForSplit));
+                                    colFamiliesForSplit));
                 }
-                ArrayList<String> colFamilysForLastSplit = new ArrayList<>();
+                ArrayList<String> colFamiliesForLastSplit = new ArrayList<>();
                 for (int i = 0; i < splitsPerReader + remainingColumns; i++) {
-                    colFamilysForLastSplit.add(
+                    colFamiliesForLastSplit.add(
                             colFamDes[colFamDes.length - i - 1].getNameAsString());
                 }
                 splits.add(
                         new HBaseSourceSplit(
-                                String.format("1234%s", colFamilysForLastSplit.get(0)),
+                                String.format("1234%s", colFamiliesForLastSplit.get(0)),
                                 "localhost",
                                 table,
-                                colFamilysForLastSplit));
+                                colFamiliesForLastSplit));
             }
 
             addSplits(splits);

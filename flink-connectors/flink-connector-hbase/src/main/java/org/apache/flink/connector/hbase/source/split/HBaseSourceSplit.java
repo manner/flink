@@ -35,24 +35,24 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     private final String table;
 
-    private final List<String> columnFamilys;
+    private final List<String> columnFamilies;
 
     private final Tuple2<Long, Integer> firstEventStamp;
 
-    public HBaseSourceSplit(String id, String host, String table, List<String> columnFamilys) {
-        this(id, host, table, columnFamilys, Tuple2.of(-1L, -1));
+    public HBaseSourceSplit(String id, String host, String table, List<String> columnFamilies) {
+        this(id, host, table, columnFamilies, Tuple2.of(-1L, -1));
     }
 
     public HBaseSourceSplit(
             String id,
             String host,
             String table,
-            List<String> columnFamilys,
+            List<String> columnFamilies,
             Tuple2<Long, Integer> firstEventStamp) {
         this.id = id;
         this.host = host;
         this.table = table;
-        this.columnFamilys = columnFamilys;
+        this.columnFamilies = columnFamilies;
         this.firstEventStamp = firstEventStamp;
     }
 
@@ -64,8 +64,8 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
         return host;
     }
 
-    public List<String> getColumnFamilys() {
-        return columnFamilys;
+    public List<String> getColumnFamilies() {
+        return columnFamilies;
     }
 
     @Override
@@ -84,6 +84,6 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     public HBaseSourceSplit withStamp(long lastTimeStamp, int lastIndex) {
         return new HBaseSourceSplit(
-                id, host, table, columnFamilys, Tuple2.of(lastTimeStamp, lastIndex));
+                id, host, table, columnFamilies, Tuple2.of(lastTimeStamp, lastIndex));
     }
 }
