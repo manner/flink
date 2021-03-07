@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import java.io.Serializable;
 import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -80,7 +79,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         assertArrayEquals(expected, actual);
     }
 
-    private static class HBaseTestSerializer implements HBaseSinkSerializer<Long>, Serializable {
+    private static class HBaseTestSerializer implements HBaseSinkSerializer<Long> {
         @Override
         public byte[] serializePayload(Long event) {
             return Bytes.toBytes(event.toString());
