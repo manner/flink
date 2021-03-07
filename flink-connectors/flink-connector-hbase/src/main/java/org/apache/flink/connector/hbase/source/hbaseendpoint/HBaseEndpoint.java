@@ -47,16 +47,15 @@ import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Consumer of HBase WAL edits. */
@@ -100,9 +99,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private RecoverableZooKeeper connectToZooKeeper() throws IOException {
-        RecoverableZooKeeper zooKeeper =
-                ZKUtil.connect(hbaseConf, "localhost:" + getZookeeperPort(), null);
-        return zooKeeper;
+        return ZKUtil.connect(hbaseConf, "localhost:" + getZookeeperPort(), null);
     }
 
     private RpcServer createServer() throws IOException {
@@ -118,7 +115,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                 RpcServerFactory.createRpcServer(
                         server,
                         name,
-                        Arrays.asList(bsai),
+                        Collections.singletonList(bsai),
                         initialIsa,
                         hbaseConf,
                         new FifoRpcScheduler(
@@ -132,21 +129,18 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private void registerAtZooKeeper() throws KeeperException, InterruptedException {
         createZKPath(
                 getBaseString() + "/" + clusterKey,
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+                null
+        );
         createZKPath(
                 getBaseString() + "/" + clusterKey + "/rs",
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+                null
+        );
 
         UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
         createZKPath(
                 getBaseString() + "/" + clusterKey + "/hbaseid",
-                Bytes.toBytes(uuid.toString()),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+                Bytes.toBytes(uuid.toString())
+        );
 
         ServerName serverName =
                 ServerName.valueOf(
@@ -239,7 +233,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                 try {
                     if (!cellScanner.advance()) {
                         throw new ArrayIndexOutOfBoundsException(
-                                "Expected walentry to have "
+                                "Expected WAL entry to have "
                                         + count
                                         + "elements, but cell scanner did not have cell for index"
                                         + i);
@@ -262,11 +256,9 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         return AdminProtos.ReplicateWALEntryResponse.newBuilder().build();
     }
 
-    private ReplicationPeerConfig createPeerConfig(String table, List<String> columnFamilys) {
-        HashMap tableMap = new HashMap<>();
-        ArrayList<String> cFs = new ArrayList<>();
-        cFs.addAll(columnFamilys);
-        tableMap.put(TableName.valueOf(table), cFs);
+    private ReplicationPeerConfig createPeerConfig(String table, List<String> columnFamilies) {
+        Map<TableName, List<String>> tableCFsMap = new HashMap<>();
+        tableCFsMap.put(TableName.valueOf(table), columnFamilies);
         return ReplicationPeerConfig.newBuilder()
                 .setClusterKey(
                         "localhost:"
@@ -276,7 +268,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                                 + "/"
                                 + clusterKey)
                 .setReplicateAllUserTables(false)
-                .setTableCFsMap(tableMap)
+                .setTableCFsMap(tableCFsMap)
                 .build();
     }
 
@@ -289,11 +281,11 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
     }
 
-    private void createZKPath(final String path, byte[] data, List<ACL> acl, CreateMode createMode)
+    private void createZKPath(final String path, byte[] data)
             throws InterruptedException {
         try {
             if (zooKeeper.exists(path, false) == null) {
-                zooKeeper.create(path, data, acl, createMode);
+                zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
         } catch (KeeperException e) {
             throw new RuntimeException("Error creating ZK path in Hbase replication endpoint", e);
