@@ -10,6 +10,7 @@ import java.io.Serializable;
 
 /** Deserialization Interface. */
 public abstract class HBaseSourceDeserializer<T> implements Serializable, ResultTypeQueryable<T> {
+    private static final long serialVersionUID = 1L;
     private final TypeInformation<T> type;
 
     protected HBaseSourceDeserializer() {

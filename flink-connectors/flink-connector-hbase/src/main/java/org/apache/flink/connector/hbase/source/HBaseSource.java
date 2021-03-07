@@ -38,6 +38,7 @@ import java.util.Collection;
 /** A connector for Hbase. */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
+    private static final long serialVersionUID = 1L;
     private final String tableName;
 
     private final HBaseSourceDeserializer<T> sourceDeserializer;

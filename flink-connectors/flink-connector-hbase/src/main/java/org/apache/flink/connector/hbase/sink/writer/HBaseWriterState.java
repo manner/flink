@@ -21,4 +21,6 @@ package org.apache.flink.connector.hbase.sink.writer;
 import java.io.Serializable;
 
 /** HBaseWriterState. */
-public class HBaseWriterState implements Serializable {}
+public class HBaseWriterState implements Serializable {
+    private static final long serialVersionUID = 1L;
+}
