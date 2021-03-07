@@ -41,12 +41,11 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
     private final Queue<HBaseSourceSplit> splits;
     private final HBaseEndpoint hbaseEndpoint;
 
-    @Nullable private String currentSplitId;
+    @Nullable
+    private String currentSplitId;
 
     public HBaseSourceSplitReader(byte[] serializedConfig) {
-        System.out.println("constructing Split Reader");
         try {
-
             this.hbaseEndpoint = new HBaseEndpoint(serializedConfig);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
@@ -85,7 +84,8 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
     }
 
     @Override
-    public void wakeUp() {}
+    public void wakeUp() {
+    }
 
     @Override
     public void close() throws Exception {

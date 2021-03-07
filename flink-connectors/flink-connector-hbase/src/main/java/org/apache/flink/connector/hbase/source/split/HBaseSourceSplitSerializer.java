@@ -42,9 +42,8 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
 
     @Override
     public byte[] serialize(HBaseSourceSplit split) throws IOException {
-        System.out.println("Splitserializer.serialize");
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(baos)) {
+             DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeUTF(split.getTable());
@@ -61,9 +60,8 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
 
     @Override
     public HBaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
-        System.out.println("Splitserializer.deserialize");
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
-                DataInputStream in = new DataInputStream(bais)) {
+             DataInputStream in = new DataInputStream(bais)) {
             String id = in.readUTF();
             String host = in.readUTF();
             String table = in.readUTF();

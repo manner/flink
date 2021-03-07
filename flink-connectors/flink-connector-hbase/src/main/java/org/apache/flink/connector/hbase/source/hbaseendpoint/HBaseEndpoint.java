@@ -48,6 +48,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -60,9 +62,8 @@ import java.util.UUID;
 /** Consumer of HBase WAL edits. */
 public class HBaseEndpoint implements ReplicationTargetInterface {
 
-    // TODO
-    String hostName = "localhost";
-
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseEndpoint.class);
+    private static final int QUEUE_CAPACITY = 1000;
     private final String clusterKey;
     /** The id under which the replication target is made known to the source cluster. */
     private final String replicationPeerId;
@@ -70,11 +71,10 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private final Configuration hbaseConf;
     private final RecoverableZooKeeper zooKeeper;
     private final RpcServer rpcServer;
-
-    private boolean isRunning = false;
-
-    private static final int QUEUE_CAPACITY = 1000;
     private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
+    // TODO
+    String hostName = "localhost";
+    private boolean isRunning = false;
 
     public HBaseEndpoint(byte[] serializedConfig)
             throws IOException, KeeperException, InterruptedException {
@@ -102,18 +102,6 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private RecoverableZooKeeper connectToZooKeeper() throws IOException {
         RecoverableZooKeeper zooKeeper =
                 ZKUtil.connect(hbaseConf, "localhost:" + getZookeeperPort(), null);
-        //                new RecoverableZooKeeper(
-        //                        "localhost:" + getZookeeperPort(),
-        //                        2,
-        //                        event -> System.out.println("Watcher processed: " + event),
-        //                        8,
-        //                        1000,
-        //                        2000,
-        //                        null,
-        //                        1);
-
-        System.out.println("Connected to Zookeeper");
-
         return zooKeeper;
     }
 
@@ -190,12 +178,12 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         isRunning = false;
         try {
             zooKeeper.close();
-            System.out.println("Closed connection to ZooKeeper");
+            LOG.info("Closed connection to ZooKeeper");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             rpcServer.stop();
-            System.out.println("Closed HBase replication target server");
+            LOG.info("Closed HBase replication target server");
         }
     }
 
@@ -204,9 +192,8 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
             throw new RuntimeException("HBase replication endpoint is already running");
         }
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
-                Admin admin = connection.getAdmin()) {
+             Admin admin = connection.getAdmin()) {
 
-            // clearExistingReplication(admin);
             ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilies);
             if (admin.listReplicationPeers().stream()
                     .map(ReplicationPeerDescription::getPeerId)
@@ -267,7 +254,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                 try {
                     walEdits.put(0, event);
                 } catch (InterruptedException exception) {
-                    System.err.println("Error adding to Queue: " + exception);
+                    LOG.error("Error adding to Queue: " + exception);
                 }
             }
         }

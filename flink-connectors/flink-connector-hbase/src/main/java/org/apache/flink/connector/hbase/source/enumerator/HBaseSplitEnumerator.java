@@ -57,9 +57,7 @@ public class HBaseSplitEnumerator
         this.context = context;
         this.remainingSplits = new ArrayDeque<>();
         this.table = table;
-
         this.serializedConfig = serializedConfig;
-        System.out.println("Constructed HBase Split enumerator");
     }
 
     @Override
@@ -67,7 +65,7 @@ public class HBaseSplitEnumerator
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(this.serializedConfig, null);
         try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration);
-                Admin admin = connection.getAdmin()) {
+             Admin admin = connection.getAdmin()) {
             ColumnFamilyDescriptor[] colFamDes =
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
@@ -122,11 +120,11 @@ public class HBaseSplitEnumerator
     }
 
     @Override
-    public void close() {}
+    public void close() {
+    }
 
     @Override
     public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
-
         final HBaseSourceSplit nextSplit = remainingSplits.poll();
         if (nextSplit != null) {
             context.assignSplit(nextSplit, subtaskId);
@@ -142,7 +140,6 @@ public class HBaseSplitEnumerator
 
     @Override
     public void addReader(int subtaskId) {
-        System.out.println("addReader");
         HBaseSourceSplit nextSplit = remainingSplits.poll();
         if (nextSplit != null) {
             context.assignSplit(nextSplit, subtaskId);

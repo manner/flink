@@ -29,7 +29,7 @@ import java.util.Map;
 /** The source reader for Hbase. */
 public class HBaseSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
-                HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
+        HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
     public HBaseSourceReader(
             byte[] serializedConfig,
             HBaseSourceDeserializer<T> sourceDeserializer,
@@ -39,7 +39,6 @@ public class HBaseSourceReader<T>
                 new HBaseRecordEmitter<T>(sourceDeserializer),
                 new Configuration(),
                 context);
-        System.out.println("constructing in Source Reader");
     }
 
     @Override
@@ -49,7 +48,6 @@ public class HBaseSourceReader<T>
 
     @Override
     protected HBaseSourceSplitState initializedState(HBaseSourceSplit split) {
-        System.out.println("SourceReader initializedState");
         return new HBaseSourceSplitState(split);
     }
 

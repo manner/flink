@@ -60,7 +60,6 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
-        System.out.println("createReader");
         return new HBaseSourceReader<>(serializedConfig, sourceDeserializer, readerContext);
     }
 
@@ -69,8 +68,6 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
             SplitEnumeratorContext<HBaseSourceSplit> enumContext,
             Collection<HBaseSourceSplit> checkpoint)
             throws Exception {
-        System.out.println("restoreEnumerator");
-
         HBaseSplitEnumerator enumerator =
                 new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
         enumerator.addSplits(checkpoint);
@@ -80,21 +77,17 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
-        System.out.println("createEnumerator");
         return new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
     }
 
     @Override
     public SimpleVersionedSerializer<HBaseSourceSplit> getSplitSerializer() {
-        System.out.println("getSplitSerializer");
-
         return new HBaseSourceSplitSerializer();
     }
 
     @Override
     public SimpleVersionedSerializer<Collection<HBaseSourceSplit>>
-            getEnumeratorCheckpointSerializer() {
-        System.out.println("getEnumeratorCheckpointSerializer");
+    getEnumeratorCheckpointSerializer() {
         return new HBaseSourceEnumeratorCheckpointSerializer();
     }
 }
