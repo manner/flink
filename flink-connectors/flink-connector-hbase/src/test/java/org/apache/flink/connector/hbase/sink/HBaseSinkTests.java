@@ -18,8 +18,6 @@
 
 package org.apache.flink.connector.hbase.sink;
 
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
 import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -55,15 +53,11 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         int start = 1;
         int end = 10;
 
-        final DataStream<Long> numberSource =
-                env.fromSource(
-                        new NumberSequenceSource(start, end),
-                        WatermarkStrategy.noWatermarks(),
-                        "numberSource");
+        DataStream<Long> numberStream = env.fromSequence(start, end);
 
         final HBaseSink<Long> hbaseSink =
                 new HBaseSink<>(baseTableName, new HBaseTestSerializer(), hbaseConfiguration);
-        numberSource.sinkTo(hbaseSink);
+        numberStream.sinkTo(hbaseSink);
         env.execute();
 
         long[] expected = LongStream.rangeClosed(start, end).toArray();
