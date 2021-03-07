@@ -29,7 +29,7 @@ import java.util.Map;
 /** The source reader for Hbase. */
 public class HBaseSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
-        HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
+                HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
     public HBaseSourceReader(
             byte[] serializedConfig,
             HBaseSourceDeserializer<T> sourceDeserializer,

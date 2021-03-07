@@ -44,7 +44,7 @@ public class HBaseSourceSplitState {
      * Update the state of which element was emitted last.
      *
      * @param event An {@link HBaseEvent} that has been emitted by the {@link
-     *         org.apache.flink.connector.hbase.source.reader.HBaseRecordEmitter}
+     *     org.apache.flink.connector.hbase.source.reader.HBaseRecordEmitter}
      */
     public void notifyEmittedEvent(HBaseEvent event) {
         lastTimeStamp = event.getTimestamp();

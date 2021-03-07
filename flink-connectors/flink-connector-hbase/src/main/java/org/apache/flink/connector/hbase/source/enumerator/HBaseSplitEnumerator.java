@@ -65,7 +65,7 @@ public class HBaseSplitEnumerator
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(this.serializedConfig, null);
         try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration);
-             Admin admin = connection.getAdmin()) {
+                Admin admin = connection.getAdmin()) {
             ColumnFamilyDescriptor[] colFamDes =
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
@@ -120,8 +120,7 @@ public class HBaseSplitEnumerator
     }
 
     @Override
-    public void close() {
-    }
+    public void close() {}
 
     @Override
     public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {

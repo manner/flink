@@ -127,20 +127,12 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private void registerAtZooKeeper() throws KeeperException, InterruptedException {
-        createZKPath(
-                getBaseString() + "/" + clusterKey,
-                null
-        );
-        createZKPath(
-                getBaseString() + "/" + clusterKey + "/rs",
-                null
-        );
+        createZKPath(getBaseString() + "/" + clusterKey, null);
+        createZKPath(getBaseString() + "/" + clusterKey + "/rs", null);
 
         UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
         createZKPath(
-                getBaseString() + "/" + clusterKey + "/hbaseid",
-                Bytes.toBytes(uuid.toString())
-        );
+                getBaseString() + "/" + clusterKey + "/hbaseid", Bytes.toBytes(uuid.toString()));
 
         ServerName serverName =
                 ServerName.valueOf(
@@ -186,7 +178,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
             throw new RuntimeException("HBase replication endpoint is already running");
         }
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
-             Admin admin = connection.getAdmin()) {
+                Admin admin = connection.getAdmin()) {
 
             ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilies);
             if (admin.listReplicationPeers().stream()
@@ -281,8 +273,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
     }
 
-    private void createZKPath(final String path, byte[] data)
-            throws InterruptedException {
+    private void createZKPath(final String path, byte[] data) throws InterruptedException {
         try {
             if (zooKeeper.exists(path, false) == null) {
                 zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

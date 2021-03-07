@@ -88,7 +88,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
 
     @Override
     public SimpleVersionedSerializer<Collection<HBaseSourceSplit>>
-    getEnumeratorCheckpointSerializer() {
+            getEnumeratorCheckpointSerializer() {
         return new HBaseSourceEnumeratorCheckpointSerializer();
     }
 }

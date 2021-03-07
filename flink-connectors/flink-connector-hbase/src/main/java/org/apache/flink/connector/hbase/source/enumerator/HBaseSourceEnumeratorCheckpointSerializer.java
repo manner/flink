@@ -43,7 +43,7 @@ public class HBaseSourceEnumeratorCheckpointSerializer
     @Override
     public byte[] serialize(Collection<HBaseSourceSplit> checkpointState) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             DataOutputStream out = new DataOutputStream(baos)) {
+                DataOutputStream out = new DataOutputStream(baos)) {
             out.writeInt(checkpointState.size());
 
             HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
@@ -62,7 +62,7 @@ public class HBaseSourceEnumeratorCheckpointSerializer
             throws IOException {
         List<HBaseSourceSplit> checkPoint = new ArrayList<>();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
-             DataInputStream in = new DataInputStream(bais)) {
+                DataInputStream in = new DataInputStream(bais)) {
             HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
             int numSplits = in.readInt();
             for (int i = 0; i < numSplits; i++) {
