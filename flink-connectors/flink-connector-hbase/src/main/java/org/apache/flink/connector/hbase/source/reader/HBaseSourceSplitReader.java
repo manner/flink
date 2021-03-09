@@ -66,7 +66,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         }
         HBaseEvent nextValue = hbaseEndpoint.next();
         List<HBaseEvent> records = Collections.singletonList(nextValue);
-        return new HbaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
+        return new HBaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
     }
 
     @Override
@@ -97,13 +97,13 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         // TODO close consumer and add test for that
     }
 
-    private static class HbaseSplitRecords<T> implements RecordsWithSplitIds<T> {
+    private static class HBaseSplitRecords<T> implements RecordsWithSplitIds<T> {
         private final Set<String> finishedSplits;
         private Iterator<T> recordsForSplit;
 
         private String splitId;
 
-        private HbaseSplitRecords(
+        private HBaseSplitRecords(
                 String splitId, Iterator<T> recordsForSplit, Set<String> finishedSplits) {
             this.splitId = splitId;
             this.recordsForSplit = recordsForSplit;
