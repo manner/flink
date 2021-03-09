@@ -28,7 +28,7 @@ under the License.
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>flink-connector-hbase-new</artifactId>
+	<artifactId>flink-connector-hbase</artifactId>
 	<name>Flink : Connectors : HBase</name>
 
 	<packaging>jar</packaging>
