@@ -33,6 +33,8 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,6 +46,8 @@ import java.util.TimerTask;
 
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseWriter.class);
 
     private final int queueLimit;
     private final int maxLatencyMs;
@@ -76,6 +80,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
         }
 
         startBatchSendTimer();
+        LOG.debug("started sink writer");
     }
 
     private void startBatchSendTimer() {

@@ -28,6 +28,8 @@ import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,6 +38,8 @@ import java.util.Properties;
 
 /** HBaseSink. */
 public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriterState, Void> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSink.class);
 
     private final HBaseSinkSerializer<IN> sinkSerializer;
     private final byte[] serializedConfig;
@@ -48,6 +52,7 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriter
         this.sinkSerializer = sinkSerializer;
         this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
         this.properties = properties;
+        LOG.debug("constructed sink");
     }
 
     public static <IN> HBaseSinkBuilder<IN> builder() {
