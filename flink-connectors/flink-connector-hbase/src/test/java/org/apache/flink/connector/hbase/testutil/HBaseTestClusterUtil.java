@@ -122,19 +122,8 @@ public class HBaseTestClusterUtil {
                     hbaseConf.get("hbase.master.info.port"));
 
             cluster.waitForActiveAndReadyMaster(30 * 1000);
-            try {
-                HBaseAdmin.available(hbaseConf);
-                LOG.info("HBase test cluster up and running ...");
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                Throwable e = e1;
-                while (e.getCause() != null) {
-                    e = e.getCause();
-                }
-                e.printStackTrace();
-                // TODO avoid system.exit!
-                System.exit(1);
-            }
+            HBaseAdmin.available(hbaseConf);
+            LOG.info("HBase test cluster up and running ...");
 
             hbaseConf.writeXml(new FileOutputStream(configPath));
 
