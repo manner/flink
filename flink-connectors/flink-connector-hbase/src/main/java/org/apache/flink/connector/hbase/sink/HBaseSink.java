@@ -32,28 +32,32 @@ import org.apache.hadoop.conf.Configuration;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 /** HBaseSink. */
 public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriterState, Void> {
 
-    private final byte[] serializedConfig;
-    private final String tableName;
     private final HBaseSinkSerializer<IN> sinkSerializer;
+    private final byte[] serializedConfig;
+    private final Properties properties;
 
-    public HBaseSink(
-            String tableName,
+    HBaseSink(
             HBaseSinkSerializer<IN> sinkSerializer,
-            Configuration hbaseConfiguration) {
-        this.tableName = tableName;
+            Configuration hbaseConfiguration,
+            Properties properties) {
         this.sinkSerializer = sinkSerializer;
-
         this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
+        this.properties = properties;
+    }
+
+    public static <IN> HBaseSinkBuilder<IN> builder() {
+        return new HBaseSinkBuilder<>();
     }
 
     @Override
     public SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> createWriter(
             InitContext context, List<HBaseWriterState> states) throws IOException {
-        return new HBaseWriter<>(context, tableName, sinkSerializer, serializedConfig);
+        return new HBaseWriter<>(context, sinkSerializer, serializedConfig, properties);
     }
 
     @Override

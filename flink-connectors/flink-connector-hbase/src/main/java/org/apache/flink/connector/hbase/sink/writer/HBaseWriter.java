@@ -21,6 +21,7 @@ package org.apache.flink.connector.hbase.sink.writer;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.connector.hbase.sink.HBaseSinkCommittable;
+import org.apache.flink.connector.hbase.sink.HBaseSinkOptions;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
@@ -37,14 +38,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
 
-    private static final int QUEUE_LIMIT = 1000;
-    private static final int MAX_LATENCY_MS = 1000;
+    private final int queueLimit;
+    private final int maxLatencyMs;
     private final HBaseSinkSerializer<IN> sinkSerializer;
     private final List<Mutation> buffer;
     private final Connection connection;
@@ -54,11 +56,16 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
 
     public HBaseWriter(
             Sink.InitContext context,
-            String tableName,
             HBaseSinkSerializer<IN> sinkSerializer,
-            byte[] serializedConfig) {
+            byte[] serializedConfig,
+            Properties properties) {
         this.sinkSerializer = sinkSerializer;
-        this.buffer = new ArrayList<>(QUEUE_LIMIT);
+        this.queueLimit = HBaseSinkOptions.getQueueLimit(properties);
+        this.maxLatencyMs = HBaseSinkOptions.getMaxLatency(properties);
+        String tableName = HBaseSinkOptions.getTableName(properties);
+
+        this.buffer = new ArrayList<>(queueLimit);
+
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
         try {
@@ -77,12 +84,12 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                     @Override
                     public void run() {
                         long diff = System.currentTimeMillis() - lastFlushTimeStamp;
-                        if (diff > MAX_LATENCY_MS) {
+                        if (diff > maxLatencyMs) {
                             flushBuffer();
                         }
                     }
                 };
-        new Timer().scheduleAtFixedRate(batchSendTimer, 0, MAX_LATENCY_MS / 2);
+        new Timer().scheduleAtFixedRate(batchSendTimer, 0, maxLatencyMs / 2);
     }
 
     private void flushBuffer() {
@@ -118,7 +125,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             throw new UnsupportedOperationException("row type not supported");
         }
 
-        if (buffer.size() >= QUEUE_LIMIT) {
+        if (buffer.size() >= queueLimit) {
             flushBuffer();
         }
     }

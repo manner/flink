@@ -55,7 +55,11 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         DataStream<Long> numberStream = env.fromSequence(start, end);
 
         final HBaseSink<Long> hbaseSink =
-                new HBaseSink<>(baseTableName, new HBaseTestSerializer(), hbaseConfiguration);
+                HBaseSink.<Long>builder()
+                        .setTableName(baseTableName)
+                        .setSinkSerializer(new HBaseTestSerializer())
+                        .setHBaseConfiguration(hbaseConfiguration)
+                        .build();
         numberStream.sinkTo(hbaseSink);
         env.execute();
 
