@@ -47,8 +47,8 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     private static final int MAX_LATENCY_MS = 1000;
     private final HBaseSinkSerializer<IN> sinkSerializer;
     private final List<Mutation> buffer;
-    private Connection connection;
-    private Table table;
+    private final Connection connection;
+    private final Table table;
     private long lastFlushTimeStamp = 0;
     private TimerTask batchSendTimer;
 
@@ -65,7 +65,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             connection = ConnectionFactory.createConnection(hbaseConfiguration);
             table = connection.getTable(TableName.valueOf(tableName));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Connection to HBase couldn't be established", e);
         }
 
         startBatchSendTimer();
@@ -94,7 +94,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
             table.batch(buffer, null);
             buffer.clear();
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed storing batch data in HBase", e);
         }
     }
 
