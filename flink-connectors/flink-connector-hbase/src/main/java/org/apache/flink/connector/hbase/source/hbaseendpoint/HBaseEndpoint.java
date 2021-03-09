@@ -104,8 +104,10 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private RecoverableZooKeeper connectToZooKeeper() throws IOException {
+        // Using private ZKUtil and RecoverableZooKeeper here, because the stability is so much
+        // improved
         RecoverableZooKeeper zooKeeper =
-                ZKUtil.connect(hbaseConf, "localhost:" + getZookeeperPort(), null);
+                ZKUtil.connect(hbaseConf, getZookeeperClientAddress(), null);
         LOG.debug("Connected to Zookeeper");
         return zooKeeper;
     }
@@ -276,19 +278,16 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         tableCFsMap.put(TableName.valueOf(table), columnFamilies);
         return ReplicationPeerConfig.newBuilder()
                 .setClusterKey(
-                        "localhost:"
-                                + getZookeeperPort()
-                                + ":"
-                                + getBaseString()
-                                + "/"
-                                + clusterKey)
+                        getZookeeperClientAddress() + ":" + getBaseString() + "/" + clusterKey)
                 .setReplicateAllUserTables(false)
                 .setTableCFsMap(tableCFsMap)
                 .build();
     }
 
-    private String getZookeeperPort() {
-        return hbaseConf.get("hbase.zookeeper.property.clientPort");
+    private String getZookeeperClientAddress() {
+        return hbaseConf.get("hbase.zookeeper.quorum")
+                + ":"
+                + hbaseConf.get("hbase.zookeeper.property.clientPort");
     }
 
     private String getBaseString() {
