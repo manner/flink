@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.internal.ArrayComparisonFailure;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -131,11 +132,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         CompletableFuture.runAsync(
                         () -> {
                             while (cluster.getReplicationPeers().size() != n) {
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
+                                sleep(1000);
                             }
                         })
                 .get(90, TimeUnit.SECONDS);
@@ -183,11 +180,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 env,
                 () -> {
                     cluster.put(secondTable, DEFAULT_CF_COUNT, uniqueValues(DEFAULT_CF_COUNT));
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    sleep(2000);
                     cluster.put(baseTableName, DEFAULT_CF_COUNT, expectedValues);
                 },
                 180);
@@ -219,10 +212,10 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                                         expectedValues,
                                         checkpointed.toArray());
                                 signalSuccess();
-                            } catch (Exception e) {
-                                LOG.error("Exception occured: {}", e.getMessage());
+                            } catch (ArrayComparisonFailure e) {
+                                LOG.error("Comparison failed", e);
                                 signalFailure();
-                                e.printStackTrace();
+                                throw e;
                             }
                         }
                     }
@@ -268,8 +261,6 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
             LOG.info("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
             LOG.info("Received success, ending test ...");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } finally {
             LOG.info("Cancelling job client");
             jobClient.cancel();

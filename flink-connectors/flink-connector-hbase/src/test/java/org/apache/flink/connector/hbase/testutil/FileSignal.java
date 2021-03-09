@@ -47,7 +47,7 @@ public class FileSignal {
             signalFile.createNewFile();
             LOG.debug("Created signal file at " + signalFile.getAbsolutePath());
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not create signal file " + signalName, e);
         }
     }
 
@@ -67,7 +67,8 @@ public class FileSignal {
                         try {
                             Thread.sleep(POLL_INTERVAL);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            throw new RuntimeException(
+                                    "Waiting for signal " + signalName + "was interrupted.", e);
                         }
                     }
                     cleanupSignal(signalName);

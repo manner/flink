@@ -121,7 +121,7 @@ public class HBaseSplitEnumerator
 
             addSplits(splits);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("could not start split enumerator", e);
         }
     }
 

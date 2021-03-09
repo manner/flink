@@ -184,20 +184,18 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         }
     }
 
-    public void close() {
+    public void close() throws InterruptedException {
         isRunning = false;
         try {
             zooKeeper.close();
             LOG.debug("Closed connection to ZooKeeper");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } finally {
             rpcServer.stop();
             LOG.debug("Closed HBase replication target rpc server");
         }
     }
 
-    public void startReplication(String table, List<String> columnFamilies) {
+    public void startReplication(String table, List<String> columnFamilies) throws IOException {
         if (isRunning) {
             throw new RuntimeException("HBase replication endpoint is already running");
         }
@@ -213,24 +211,17 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                 admin.addReplicationPeer(replicationPeerId, peerConfig);
             }
             isRunning = true;
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     /** Instead of clearing existing replication under the same id, the config should be updated. */
     @Deprecated
     private void clearExistingReplication(Admin admin) throws IOException {
-        admin.listReplicationPeers().stream()
-                .filter(peer -> peer.getPeerId().equals(replicationPeerId))
-                .forEach(
-                        peer -> {
-                            try {
-                                admin.removeReplicationPeer(peer.getPeerId());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
+        for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
+            if (peer.getPeerId().equals(replicationPeerId)) {
+                admin.removeReplicationPeer(peer.getPeerId());
+            }
+        }
     }
 
     @Override
@@ -240,13 +231,12 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         List<AdminProtos.WALEntry> entries = request.getEntryList();
         CellScanner cellScanner = ((HBaseRpcController) controller).cellScanner();
 
-        for (final AdminProtos.WALEntry entry : entries) {
-            final String table =
-                    TableName.valueOf(entry.getKey().getTableName().toByteArray()).toString();
-            final int count = entry.getAssociatedCellCount();
-
-            for (int i = 0; i < count; i++) {
-                try {
+        try {
+            for (final AdminProtos.WALEntry entry : entries) {
+                final String table =
+                        TableName.valueOf(entry.getKey().getTableName().toByteArray()).toString();
+                final int count = entry.getAssociatedCellCount();
+                for (int i = 0; i < count; i++) {
                     if (!cellScanner.advance()) {
                         throw new ArrayIndexOutOfBoundsException(
                                 "Expected WAL entry to have "
@@ -254,20 +244,14 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                                         + "elements, but cell scanner did not have cell for index"
                                         + i);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
 
-                Cell cell = cellScanner.current();
-                HBaseEvent event = HBaseEvent.fromCell(table, cell, i);
-
-                try {
+                    Cell cell = cellScanner.current();
+                    HBaseEvent event = HBaseEvent.fromCell(table, cell, i);
                     walEdits.put(0, event);
-                } catch (InterruptedException exception) {
-                    // TODO error handling
-                    LOG.error("Error adding to Queue: {}", exception);
                 }
             }
+        } catch (Exception e) {
+            throw new ServiceException("Could not replicate WAL entry in HBase endpoint", e);
         }
 
         return AdminProtos.ReplicateWALEntryResponse.newBuilder().build();

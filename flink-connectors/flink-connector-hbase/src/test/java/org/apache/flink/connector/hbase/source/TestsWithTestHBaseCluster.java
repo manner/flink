@@ -122,4 +122,12 @@ public abstract class TestsWithTestHBaseCluster {
         }
         return values;
     }
+
+    protected static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Waiting was interrupted", e);
+        }
+    }
 }

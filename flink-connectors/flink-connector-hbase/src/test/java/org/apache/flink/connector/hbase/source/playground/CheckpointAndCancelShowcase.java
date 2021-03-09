@@ -98,7 +98,7 @@ public class CheckpointAndCancelShowcase {
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
             LOG.info("Next called with i=" + i);
             return "" + (i++);

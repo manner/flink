@@ -106,7 +106,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
             checkpointedValues.get().forEach(checkpointed::add);
             return checkpointed;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Could not retrieve checkpointed values", e);
             return null;
         }
     }

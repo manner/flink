@@ -128,7 +128,7 @@ public class HBaseTestClusterUtil {
             hbaseConf.writeXml(new FileOutputStream(configPath));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not start HBase test mini cluster", e);
         }
     }
 
@@ -154,7 +154,7 @@ public class HBaseTestClusterUtil {
                                 } catch (ParserConfigurationException
                                         | IOException
                                         | SAXException e) {
-                                    e.printStackTrace();
+                                    LOG.error("Error trying to connect to cluster", e);
                                     return false;
                                 }
                             })
@@ -172,7 +172,7 @@ public class HBaseTestClusterUtil {
                 admin.deleteTable(table.getTableName());
             }
         } catch (ParserConfigurationException | IOException | SAXException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not clear test cluster tables", e);
         }
     }
 
@@ -185,7 +185,7 @@ public class HBaseTestClusterUtil {
             }
             LOG.info(logMessage.toString());
         } catch (SAXException | IOException | ParserConfigurationException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not clear test cluster replication peers", e);
         }
     }
 
@@ -193,7 +193,7 @@ public class HBaseTestClusterUtil {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             return admin.listReplicationPeers();
         } catch (SAXException | IOException | ParserConfigurationException e) {
-            e.printStackTrace();
+            LOG.error("Error retrieving replication peers", e);
             return null;
         }
     }
@@ -224,7 +224,7 @@ public class HBaseTestClusterUtil {
                 admin.createTable(tableBuilder.build());
             }
         } catch (SAXException | IOException | ParserConfigurationException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not create test cluster table", e);
         }
     }
 
@@ -235,7 +235,7 @@ public class HBaseTestClusterUtil {
             htable.put(put);
             LOG.info("Commited put to row {}", Bytes.toString(put.getRow()));
         } catch (IOException | SAXException | ParserConfigurationException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not commit put to test cluster", e);
         }
     }
 
@@ -252,7 +252,7 @@ public class HBaseTestClusterUtil {
             htable.delete(delete);
             LOG.info("Deleted row {}", rowKey);
         } catch (IOException | SAXException | ParserConfigurationException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Could not delete row in test cluster", e);
         }
     }
 
@@ -280,8 +280,7 @@ public class HBaseTestClusterUtil {
             LOG.info("Added row " + rowKey);
             return rowKey;
         } catch (IOException | SAXException | ParserConfigurationException e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Could not put to test cluster", e);
         }
     }
 
