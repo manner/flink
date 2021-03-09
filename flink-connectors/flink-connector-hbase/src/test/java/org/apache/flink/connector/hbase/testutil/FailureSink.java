@@ -27,6 +27,9 @@ import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -36,7 +39,8 @@ import java.util.TimerTask;
 public abstract class FailureSink<T> extends RichSinkFunction<T>
         implements CheckpointedFunction, CheckpointListener {
 
-    private final boolean verbose;
+    private static final Logger LOG = LoggerFactory.getLogger(FailureSink.class);
+
     private final long activateAfter;
     private final TypeInformation<T> typeInfo;
     private boolean active = false;
@@ -46,17 +50,14 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
     protected final List<T> unCheckpointedValues = new ArrayList<>();
     protected transient ListState<T> checkpointedValues;
 
-    public FailureSink(boolean verbose, long activateAfter, TypeInformation<T> typeInfo) {
-        this.verbose = verbose;
+    public FailureSink(long activateAfter, TypeInformation<T> typeInfo) {
         this.activateAfter = activateAfter;
         this.typeInfo = typeInfo;
     }
 
     @Override
     public void invoke(T value, Context context) throws Exception {
-        if (verbose) {
-            System.out.println(value + " " + active);
-        }
+        LOG.info("FailureSink has been invoked with value {} is active={}", value, active);
         unCheckpointedValues.add(value);
         collectValue(value);
         hasSeenAtLeastOneInput = true;
@@ -69,18 +70,17 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
 
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
-        System.out.println(
-                "FailureSink.notifyCheckpointComplete has been called with checkpointId="
-                        + checkpointId);
+        LOG.info(
+                "FailureSink.notifyCheckpointComplete has been called with checkpointId={} is active{}",
+                checkpointId,
+                active);
         hasSeenAtLeastOneCheckpoint = true;
         throwFailureIfActive();
     }
 
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
-        if (verbose) {
-            System.out.println("FailureSink.snapshotState has been called");
-        }
+        LOG.info("FailureSink.snapshotState has been called");
         checkpointedValues.addAll(unCheckpointedValues);
         unCheckpointedValues.clear();
         checkpoint();
@@ -88,9 +88,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
 
     @Override
     public void initializeState(FunctionInitializationContext context) throws Exception {
-        if (verbose) {
-            System.out.println("FailureSink.initializeState has been called");
-        }
+        LOG.info("FailureSink.initializeState has been called");
 
         hasSeenAtLeastOneCheckpoint = false;
         hasSeenAtLeastOneInput = false;
@@ -119,9 +117,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
             public void run() {
                 if (hasSeenAtLeastOneCheckpoint && hasSeenAtLeastOneInput) {
                     active = true;
-                    if (verbose) {
-                        System.out.println("FailureSink activated");
-                    }
+                    LOG.info("FailureSink activated");
                 } else {
                     new Timer().schedule(activation(), activateAfter / 2);
                 }
@@ -131,9 +127,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
 
     private void throwFailureIfActive() {
         if (active) {
-            if (verbose) {
-                System.out.println("FailureSink triggered");
-            }
+            LOG.info("FailureSink triggered");
             throw new RuntimeException("Failure Sink throws error");
         }
     }

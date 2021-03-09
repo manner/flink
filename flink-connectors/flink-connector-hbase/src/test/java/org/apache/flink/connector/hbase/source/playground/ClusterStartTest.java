@@ -22,12 +22,16 @@ import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 /** This class is only used to start a (reusable) test cluster from the test root. */
 @Deprecated
 public class ClusterStartTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ClusterStartTest.class);
 
     @BeforeClass
     public static void setup() throws IOException {
@@ -38,7 +42,7 @@ public class ClusterStartTest {
     public static void teardown() {}
 
     public void startCluster() throws Exception {
-        System.out.println("Pass");
+        LOG.info("Pass");
         while (true) {
             Thread.sleep(30000);
         }

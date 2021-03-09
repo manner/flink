@@ -30,6 +30,8 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -45,6 +47,9 @@ import java.util.Queue;
 @Internal
 public class HBaseSplitEnumerator
         implements SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSplitEnumerator.class);
+
     private final SplitEnumeratorContext<HBaseSourceSplit> context;
     private final Queue<HBaseSourceSplit> remainingSplits;
     private final String table;
@@ -58,6 +63,7 @@ public class HBaseSplitEnumerator
         this.remainingSplits = new ArrayDeque<>();
         this.table = table;
         this.serializedConfig = serializedConfig;
+        LOG.debug("Constructed HBase Split enumerator");
     }
 
     @Override
@@ -139,6 +145,7 @@ public class HBaseSplitEnumerator
 
     @Override
     public void addReader(int subtaskId) {
+        LOG.debug("addReader {}", subtaskId);
         HBaseSourceSplit nextSplit = remainingSplits.poll();
         if (nextSplit != null) {
             context.assignSplit(nextSplit, subtaskId);

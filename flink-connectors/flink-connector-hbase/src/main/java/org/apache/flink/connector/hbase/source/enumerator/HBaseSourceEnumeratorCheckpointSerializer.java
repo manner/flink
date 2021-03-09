@@ -22,6 +22,9 @@ import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -35,6 +38,9 @@ import java.util.List;
 public class HBaseSourceEnumeratorCheckpointSerializer
         implements SimpleVersionedSerializer<Collection<HBaseSourceSplit>> {
 
+    private static final Logger LOG =
+            LoggerFactory.getLogger(HBaseSourceEnumeratorCheckpointSerializer.class);
+
     @Override
     public int getVersion() {
         return 0;
@@ -42,6 +48,7 @@ public class HBaseSourceEnumeratorCheckpointSerializer
 
     @Override
     public byte[] serialize(Collection<HBaseSourceSplit> checkpointState) throws IOException {
+        LOG.debug("serialize");
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeInt(checkpointState.size());
@@ -60,6 +67,7 @@ public class HBaseSourceEnumeratorCheckpointSerializer
     @Override
     public Collection<HBaseSourceSplit> deserialize(int version, byte[] serialized)
             throws IOException {
+        LOG.debug("deserialize");
         List<HBaseSourceSplit> checkPoint = new ArrayList<>();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {

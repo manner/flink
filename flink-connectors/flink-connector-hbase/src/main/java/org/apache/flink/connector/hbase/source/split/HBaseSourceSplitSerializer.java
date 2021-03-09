@@ -21,6 +21,9 @@ package org.apache.flink.connector.hbase.source.split;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -33,6 +36,9 @@ import java.util.ArrayList;
  * HBaseSourceSplit}.
  */
 public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBaseSourceSplit> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceSplitSerializer.class);
+
     private static final int VERSION = 1;
 
     @Override
@@ -42,6 +48,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
 
     @Override
     public byte[] serialize(HBaseSourceSplit split) throws IOException {
+        LOG.debug("Splitserializer.serialize");
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
@@ -60,6 +67,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
 
     @Override
     public HBaseSourceSplit deserialize(int version, byte[] serialized) throws IOException {
+        LOG.debug("Splitserializer.deserialize");
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {
             String id = in.readUTF();

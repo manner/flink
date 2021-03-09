@@ -57,7 +57,7 @@ public class Playground {
                         "source-1");
         source1.print();
         env.execute();
-        System.out.println("Playground out");
+        LOG.info("Playground out");
     }
 
     public static void testHBaseSource() throws Exception {

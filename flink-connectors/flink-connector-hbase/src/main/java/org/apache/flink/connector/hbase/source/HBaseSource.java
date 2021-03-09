@@ -33,10 +33,15 @@ import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 
 /** A connector for Hbase. */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSource.class);
 
     private static final long serialVersionUID = 1L;
     private final String tableName;
@@ -51,6 +56,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
         this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
         this.sourceDeserializer = sourceDeserializer;
         this.tableName = table;
+        LOG.debug("constructed source");
     }
 
     @Override
@@ -61,6 +67,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
+        LOG.debug("createReader");
         return new HBaseSourceReader<>(serializedConfig, sourceDeserializer, readerContext);
     }
 
@@ -69,6 +76,8 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
             SplitEnumeratorContext<HBaseSourceSplit> enumContext,
             Collection<HBaseSourceSplit> checkpoint)
             throws Exception {
+        LOG.debug("restoreEnumerator");
+
         HBaseSplitEnumerator enumerator =
                 new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
         enumerator.addSplits(checkpoint);
@@ -78,17 +87,20 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
+        LOG.debug("createEnumerator");
         return new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
     }
 
     @Override
     public SimpleVersionedSerializer<HBaseSourceSplit> getSplitSerializer() {
+        LOG.debug("getSplitSerializer");
         return new HBaseSourceSplitSerializer();
     }
 
     @Override
     public SimpleVersionedSerializer<Collection<HBaseSourceSplit>>
             getEnumeratorCheckpointSerializer() {
+        LOG.debug("getEnumeratorCheckpointSerializer");
         return new HBaseSourceEnumeratorCheckpointSerializer();
     }
 }

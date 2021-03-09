@@ -25,6 +25,9 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseEndpoint;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nullable;
 
 import java.io.IOException;
@@ -38,12 +41,15 @@ import java.util.Set;
 /** A {@link SplitReader} implementation for Hbase. */
 public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSourceSplit> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceSplitReader.class);
+
     private final Queue<HBaseSourceSplit> splits;
     private final HBaseEndpoint hbaseEndpoint;
 
     @Nullable private String currentSplitId;
 
     public HBaseSourceSplitReader(byte[] serializedConfig) {
+        LOG.debug("constructing Split Reader");
         try {
             this.hbaseEndpoint = new HBaseEndpoint(serializedConfig);
         } catch (Exception e) {
@@ -65,6 +71,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
 
     @Override
     public void handleSplitsChanges(SplitsChange<HBaseSourceSplit> splitsChanges) {
+        LOG.debug("handle splits change {}", splitsChanges);
         if (splitsChanges instanceof SplitsAddition) {
             HBaseSourceSplit split = splitsChanges.splits().get(0);
             try {

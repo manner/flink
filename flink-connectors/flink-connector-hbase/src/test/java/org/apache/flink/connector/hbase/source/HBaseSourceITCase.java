@@ -46,7 +46,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignalThrowOnFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSuccess;
@@ -56,6 +58,7 @@ import static org.apache.flink.connector.hbase.testutil.FileSignal.makeFolder;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signal;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalSuccess;
+import static org.apache.flink.connector.hbase.testutil.Logging.LOG;
 import static org.junit.Assert.assertArrayEquals;
 
 /** Tests the most basic use cases of the source with a mocked HBase system. */
@@ -93,7 +96,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
                     @Override
                     public void flatMap(T value, Collector<Object> out) {
-                        System.out.println("Test collected: " + value);
+                        LOG.info("Test collected: {}", value);
                         collectedValues.add(value);
                         if (collectedValues.size() == expectedValues.length) {
                             assertArrayEquals(message, expectedValues, collectedValues.toArray());
@@ -108,7 +111,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         try {
             JobClient jobClient = env.executeAsync();
             MiniCluster miniCluster = Util.miniCluster((MiniClusterJobClient) jobClient);
-            Util.waitForClusterStart(miniCluster, true);
+            Util.waitForClusterStart(miniCluster);
 
             action.run();
             jobClient.getJobExecutionResult().get(timeout, TimeUnit.SECONDS);
@@ -121,6 +124,21 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 // Normal termination
             }
         }
+    }
+
+    private void waitUntilNReplicationPeers(int n)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        CompletableFuture.runAsync(
+                        () -> {
+                            while (cluster.getReplicationPeers().size() != n) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
+                .get(90, TimeUnit.SECONDS);
     }
 
     @Before
@@ -186,11 +204,14 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
         stream.addSink(
-                new FailureSink<String>(true, 3500, TypeInformation.of(String.class)) {
+                new FailureSink<String>(3500, TypeInformation.of(String.class)) {
 
                     private void checkForSuccess() {
                         List<String> checkpointed = getCheckpointedValues();
-                        System.out.println(unCheckpointedValues + " " + checkpointed);
+                        LOG.info(
+                                "\n\tUncheckpointed: {}\n\tCheckpointed: {}",
+                                unCheckpointedValues,
+                                checkpointed);
                         if (checkpointed.size() == expectedValues.length) {
                             try {
                                 assertArrayEquals(
@@ -199,7 +220,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                                         checkpointed.toArray());
                                 signalSuccess();
                             } catch (Exception e) {
-                                System.out.println("Exception occured: " + e.getMessage());
+                                LOG.error("Exception occured: {}", e.getMessage());
                                 signalFailure();
                                 e.printStackTrace();
                             }
@@ -210,7 +231,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     public void collectValue(String value) throws Exception {
 
                         if (getCheckpointedValues().contains(value)) {
-                            System.out.println("Unique value " + value + " was not seen only once");
+                            LOG.error("Unique value {} was not seen only once", value);
                             signalFailure();
                             throw new RuntimeException(
                                     "Unique value " + value + " was not seen only once");
@@ -227,12 +248,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
         JobClient jobClient = env.executeAsync();
         MiniCluster miniCluster = Util.miniCluster((MiniClusterJobClient) jobClient);
-        Util.waitForClusterStart(miniCluster, true);
+        Util.waitForClusterStart(miniCluster);
         try {
             Thread.sleep(8000);
             int putsPerPackage = 5;
             for (int i = 0; i < expectedValues.length; i += putsPerPackage) {
-                System.out.println("Sending next package ...");
+                LOG.info("Sending next package ...");
                 for (int j = i; j < expectedValues.length && j < i + putsPerPackage; j++) {
                     cluster.put(baseTableName, expectedValues[j]);
                 }
@@ -241,19 +262,19 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 // checkpoint them
                 awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
                 Thread.sleep(3000);
-                System.out.println("Consuming collection signal");
+                LOG.info("Consuming collection signal");
                 cleanupSignal(collectedValueSignal);
             }
-            System.out.println("Finished sending packages, awaiting success ...");
+            LOG.info("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);
-            System.out.println("Received success, ending test ...");
+            LOG.info("Received success, ending test ...");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            System.out.println("Cancelling job client");
+            LOG.info("Cancelling job client");
             jobClient.cancel();
         }
-        System.out.println("End of test method reached");
+        LOG.info("End of test method reached");
     }
 
     @Test
@@ -263,18 +284,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         streamFromHBaseSource(env, baseTableName, parallelism).print();
         cluster.makeTable(baseTableName, parallelism);
         JobClient jobClient = env.executeAsync();
-        CompletableFuture.runAsync(
-                        () -> {
-                            while (cluster.getReplicationPeers().size() != parallelism) {
-                                try {
-                                    System.out.println(cluster.getReplicationPeers().size());
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        })
-                .get(90, TimeUnit.SECONDS);
+        waitUntilNReplicationPeers(parallelism);
         jobClient.cancel();
     }
 

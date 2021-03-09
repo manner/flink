@@ -24,12 +24,18 @@ import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSource
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitState;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 
 /** The source reader for Hbase. */
 public class HBaseSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
                 HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceReader.class);
+
     public HBaseSourceReader(
             byte[] serializedConfig,
             HBaseSourceDeserializer<T> sourceDeserializer,
@@ -39,15 +45,18 @@ public class HBaseSourceReader<T>
                 new HBaseRecordEmitter<T>(sourceDeserializer),
                 new Configuration(),
                 context);
+        LOG.debug("constructing Source Reader");
     }
 
     @Override
     protected void onSplitFinished(Map<String, HBaseSourceSplitState> finishedSplitIds) {
+        LOG.debug("SourceReader onSplitFinished {}", finishedSplitIds);
         context.sendSplitRequest();
     }
 
     @Override
     protected HBaseSourceSplitState initializedState(HBaseSourceSplit split) {
+        LOG.debug("SourceReader initializedState");
         return new HBaseSourceSplitState(split);
     }
 

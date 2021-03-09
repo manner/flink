@@ -26,6 +26,9 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Iterator;
@@ -33,6 +36,8 @@ import java.util.List;
 
 /** Playground. */
 public class CheckpointAndCancelShowcase {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CheckpointAndCancelShowcase.class);
 
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -42,30 +47,30 @@ public class CheckpointAndCancelShowcase {
         DataStream<String> stream = env.fromCollection(new Numbers(), String.class);
 
         FailureSink<String> failureSink =
-                new FailureSink<String>(true, 2500, TypeInformation.of(String.class)) {
+                new FailureSink<String>(2500, TypeInformation.of(String.class)) {
                     @Override
                     public void collectValue(String value) throws Exception {
                         List<String> checkpointed = getCheckpointedValues();
-                        System.out.println(unCheckpointedValues + " " + checkpointed);
+                        LOG.info(unCheckpointedValues + " " + checkpointed);
                         if (checkpointed.contains(value)) {
-                            System.err.println(("That was not exactly once!"));
+                            LOG.error(("That was not exactly once!"));
                         }
                     }
                 };
         stream.addSink(failureSink);
         MiniClusterJobClient jobClient = (MiniClusterJobClient) env.executeAsync();
         MiniCluster miniCluster = miniCluster(jobClient);
-        System.out.println("Started execution ...");
+        LOG.info("Started execution ...");
         while (!miniCluster.isRunning()) {
             Thread.sleep(100);
         }
-        System.out.println("Flinkcluster is running");
+        LOG.info("Flinkcluster is running");
         Thread.sleep(5000);
         miniCluster.close();
         while (miniCluster.isRunning()) {
             Thread.sleep(100);
         }
-        System.out.println("Terminated ...");
+        LOG.info("Terminated ...");
     }
 
     private static MiniCluster miniCluster(MiniClusterJobClient jobClient)
@@ -80,7 +85,7 @@ public class CheckpointAndCancelShowcase {
         private int i = 0;
 
         {
-            System.out.println("Constructed iterator");
+            LOG.info("Constructed iterator");
         }
 
         @Override
@@ -95,7 +100,7 @@ public class CheckpointAndCancelShowcase {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("Next called with i=" + i);
+            LOG.info("Next called with i=" + i);
             return "" + (i++);
         }
     }

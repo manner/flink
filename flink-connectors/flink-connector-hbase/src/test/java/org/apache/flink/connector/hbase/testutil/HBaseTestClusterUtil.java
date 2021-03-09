@@ -38,6 +38,8 @@ import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -62,6 +64,8 @@ import java.util.concurrent.TimeoutException;
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
 public class HBaseTestClusterUtil {
 
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseTestClusterUtil.class);
+
     public static final String COLUMN_FAMILY_BASE = "info";
     public static final String DEFAULT_COLUMN_FAMILY = COLUMN_FAMILY_BASE + 0;
     public static final String QUALIFIER_BASE = "qualifier";
@@ -83,7 +87,7 @@ public class HBaseTestClusterUtil {
     }
 
     public void startCluster() throws IOException {
-        System.out.println("Starting HBase test cluster ...");
+        LOG.info("Starting HBase test cluster ...");
         testFolder = Files.createTempDirectory(null).toString();
 
         // Fallback for windows users with space in user name, will not work if path contains space.
@@ -99,28 +103,28 @@ public class HBaseTestClusterUtil {
         hbaseConf.setBoolean("hbase.replication", true);
 
         System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, testFolder);
-        System.out.println("Testfolder: " + testFolder);
 
         HBaseTestingUtility utility = new HBaseTestingUtility(hbaseConf);
-        System.out.println(utility.getDataTestDir().toString());
+        LOG.info("Testfolder: {}", utility.getDataTestDir().toString());
         try {
             cluster =
                     utility.startMiniCluster(
                             StartMiniClusterOption.builder().numRegionServers(3).build());
             int numRegionServers = utility.getHBaseCluster().getRegionServerThreads().size();
-            System.out.println(numRegionServers);
-
-            System.out.println(hbaseConf.get("hbase.zookeeper.quorum"));
-            System.out.println(hbaseConf.get("hbase.zookeeper.property.clientPort"));
-            System.out.println(hbaseConf.get("hbase.master.info.port"));
-            System.out.println(hbaseConf.get("hbase.master.port"));
-            System.out.println(hbaseConf.get("hbase.master.info.port"));
-            System.out.println(hbaseConf.get("hbase.master.info.port"));
+            LOG.info("Number of region servers: {}", numRegionServers);
+            LOG.info(
+                    "ZooKeeper client address: {}:{}",
+                    hbaseConf.get("hbase.zookeeper.quorum"),
+                    hbaseConf.get("hbase.zookeeper.property.clientPort"));
+            LOG.info(
+                    "Master port={}, web UI at port={}",
+                    hbaseConf.get("hbase.master.port"),
+                    hbaseConf.get("hbase.master.info.port"));
 
             cluster.waitForActiveAndReadyMaster(30 * 1000);
             try {
                 HBaseAdmin.available(hbaseConf);
-                System.out.println("HBase test cluster up and running ...");
+                LOG.info("HBase test cluster up and running ...");
             } catch (IOException e1) {
                 e1.printStackTrace();
                 Throwable e = e1;
@@ -128,6 +132,7 @@ public class HBaseTestClusterUtil {
                     e = e.getCause();
                 }
                 e.printStackTrace();
+                // TODO avoid system.exit!
                 System.exit(1);
             }
 
@@ -140,14 +145,14 @@ public class HBaseTestClusterUtil {
 
     public void shutdownCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        System.out.println("Shutting down HBase test cluster");
+        LOG.info("Shutting down HBase test cluster");
         clearTables();
         clearReplicationPeers();
         cluster.shutdown();
         new File(configPath).delete();
         CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
         Paths.get(testFolder).toFile().delete();
-        System.out.println("HBase test cluster shut down");
+        LOG.info("HBase test cluster shut down");
     }
 
     public boolean isClusterAlreadyRunning() throws InterruptedException, ExecutionException {
@@ -166,8 +171,7 @@ public class HBaseTestClusterUtil {
                             })
                     .get(10, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            System.out.println("Trying to connect to HBase test cluster timed out");
-            e.printStackTrace(System.out);
+            LOG.error("Trying to connect to HBase test cluster timed out", e);
             return false;
         }
     }
@@ -185,11 +189,12 @@ public class HBaseTestClusterUtil {
 
     public void clearReplicationPeers() {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
+            StringBuilder logMessage = new StringBuilder("Cleard existing replication peers:");
             for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
-                System.out.println("==== " + desc.getPeerId() + " ====");
-                System.out.println(desc);
+                logMessage.append("\n\t").append(desc.getPeerId()).append(" | ").append(desc);
                 admin.removeReplicationPeer(desc.getPeerId());
             }
+            LOG.info(logMessage.toString());
         } catch (SAXException | IOException | ParserConfigurationException e) {
             e.printStackTrace();
         }
@@ -239,29 +244,14 @@ public class HBaseTestClusterUtil {
                 ConnectionFactory.createConnection(getConfig())
                         .getTable(TableName.valueOf(tableName))) {
             htable.put(put);
-            System.out.println("Added row " + Bytes.toString(put.getRow()));
+            LOG.info("Commited put to row {}", Bytes.toString(put.getRow()));
         } catch (IOException | SAXException | ParserConfigurationException e) {
             e.printStackTrace();
         }
     }
 
     public String put(String tableName, String value) {
-        try (Table htable =
-                ConnectionFactory.createConnection(getConfig())
-                        .getTable(TableName.valueOf(tableName))) {
-            String uuid = UUID.randomUUID().toString();
-            byte[] rowkey = Bytes.toBytes(uuid);
-            byte[] columnFamily = DEFAULT_COLUMN_FAMILY.getBytes();
-            byte[] qualifier = DEFAULT_QUALIFIER.getBytes();
-            byte[] payload = value.getBytes();
-            Put put = new Put(rowkey).addColumn(columnFamily, qualifier, payload);
-            htable.put(put);
-            System.out.println("Added row " + uuid);
-            return uuid;
-        } catch (IOException | SAXException | ParserConfigurationException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return put(tableName, 1, value);
     }
 
     public void delete(String tableName, String rowKey, String columnFamily, String qualifier) {
@@ -271,13 +261,13 @@ public class HBaseTestClusterUtil {
             Delete delete = new Delete(rowKey.getBytes());
             delete.addColumn(columnFamily.getBytes(), qualifier.getBytes());
             htable.delete(delete);
-            System.out.println("Deleted row " + rowKey);
+            LOG.info("Deleted row {}", rowKey);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             e.printStackTrace();
         }
     }
 
-    public void put(String tableName, int numColumnFamilies, String... values) {
+    public String put(String tableName, int numColumnFamilies, String... values) {
         assert numColumnFamilies >= 1;
         assert values.length >= numColumnFamilies;
         try (Table htable =
@@ -298,9 +288,11 @@ public class HBaseTestClusterUtil {
                 index += cq;
             }
             htable.put(put);
-            System.out.println("Added row " + rowKey);
+            LOG.info("Added row " + rowKey);
+            return rowKey;
         } catch (IOException | SAXException | ParserConfigurationException e) {
             e.printStackTrace();
+            return null;
         }
     }
 
