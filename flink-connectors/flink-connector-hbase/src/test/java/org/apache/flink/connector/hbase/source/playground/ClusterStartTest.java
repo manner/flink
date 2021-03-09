@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.hbase.source;
+package org.apache.flink.connector.hbase.source.playground;
 
 import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
 
