@@ -54,7 +54,7 @@ public class HBaseSinkOptions {
     }
 
     public static String getTableName(Properties properties) {
-        return properties.getProperty(TABLE_NAME.key());
+        return getOption(properties, TABLE_NAME, Function.identity());
     }
 
     public static int getQueueLimit(Properties properties) {
