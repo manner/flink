@@ -53,7 +53,6 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
-            out.writeUTF(split.getTable());
             out.writeInt(split.getColumnFamilies().size());
             for (String cF : split.getColumnFamilies()) {
                 out.writeUTF(cF);
@@ -72,7 +71,6 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
                 DataInputStream in = new DataInputStream(bais)) {
             String id = in.readUTF();
             String host = in.readUTF();
-            String table = in.readUTF();
             ArrayList<String> columnFamilies = new ArrayList<>();
             int noOfCfs = in.readInt();
             for (int i = 0; i < noOfCfs; i++) {
@@ -84,7 +82,6 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             return new HBaseSourceSplit(
                     id,
                     host,
-                    table,
                     columnFamilies,
                     Tuple2.of(firstTimestamp, firstIndex)); // TODO find real configuration
         }

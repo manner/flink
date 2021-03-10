@@ -88,7 +88,6 @@ public class HBaseSplitEnumerator
                                     // TODO find better pattern than 1234
                                     String.format("1234%s", new String(colFamDe.getName())),
                                     "localhost",
-                                    table,
                                     new ArrayList<>(Arrays.asList(colFamDe.getNameAsString()))));
                 }
             } else {
@@ -105,7 +104,6 @@ public class HBaseSplitEnumerator
                             new HBaseSourceSplit(
                                     String.format("1234%s", colFamiliesForSplit.get(0)),
                                     "localhost",
-                                    table,
                                     colFamiliesForSplit));
                 }
                 ArrayList<String> colFamiliesForLastSplit = new ArrayList<>();
@@ -117,7 +115,6 @@ public class HBaseSplitEnumerator
                         new HBaseSourceSplit(
                                 String.format("1234%s", colFamiliesForLastSplit.get(0)),
                                 "localhost",
-                                table,
                                 colFamiliesForLastSplit));
             }
 
