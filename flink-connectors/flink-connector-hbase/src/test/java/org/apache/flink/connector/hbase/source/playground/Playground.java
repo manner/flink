@@ -67,10 +67,11 @@ public class Playground {
                 new CustomHBaseDeserializationSchema();
 
         HBaseSource<String> source =
-                new HBaseSource<>(
-                        deserializationSchema,
-                        "test-table",
-                        new HBaseTestClusterUtil().getConfig());
+                HBaseSource.<String>builder()
+                        .setSourceDeserializer(deserializationSchema)
+                        .setTableName("test-table")
+                        .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
+                        .build();
 
         DataStream<String> stream =
                 env.fromSource(

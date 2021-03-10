@@ -35,6 +35,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Queue;
 import java.util.Set;
 
@@ -48,10 +49,10 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
 
     @Nullable private String currentSplitId;
 
-    public HBaseSourceSplitReader(byte[] serializedConfig) {
+    public HBaseSourceSplitReader(byte[] serializedConfig, Properties properties) {
         LOG.debug("constructing Split Reader");
         try {
-            this.hbaseEndpoint = new HBaseEndpoint(serializedConfig);
+            this.hbaseEndpoint = new HBaseEndpoint(serializedConfig, properties);
         } catch (Exception e) {
             throw new RuntimeException("failed HBase consumer", e);
         }
@@ -75,7 +76,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
         if (splitsChanges instanceof SplitsAddition) {
             HBaseSourceSplit split = splitsChanges.splits().get(0);
             try {
-                this.hbaseEndpoint.startReplication(split.getTable(), split.getColumnFamilies());
+                this.hbaseEndpoint.startReplication(split.getColumnFamilies());
             } catch (Exception e) {
                 throw new RuntimeException("failed HBase consumer", e);
             }

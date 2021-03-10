@@ -19,6 +19,7 @@
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
+import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
@@ -57,16 +58,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 
 /** Consumer of HBase WAL edits. */
 public class HBaseEndpoint implements ReplicationTargetInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseEndpoint.class);
-
-    // TODO
-    String hostName = "localhost";
-
     private final String clusterKey;
     /** The id under which the replication target is made known to the source cluster. */
     private final String replicationPeerId;
@@ -74,28 +72,30 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private final Configuration hbaseConf;
     private final RecoverableZooKeeper zooKeeper;
     private final RpcServer rpcServer;
-
-    private boolean isRunning = false;
-
-    private static final int QUEUE_CAPACITY = 1000;
     private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
+    private final String hostName;
+    private boolean isRunning = false;
+    private final String tableName;
 
-    public HBaseEndpoint(byte[] serializedConfig)
+    public HBaseEndpoint(byte[] serializedConfig, Properties properties)
             throws IOException, KeeperException, InterruptedException {
-        this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null));
+        this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null), properties);
     }
 
-    public HBaseEndpoint(Configuration hbaseConf)
+    public HBaseEndpoint(Configuration hbaseConf, Properties properties)
             throws InterruptedException, KeeperException, IOException {
-        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf);
+        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf, properties);
     }
 
-    public HBaseEndpoint(String peerId, Configuration hbaseConf)
+    public HBaseEndpoint(String peerId, Configuration hbaseConf, Properties properties)
             throws IOException, KeeperException, InterruptedException {
         this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";
         this.replicationPeerId = peerId;
-        this.walEdits = new FutureCompletingBlockingQueue<>(QUEUE_CAPACITY);
+        this.hostName = HBaseSourceOptions.getHostName(properties);
+        this.tableName = HBaseSourceOptions.getTableName(properties);
+        int queueCapacity = HBaseSourceOptions.getEndpointQueueCapacity(properties);
+        this.walEdits = new FutureCompletingBlockingQueue<>(queueCapacity);
 
         // Setup
         zooKeeper = connectToZooKeeper();
@@ -195,14 +195,14 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         }
     }
 
-    public void startReplication(String table, List<String> columnFamilies) throws IOException {
+    public void startReplication(List<String> columnFamilies) throws IOException {
         if (isRunning) {
             throw new RuntimeException("HBase replication endpoint is already running");
         }
         try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
                 Admin admin = connection.getAdmin()) {
 
-            ReplicationPeerConfig peerConfig = createPeerConfig(table, columnFamilies);
+            ReplicationPeerConfig peerConfig = createPeerConfig(this.tableName, columnFamilies);
             if (admin.listReplicationPeers().stream()
                     .map(ReplicationPeerDescription::getPeerId)
                     .anyMatch(replicationPeerId::equals)) {

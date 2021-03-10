@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Properties;
 
 /** A connector for Hbase. */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
@@ -44,19 +45,23 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSource.class);
 
     private static final long serialVersionUID = 1L;
-    private final String tableName;
 
     private final HBaseSourceDeserializer<T> sourceDeserializer;
     private final byte[] serializedConfig;
+    private final Properties properties;
 
-    public HBaseSource(
+    HBaseSource(
             HBaseSourceDeserializer<T> sourceDeserializer,
-            String table,
-            org.apache.hadoop.conf.Configuration hbaseConfiguration) {
+            org.apache.hadoop.conf.Configuration hbaseConfiguration,
+            Properties properties) {
         this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
         this.sourceDeserializer = sourceDeserializer;
-        this.tableName = table;
+        this.properties = properties;
         LOG.debug("constructed source");
+    }
+
+    public static <IN> HBaseSourceBuilder<IN> builder() {
+        return new HBaseSourceBuilder<>();
     }
 
     @Override
@@ -68,7 +73,8 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
         LOG.debug("createReader");
-        return new HBaseSourceReader<>(serializedConfig, sourceDeserializer, readerContext);
+        return new HBaseSourceReader<>(
+                serializedConfig, sourceDeserializer, properties, readerContext);
     }
 
     @Override
@@ -79,7 +85,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
         LOG.debug("restoreEnumerator");
 
         HBaseSplitEnumerator enumerator =
-                new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
+                new HBaseSplitEnumerator(enumContext, serializedConfig, properties);
         enumerator.addSplits(checkpoint);
         return enumerator;
     }
@@ -88,7 +94,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
         LOG.debug("createEnumerator");
-        return new HBaseSplitEnumerator(enumContext, serializedConfig, tableName);
+        return new HBaseSplitEnumerator(enumContext, serializedConfig, properties);
     }
 
     @Override

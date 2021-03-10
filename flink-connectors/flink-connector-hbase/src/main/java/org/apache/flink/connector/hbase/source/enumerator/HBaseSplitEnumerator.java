@@ -21,6 +21,7 @@ package org.apache.flink.connector.hbase.source.enumerator;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
+import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.Queue;
 
 /** The enumerator class for Hbase source. */
@@ -58,10 +60,10 @@ public class HBaseSplitEnumerator
     public HBaseSplitEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> context,
             byte[] serializedConfig,
-            String table) {
+            Properties properties) {
         this.context = context;
         this.remainingSplits = new ArrayDeque<>();
-        this.table = table;
+        this.table = HBaseSourceOptions.getTableName(properties);
         this.serializedConfig = serializedConfig;
         LOG.debug("Constructed HBase Split enumerator");
     }
