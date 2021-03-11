@@ -134,13 +134,16 @@ public class HBaseTestCluster {
     public void shutdownCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         LOG.info("Shutting down HBase test cluster");
-        clearTables();
-        clearReplicationPeers();
-        cluster.shutdown();
-        new File(configPath).delete();
-        CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
-        Paths.get(testFolder).toFile().delete();
-        LOG.info("HBase test cluster shut down");
+        try {
+            clearTables();
+            clearReplicationPeers();
+        } finally {
+            cluster.shutdown();
+            new File(configPath).delete();
+            CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
+            Paths.get(testFolder).toFile().delete();
+            LOG.info("HBase test cluster shut down");
+        }
     }
 
     public boolean isClusterAlreadyRunning() throws InterruptedException, ExecutionException {
