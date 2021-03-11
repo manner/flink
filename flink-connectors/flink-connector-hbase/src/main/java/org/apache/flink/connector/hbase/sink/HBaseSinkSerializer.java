@@ -19,6 +19,7 @@
 package org.apache.flink.connector.hbase.sink;
 
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Put;
 
 import java.io.Serializable;
 
@@ -32,5 +33,7 @@ public interface HBaseSinkSerializer<T> extends Serializable {
 
     byte[] serializeRowKey(T event);
 
-    Class<? extends Mutation> serializeRowType(T event);
+    default Class<? extends Mutation> serializeRowType(T event) {
+        return Put.class;
+    }
 }
