@@ -1,6 +1,6 @@
 # Flink HBase Connector
 
-This connector provides classes that allow Flink to access [HBase](https://hbase.apache.org/). 
+This module provides connectors that allow Flink to access [HBase](https://hbase.apache.org/) using [CDC](https://en.wikipedia.org/wiki/Change_data_capture) . 
 It supports the new Source and Sink API specified in [FLIP-27](https://cwiki.apache.org/confluence/display/FLINK/FLIP-27%3A+Refactor+Source+Interface) and [FLIP-143](https://cwiki.apache.org/confluence/display/FLINK/FLIP-143%3A+Unified+Sink+API).
 
 ## Installing HBase
@@ -22,7 +22,8 @@ If that's not the case a configuration should be provided where the proper core-
 To receive data from HBase, the connector makes use of the internal replication mechanism of HBase. 
 The connector registers at the HBase cluster as a *Replication Peer* and will receive all change events from HBase.
 
-For the replication to work, the HBase config needs to have replication enabled in the `hbase-site.xml` file:
+For the replication to work, the HBase config needs to have replication enabled in the `hbase-site.xml` file.
+This needs be done only once per cluster:
 ```xml
 <configuration>
   <property>
