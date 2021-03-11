@@ -68,7 +68,7 @@ public class HBaseSourceEnumeratorCheckpointSerializer
     public Collection<HBaseSourceSplit> deserialize(int version, byte[] serialized)
             throws IOException {
         LOG.debug("deserialize");
-        List<HBaseSourceSplit> checkPoint = new ArrayList<>();
+        List<HBaseSourceSplit> checkPointState = new ArrayList<>();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {
             int numSplits = in.readInt();
@@ -78,9 +78,9 @@ public class HBaseSourceEnumeratorCheckpointSerializer
                 in.read(serializedSplit);
                 HBaseSourceSplit split =
                         splitSerializer.deserialize(splitSerializer.getVersion(), serializedSplit);
-                checkPoint.add(split);
+                checkPointState.add(split);
             }
         }
-        return checkPoint;
+        return checkPointState;
     }
 }
