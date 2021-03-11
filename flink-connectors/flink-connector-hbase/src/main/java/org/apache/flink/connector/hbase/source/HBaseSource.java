@@ -39,7 +39,31 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Properties;
 
-/** A connector for Hbase. */
+/**
+ *  A Source Connector for HBase. Please use a {@link HBaseSourceBuilder} to construct a {@link
+ * HBaseSource} The following example shows how to create a HBaseSource that reads String values
+ * from each cell.
+ *
+ * <pre>{@code
+ * HBaseSource<String> source = HBaseSource
+ *      .<String>builder()
+ *      .setSourceDeserializer(new CustomHBaseDeserializationSchema())
+ *      .setTableName("test-table")
+ *      .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
+ *      .build();
+ *
+ * public static class CustomHBaseDeserializationSchema extends HBaseSourceDeserializer<String> {
+ *
+ *         @Override
+ *         public String deserialize(HBaseEvent event) {
+ *             return new String(event.getPayload());
+ *         }
+ *     }
+ *
+ * }</pre>
+ *
+ * <p>See {@link HBaseSourceBuilder} for more details.
+ */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSource.class);

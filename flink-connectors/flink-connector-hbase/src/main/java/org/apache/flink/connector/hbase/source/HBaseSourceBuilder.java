@@ -26,7 +26,37 @@ import java.util.Properties;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** The builder class to create an {@link HBaseSource}. */
+/**
+ *  The builder class to create an {@link HBaseSource}.
+ *
+ * <p> The following example shows a minimum setup to create a HBase Source that reads String
+ * values from each cell.</p>
+ *
+ * <pre>{@code
+ * HBaseSource<String> source = HBaseSource
+ *      .<String>builder()
+ *      .setSourceDeserializer(new CustomHBaseDeserializationSchema())
+ *      .setTableName("test-table")
+ *      .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
+ *      .build();
+ *
+ * public static class CustomHBaseDeserializationSchema extends HBaseSourceDeserializer<String> {
+ *
+ *         @Override
+ *         public String deserialize(HBaseEvent event) {
+ *             return new String(event.getPayload());
+ *         }
+ *     }
+ * }</pre>
+ *
+ * <p>A DeserializationSchema is always required to be set, as well as a TableName to read from
+ * and a HBaseConfiguration.</p>
+ *
+ * <p>By default each HBaseEndpoint has a queue capacity of 1000 entries for WALedits, this can be
+ * changed with {@link #setQueueCapacity(int queueSize)}.The hostname of the created RPC Servers can
+ * be changed with {@link #setHostName(String hostname)}.</p>
+ *
+ */
 public class HBaseSourceBuilder<IN> {
 
     private static final String[] REQUIRED_CONFIGS = {HBaseSourceOptions.TABLE_NAME.key()};
@@ -40,26 +70,56 @@ public class HBaseSourceBuilder<IN> {
         this.properties = new Properties();
     }
 
+    /**
+     * Sets the table name from which changes will be processed.
+     *
+     * @param tableName the HBase table name.
+     * @return this HBaseSourceBuilder.
+     */
     public HBaseSourceBuilder<IN> setTableName(String tableName) {
         return setProperty(HBaseSourceOptions.TABLE_NAME.key(), tableName);
     }
 
+    /**
+     * Sets the Deserializer, that will be used to deserialize cell entries in HBase.
+     *
+     * @param sourceDeserializer the HBase Source Deserializer.
+     * @return this HBaseSourceBuilder.
+     */
     public HBaseSourceBuilder<IN> setSourceDeserializer(
             HBaseSourceDeserializer<IN> sourceDeserializer) {
         this.sourceDeserializer = sourceDeserializer;
         return this;
     }
 
+    /**
+     * Sets the HBaseConfiguration.
+     *
+     * @param hbaseConfiguration the HBaseConfiguration.
+     * @return this HBaseSourceBuilder.
+     */
     public HBaseSourceBuilder<IN> setHBaseConfiguration(Configuration hbaseConfiguration) {
         this.hbaseConfiguration = hbaseConfiguration;
         return this;
     }
 
+    /**
+     * Sets the queue capacity for incoming WALedits in the HBaseEndpoint.
+     *
+     * @param queueCapacity integer value of the queue capacity.
+     * @return this KafkaSourceBuilder.
+     */
     public HBaseSourceBuilder<IN> setQueueCapacity(int queueCapacity) {
         return setProperty(
                 HBaseSourceOptions.ENDPOINT_QUEUE_CAPACITY.key(), String.valueOf(queueCapacity));
     }
 
+    /**
+     * Sets the hostname of the RPC Server in the HBaseEndpoint.
+     *
+     * @param hostName the hostname String.
+     * @return this KafkaSourceBuilder.
+     */
     public HBaseSourceBuilder<IN> setHostName(String hostName) {
         return setProperty(HBaseSourceOptions.HOST_NAME.key(), hostName);
     }
