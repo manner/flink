@@ -70,6 +70,7 @@ public class HBaseSplitEnumerator
 
     @Override
     public void start() {
+        // TODO simplify duplicates
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(this.serializedConfig, null);
         try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration);
@@ -85,8 +86,7 @@ public class HBaseSplitEnumerator
                 for (ColumnFamilyDescriptor colFamDe : colFamDes) {
                     splits.add(
                             new HBaseSourceSplit(
-                                    // TODO find better pattern than 1234
-                                    String.format("1234%s", new String(colFamDe.getName())),
+                                    String.format("%s", new String(colFamDe.getName())),
                                     "localhost",
                                     new ArrayList<>(Arrays.asList(colFamDe.getNameAsString()))));
                 }
@@ -102,7 +102,7 @@ public class HBaseSplitEnumerator
 
                     splits.add(
                             new HBaseSourceSplit(
-                                    String.format("1234%s", colFamiliesForSplit.get(0)),
+                                    String.format("%s", colFamiliesForSplit.get(0)),
                                     "localhost",
                                     colFamiliesForSplit));
                 }
@@ -113,7 +113,7 @@ public class HBaseSplitEnumerator
                 }
                 splits.add(
                         new HBaseSourceSplit(
-                                String.format("1234%s", colFamiliesForLastSplit.get(0)),
+                                String.format("%s", colFamiliesForLastSplit.get(0)),
                                 "localhost",
                                 colFamiliesForLastSplit));
             }
