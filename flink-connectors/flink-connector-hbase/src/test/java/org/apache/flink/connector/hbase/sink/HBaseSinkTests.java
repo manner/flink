@@ -18,8 +18,8 @@
 
 package org.apache.flink.connector.hbase.sink;
 
-import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
+import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
