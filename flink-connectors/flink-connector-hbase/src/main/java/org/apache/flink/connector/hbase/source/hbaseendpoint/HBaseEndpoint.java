@@ -214,16 +214,6 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         }
     }
 
-    /** Instead of clearing existing replication under the same id, the config should be updated. */
-    @Deprecated
-    private void clearExistingReplication(Admin admin) throws IOException {
-        for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
-            if (peer.getPeerId().equals(replicationPeerId)) {
-                admin.removeReplicationPeer(peer.getPeerId());
-            }
-        }
-    }
-
     @Override
     public AdminProtos.ReplicateWALEntryResponse replicateWALEntry(
             RpcController controller, AdminProtos.ReplicateWALEntryRequest request)
