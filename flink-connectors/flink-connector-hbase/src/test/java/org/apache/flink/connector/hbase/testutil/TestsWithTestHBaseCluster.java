@@ -22,6 +22,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -30,6 +32,8 @@ import java.util.concurrent.TimeoutException;
 
 /** Abstract test class that provides that {@link HBaseTestCluster} is up and running. */
 public abstract class TestsWithTestHBaseCluster {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(TestsWithTestHBaseCluster.class);
 
     public static final int DEFAULT_CF_COUNT = 4;
 

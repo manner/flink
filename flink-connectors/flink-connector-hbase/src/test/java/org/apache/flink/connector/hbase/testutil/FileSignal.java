@@ -20,6 +20,9 @@ package org.apache.flink.connector.hbase.testutil;
 
 import org.apache.flink.util.FileUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -27,13 +30,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.apache.flink.connector.hbase.testutil.Logging.LOG;
-
 /**
  * Utility class to signal events of tests such as success or failure. Allows to get signals out of
  * flink without using web sockets or success exceptions or similar.
  */
 public class FileSignal {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileSignal.class);
 
     private static final long POLL_INTERVAL = 100; // ms
     private static final File SIGNAL_FOLDER = new File("signal");

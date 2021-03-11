@@ -60,7 +60,6 @@ import static org.apache.flink.connector.hbase.testutil.FileSignal.makeFolder;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signal;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalSuccess;
-import static org.apache.flink.connector.hbase.testutil.Logging.LOG;
 import static org.junit.Assert.assertArrayEquals;
 
 /** Tests the most basic use cases of the source with a mocked HBase system. */
