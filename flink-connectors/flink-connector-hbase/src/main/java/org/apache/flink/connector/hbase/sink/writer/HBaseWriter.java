@@ -52,7 +52,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     private final int queueLimit;
     private final int maxLatencyMs;
     private final HBaseSinkSerializer<IN> sinkSerializer;
-    private final List<Mutation> buffer;
+    private final List<Mutation> pendingMutations;
     private final Connection connection;
     private final Table table;
     private long lastFlushTimeStamp = 0;
@@ -68,7 +68,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
         this.maxLatencyMs = HBaseSinkOptions.getMaxLatency(properties);
         String tableName = HBaseSinkOptions.getTableName(properties);
 
-        this.buffer = new ArrayList<>(queueLimit);
+        this.pendingMutations = new ArrayList<>(queueLimit);
 
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
@@ -99,12 +99,12 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
 
     private void flushBuffer() {
         lastFlushTimeStamp = System.currentTimeMillis();
-        if (buffer.size() == 0) {
+        if (pendingMutations.size() == 0) {
             return;
         }
         try {
-            table.batch(buffer, null);
-            buffer.clear();
+            table.batch(pendingMutations, null);
+            pendingMutations.clear();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Failed storing batch data in HBase", e);
         }
@@ -119,18 +119,18 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                     sinkSerializer.serializeColumnFamily(element),
                     sinkSerializer.serializeQualifier(element),
                     sinkSerializer.serializePayload(element));
-            buffer.add(put);
+            pendingMutations.add(put);
         } else if (mutationClass.isAssignableFrom(Delete.class)) {
             Delete delete = new Delete(sinkSerializer.serializeRowKey(element));
             delete.addColumn(
                     sinkSerializer.serializeColumnFamily(element),
                     sinkSerializer.serializeQualifier(element));
-            buffer.add(delete);
+            pendingMutations.add(delete);
         } else {
             throw new UnsupportedOperationException("row type not supported");
         }
 
-        if (buffer.size() >= queueLimit) {
+        if (pendingMutations.size() >= queueLimit) {
             flushBuffer();
         }
     }
