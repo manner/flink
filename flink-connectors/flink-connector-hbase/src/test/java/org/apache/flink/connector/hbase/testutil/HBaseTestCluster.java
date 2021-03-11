@@ -42,16 +42,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -74,15 +65,13 @@ public class HBaseTestCluster {
     public static final String QUALIFIER_BASE = "qualifier";
     public static final String DEFAULT_QUALIFIER = QUALIFIER_BASE + 0;
 
-    public final String configPath = "config" + UUID.randomUUID() + ".xml";
     private MiniHBaseCluster cluster;
     private Configuration hbaseConf;
     private String testFolder;
 
     public HBaseTestCluster() {}
 
-    public static void main(String[] args)
-            throws ParserConfigurationException, SAXException, IOException {
+    public static void main(String[] args) throws IOException {
         Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
         HBaseTestCluster hbaseTestCluster = new HBaseTestCluster();
         hbaseTestCluster.startCluster();
@@ -128,8 +117,6 @@ public class HBaseTestCluster {
             HBaseAdmin.available(hbaseConf);
             LOG.info("HBase test cluster up and running ...");
 
-            hbaseConf.writeXml(new FileOutputStream(configPath));
-
         } catch (Exception e) {
             throw new RuntimeException("Could not start HBase test mini cluster", e);
         }
@@ -143,7 +130,6 @@ public class HBaseTestCluster {
             clearReplicationPeers();
         } finally {
             cluster.shutdown();
-            new File(configPath).delete();
             CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
             Paths.get(testFolder).toFile().delete();
             LOG.info("HBase test cluster shut down");
@@ -157,9 +143,7 @@ public class HBaseTestCluster {
                                 try (Connection connection =
                                         ConnectionFactory.createConnection(getConfig())) {
                                     return true;
-                                } catch (ParserConfigurationException
-                                        | IOException
-                                        | SAXException e) {
+                                } catch (IOException e) {
                                     LOG.error("Error trying to connect to cluster", e);
                                     return false;
                                 }
@@ -177,7 +161,7 @@ public class HBaseTestCluster {
                 admin.disableTable(table.getTableName());
                 admin.deleteTable(table.getTableName());
             }
-        } catch (ParserConfigurationException | IOException | SAXException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Could not clear test cluster tables", e);
         }
     }
@@ -190,7 +174,7 @@ public class HBaseTestCluster {
                 admin.removeReplicationPeer(desc.getPeerId());
             }
             LOG.info(logMessage.toString());
-        } catch (SAXException | IOException | ParserConfigurationException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Could not clear test cluster replication peers", e);
         }
     }
@@ -198,7 +182,7 @@ public class HBaseTestCluster {
     public List<ReplicationPeerDescription> getReplicationPeers() {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             return admin.listReplicationPeers();
-        } catch (SAXException | IOException | ParserConfigurationException e) {
+        } catch (IOException e) {
             LOG.error("Error retrieving replication peers", e);
             return null;
         }
@@ -210,8 +194,8 @@ public class HBaseTestCluster {
 
     /**
      * Creates a table for given name with given number of column families. Column family names
-     * start with {@link HBaseTestCluster#COLUMN_FAMILY_BASE} and are indexed, if more than one
-     * is requested
+     * start with {@link HBaseTestCluster#COLUMN_FAMILY_BASE} and are indexed, if more than one is
+     * requested
      */
     public void makeTable(String tableName, int numColumnFamilies) {
         assert numColumnFamilies >= 1;
@@ -229,7 +213,7 @@ public class HBaseTestCluster {
                 }
                 admin.createTable(tableBuilder.build());
             }
-        } catch (SAXException | IOException | ParserConfigurationException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Could not create test cluster table", e);
         }
     }
@@ -240,7 +224,7 @@ public class HBaseTestCluster {
                         .getTable(TableName.valueOf(tableName))) {
             htable.put(put);
             LOG.info("Commited put to row {}", Bytes.toString(put.getRow()));
-        } catch (IOException | SAXException | ParserConfigurationException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Could not commit put to test cluster", e);
         }
     }
@@ -257,7 +241,7 @@ public class HBaseTestCluster {
             delete.addColumn(columnFamily.getBytes(), qualifier.getBytes());
             htable.delete(delete);
             LOG.info("Deleted row {}", rowKey);
-        } catch (IOException | SAXException | ParserConfigurationException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Could not delete row in test cluster", e);
         }
     }
@@ -285,24 +269,12 @@ public class HBaseTestCluster {
             htable.put(put);
             LOG.info("Added row " + rowKey);
             return rowKey;
-        } catch (IOException | SAXException | ParserConfigurationException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Could not put to test cluster", e);
         }
     }
 
-    public Configuration getConfig()
-            throws SAXException, IOException, ParserConfigurationException {
-        Configuration hbaseConf = HBaseConfiguration.create();
-
-        Document config =
-                DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configPath);
-        NodeList nodes = config.getDocumentElement().getElementsByTagName("property");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Element e = (Element) nodes.item(i);
-            hbaseConf.set(
-                    e.getElementsByTagName("name").item(0).getTextContent(),
-                    e.getElementsByTagName("value").item(0).getTextContent());
-        }
+    public Configuration getConfig() {
         return hbaseConf;
     }
 
