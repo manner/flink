@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,10 @@ import java.util.concurrent.TimeoutException;
 public abstract class TestsWithTestHBaseCluster {
 
     protected static final Logger LOG = LoggerFactory.getLogger(TestsWithTestHBaseCluster.class);
+
+    @Rule
+    public FileSignal.FileSignalFolderSetup fileSignalFolderSetup =
+            new FileSignal.FileSignalFolderSetup();
 
     public static final int DEFAULT_CF_COUNT = 4;
 

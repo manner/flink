@@ -36,8 +36,6 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
 
 import org.apache.hadoop.hbase.client.Put;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.internal.ArrayComparisonFailure;
 import org.xml.sax.SAXException;
@@ -54,9 +52,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignalThrowOnFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSuccess;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.cleanupFolder;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.cleanupSignal;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.makeFolder;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signal;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalSuccess;
@@ -140,16 +136,6 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                             }
                         })
                 .get(90, TimeUnit.SECONDS);
-    }
-
-    @Before
-    public void makeSignalFolder() {
-        makeFolder();
-    }
-
-    @After
-    public void cleanupSignalFolder() throws IOException {
-        cleanupFolder();
     }
 
     @Test

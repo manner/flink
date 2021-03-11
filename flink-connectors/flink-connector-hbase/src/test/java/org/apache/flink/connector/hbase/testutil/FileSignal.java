@@ -20,6 +20,7 @@ package org.apache.flink.connector.hbase.testutil;
 
 import org.apache.flink.util.FileUtils;
 
+import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,5 +112,21 @@ public class FileSignal {
 
     private static File signalFile(String signalName) {
         return SIGNAL_FOLDER.toPath().resolve(signalName + ".signal").toFile();
+    }
+
+    public static class FileSignalFolderSetup extends ExternalResource {
+        @Override
+        protected void before() throws Throwable {
+            makeFolder();
+        }
+
+        @Override
+        protected void after() {
+            try {
+                cleanupFolder();
+            } catch (IOException e) {
+                throw new RuntimeException("Could not clean up signal folder", e);
+            }
+        }
     }
 }
