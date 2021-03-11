@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.hbase.source;
-
-import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
+package org.apache.flink.connector.hbase.testutil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -30,7 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-/** Abstract test class that provides that {@link HBaseTestClusterUtil} is up and running. */
+/** Abstract test class that provides that {@link HBaseTestCluster} is up and running. */
 public abstract class TestsWithTestHBaseCluster {
 
     public static final int DEFAULT_CF_COUNT = 4;
@@ -41,8 +39,8 @@ public abstract class TestsWithTestHBaseCluster {
      */
     public static final boolean SHARE_CLUSTER = false;
 
-    private static final HBaseTestClusterUtil sharedCluster = new HBaseTestClusterUtil();
-    protected HBaseTestClusterUtil cluster;
+    private static final HBaseTestCluster sharedCluster = new HBaseTestCluster();
+    protected HBaseTestCluster cluster;
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
@@ -90,7 +88,7 @@ public abstract class TestsWithTestHBaseCluster {
     public void setupIndividualCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (!SHARE_CLUSTER) {
-            cluster = new HBaseTestClusterUtil();
+            cluster = new HBaseTestCluster();
             cluster.startCluster();
             assert cluster.isClusterAlreadyRunning();
         } else {

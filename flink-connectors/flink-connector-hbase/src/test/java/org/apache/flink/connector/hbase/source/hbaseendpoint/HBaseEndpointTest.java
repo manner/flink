@@ -18,9 +18,9 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
-import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
+import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
-import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
+import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 
 import org.apache.hadoop.hbase.Cell;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
     public void testSetup() throws Exception {
         new HBaseEndpoint(cluster.getConfig(), cluster.getPropertiesForTable(baseTableName))
                 .startReplication(
-                        Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+                        Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
     }
 
     @Test
@@ -51,7 +51,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 new HBaseEndpoint(
                         cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
         consumer.startReplication(
-                Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+                Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, "foobar");
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         assertNotNull(result);
@@ -65,14 +65,14 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 new HBaseEndpoint(
                         cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
         consumer.startReplication(
-                Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+                Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
 
         String rowKey = cluster.put(baseTableName, "foobar");
         cluster.delete(
                 baseTableName,
                 rowKey,
-                HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY,
-                HBaseTestClusterUtil.DEFAULT_QUALIFIER);
+                HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
+                HBaseTestCluster.DEFAULT_QUALIFIER);
 
         CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
@@ -87,7 +87,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 new HBaseEndpoint(
                         cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
         consumer.startReplication(
-                Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+                Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.makeTable(baseTableName);
 
         int numPuts = 3;
@@ -119,7 +119,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 new HBaseEndpoint(
                         id, cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
         firstConsumer.startReplication(
-                Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+                Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, firstValue);
         String firstResult = new String(firstConsumer.next().getPayload());
         assertEquals(firstValue, firstResult);
@@ -130,7 +130,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 new HBaseEndpoint(
                         id, cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
         secondConsumer.startReplication(
-                Collections.singletonList(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY));
+                Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, secondValue);
         String secondResult = new String(secondConsumer.next().getPayload());
         assertEquals(secondValue, secondResult);

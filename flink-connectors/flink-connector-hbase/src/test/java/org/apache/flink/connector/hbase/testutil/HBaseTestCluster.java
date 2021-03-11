@@ -65,9 +65,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
-public class HBaseTestClusterUtil {
+public class HBaseTestCluster {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HBaseTestClusterUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseTestCluster.class);
 
     public static final String COLUMN_FAMILY_BASE = "info";
     public static final String DEFAULT_COLUMN_FAMILY = COLUMN_FAMILY_BASE + 0;
@@ -79,14 +79,14 @@ public class HBaseTestClusterUtil {
     private Configuration hbaseConf;
     private String testFolder;
 
-    public HBaseTestClusterUtil() {}
+    public HBaseTestCluster() {}
 
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException, IOException {
         Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
-        HBaseTestClusterUtil hbaseTestClusterUtil = new HBaseTestClusterUtil();
-        hbaseTestClusterUtil.startCluster();
-        hbaseTestClusterUtil.makeTable("tableName");
+        HBaseTestCluster hbaseTestCluster = new HBaseTestCluster();
+        hbaseTestCluster.startCluster();
+        hbaseTestCluster.makeTable("tableName");
     }
 
     public void startCluster() throws IOException {
@@ -100,10 +100,6 @@ public class HBaseTestClusterUtil {
         UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser("tempusername"));
 
         hbaseConf = HBaseConfiguration.create();
-        hbaseConf.setInt("replication.stats.thread.period.seconds", 5);
-        hbaseConf.setLong("replication.sleep.before.failover", 2000);
-        hbaseConf.setInt("replication.source.maxretriesmultiplier", 10);
-        hbaseConf.setBoolean("hbase.replication", true);
 
         System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, testFolder);
 
@@ -207,7 +203,7 @@ public class HBaseTestClusterUtil {
 
     /**
      * Creates a table for given name with given number of column families. Column family names
-     * start with {@link HBaseTestClusterUtil#COLUMN_FAMILY_BASE} and are indexed, if more than one
+     * start with {@link HBaseTestCluster#COLUMN_FAMILY_BASE} and are indexed, if more than one
      * is requested
      */
     public void makeTable(String tableName, int numColumnFamilies) {

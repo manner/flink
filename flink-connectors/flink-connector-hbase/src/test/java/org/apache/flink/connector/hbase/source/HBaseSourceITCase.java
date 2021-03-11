@@ -24,7 +24,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
-import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
+import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
+import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.testutil.Util;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.runtime.minicluster.MiniCluster;
@@ -295,7 +296,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         Put put = new Put("rowkey".getBytes());
         for (int i = 0; i < expectedValues.length; i++) {
             put.addColumn(
-                    (HBaseTestClusterUtil.COLUMN_FAMILY_BASE + i).getBytes(),
+                    (HBaseTestCluster.COLUMN_FAMILY_BASE + i).getBytes(),
                     expectedValues[i].getBytes(),
                     expectedValues[i].getBytes());
         }

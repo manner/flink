@@ -18,8 +18,8 @@
 
 package org.apache.flink.connector.hbase.sink;
 
-import org.apache.flink.connector.hbase.source.TestsWithTestHBaseCluster;
-import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
+import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
+import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -73,8 +73,8 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
                 Result r = table.get(get);
                 byte[] value =
                         r.getValue(
-                                HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY.getBytes(),
-                                HBaseTestClusterUtil.DEFAULT_QUALIFIER.getBytes());
+                                HBaseTestCluster.DEFAULT_COLUMN_FAMILY.getBytes(),
+                                HBaseTestCluster.DEFAULT_QUALIFIER.getBytes());
                 long l = Long.parseLong(new String(value));
                 actual[i - start] = l;
             }
@@ -91,12 +91,12 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
 
         @Override
         public byte[] serializeColumnFamily(Long event) {
-            return Bytes.toBytes(HBaseTestClusterUtil.DEFAULT_COLUMN_FAMILY);
+            return Bytes.toBytes(HBaseTestCluster.DEFAULT_COLUMN_FAMILY);
         }
 
         @Override
         public byte[] serializeQualifier(Long event) {
-            return Bytes.toBytes(HBaseTestClusterUtil.DEFAULT_QUALIFIER);
+            return Bytes.toBytes(HBaseTestCluster.DEFAULT_QUALIFIER);
         }
 
         @Override

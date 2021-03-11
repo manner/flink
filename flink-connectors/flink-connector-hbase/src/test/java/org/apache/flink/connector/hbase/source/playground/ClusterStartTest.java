@@ -18,7 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.playground;
 
-import org.apache.flink.connector.hbase.testutil.HBaseTestClusterUtil;
+import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -35,7 +35,7 @@ public class ClusterStartTest {
 
     @BeforeClass
     public static void setup() throws IOException {
-        new HBaseTestClusterUtil().startCluster();
+        new HBaseTestCluster().startCluster();
     }
 
     @AfterClass
