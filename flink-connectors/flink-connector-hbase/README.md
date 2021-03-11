@@ -55,17 +55,18 @@ Configuration hbaseConfig = HBaseConfiguration.create();
 hbaseConfig.setBoolean("hbase.replication", true);
 String tableName = "TestTable";
 
-HBaseSource<String> hbaseSource = new HBaseSource<>(
-    tableName,
-    new HBaseStringDeserializer(),
-    hbaseConfig
-);
+HBaseSource<String> hbaseSource =
+    HBaseSource.<String>builder()
+        .setTableName(tableName)
+        .setSourceDeserializer(new HBaseStringDeserializer())
+        .setHBaseConfiguration(hbaseConfig)
+        .build();
 
 DataStream<String> stream = env.fromSource(
         hbaseSource,
         WatermarkStrategy.noWatermarks(),
         "HBaseSource");
-...
+// ...
 ```
 
 The Deserializer is created as follows:
@@ -91,14 +92,15 @@ String tableName = "TestTable";
 
 DataStream<Long> longStream = env.fromSequence(0, 100);
 
-HBaseSink<Long> hbaseSink = new HBaseSink<>(
-    tableName, 
-    new HBaseLongSerializer(),
-    hbaseConfig
-);
+HBaseSink<Long> hbaseSink =
+    HBaseSink.<Long>builder()
+        .setTableName(tableName)
+        .setSinkSerializer(new HBaseLongSerializer())
+        .setHBaseConfiguration(hbaseConfig)
+        .build();
 
 longStream.sinkTo(hbaseSink);
-...
+// ...
 ```
 An example Serializer is given below. You need to implement the following five methods, so the connector 
 knows how to save the data to HBase.
