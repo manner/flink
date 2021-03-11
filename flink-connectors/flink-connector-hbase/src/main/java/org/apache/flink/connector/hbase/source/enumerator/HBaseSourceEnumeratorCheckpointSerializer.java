@@ -38,6 +38,8 @@ import java.util.List;
 public class HBaseSourceEnumeratorCheckpointSerializer
         implements SimpleVersionedSerializer<Collection<HBaseSourceSplit>> {
 
+    private HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
+
     private static final Logger LOG =
             LoggerFactory.getLogger(HBaseSourceEnumeratorCheckpointSerializer.class);
 
@@ -52,8 +54,6 @@ public class HBaseSourceEnumeratorCheckpointSerializer
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeInt(checkpointState.size());
-
-            HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
             for (HBaseSourceSplit split : checkpointState) {
                 byte[] serializedSplit = splitSerializer.serialize(split);
                 out.write(serializedSplit.length);
@@ -71,7 +71,6 @@ public class HBaseSourceEnumeratorCheckpointSerializer
         List<HBaseSourceSplit> checkPoint = new ArrayList<>();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {
-            HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
             int numSplits = in.readInt();
             for (int i = 0; i < numSplits; i++) {
                 int splitSize = in.readInt();
