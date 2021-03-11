@@ -100,6 +100,10 @@ public class HBaseTestCluster {
         UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser("tempusername"));
 
         hbaseConf = HBaseConfiguration.create();
+        hbaseConf.setInt("replication.stats.thread.period.seconds", 5);
+        hbaseConf.setLong("replication.sleep.before.failover", 2000);
+        hbaseConf.setInt("replication.source.maxretriesmultiplier", 10);
+        hbaseConf.setBoolean("hbase.replication", true);
 
         System.setProperty(HBaseTestingUtility.BASE_TEST_DIRECTORY_KEY, testFolder);
 
