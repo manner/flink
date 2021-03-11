@@ -44,7 +44,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
     private final long activateAfter;
     private final TypeInformation<T> typeInfo;
     private boolean active = false;
-    private boolean hasSeenAtLeastOneCheckpoint = false;
+    private boolean completedAtLeastOneCheckpoint = false;
     private boolean hasSeenAtLeastOneInput = false;
 
     protected final List<T> unCheckpointedValues = new ArrayList<>();
@@ -74,7 +74,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
                 "FailureSink.notifyCheckpointComplete has been called with checkpointId={} is active{}",
                 checkpointId,
                 active);
-        hasSeenAtLeastOneCheckpoint = true;
+        completedAtLeastOneCheckpoint = true;
         throwFailureIfActive();
     }
 
@@ -90,7 +90,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
     public void initializeState(FunctionInitializationContext context) throws Exception {
         LOG.info("FailureSink.initializeState has been called");
 
-        hasSeenAtLeastOneCheckpoint = false;
+        completedAtLeastOneCheckpoint = false;
         hasSeenAtLeastOneInput = false;
 
         ListStateDescriptor<T> descriptor = new ListStateDescriptor<>("checkpointed", typeInfo);
@@ -115,7 +115,7 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         return new TimerTask() {
             @Override
             public void run() {
-                if (hasSeenAtLeastOneCheckpoint && hasSeenAtLeastOneInput) {
+                if (completedAtLeastOneCheckpoint && hasSeenAtLeastOneInput) {
                     active = true;
                     LOG.info("FailureSink activated");
                 } else {
