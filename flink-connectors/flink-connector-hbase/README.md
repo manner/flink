@@ -3,19 +3,6 @@
 This connector provides classes that allow Flink to access [HBase](https://hbase.apache.org/). 
 It supports the new Source and Sink API specified in [FLIP-27](https://cwiki.apache.org/confluence/display/FLINK/FLIP-27%3A+Refactor+Source+Interface) and [FLIP-143](https://cwiki.apache.org/confluence/display/FLINK/FLIP-143%3A+Unified+Sink+API).
 
-## Building the connector
-
-Note that the streaming connectors are not part of the binary distribution of Flink.
-You need to link them into your job jar for cluster execution.
-See how to link with them for cluster execution [here](https://ci.apache.org/projects/flink/flink-docs-stable/dev/project-configuration.html#adding-connector-and-library-dependencies).
-
-The connector can be built by using maven:
-
-```
-cd flink-connectors/flink-connector-hbase
-mvn clean install
-```
-
 ## Installing HBase
 
 Follow the instructions from the [HBase Quick Start Guide](http://hbase.apache.org/book.html#quickstart) to install HBase.
@@ -133,4 +120,17 @@ static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
         return Put.class;
     }
 }
+```
+
+## Building the connector
+
+Note that the streaming connectors are not part of the binary distribution of Flink.
+You need to link them into your job jar for cluster execution.
+See how to link with them for cluster execution [here](https://ci.apache.org/projects/flink/flink-docs-stable/dev/project-configuration.html#adding-connector-and-library-dependencies).
+
+The connector can be built by using maven:
+
+```
+cd flink-connectors/flink-connector-hbase
+mvn clean install
 ```
