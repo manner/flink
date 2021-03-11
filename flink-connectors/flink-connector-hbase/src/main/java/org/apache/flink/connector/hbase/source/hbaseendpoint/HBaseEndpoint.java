@@ -48,7 +48,6 @@ import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,22 +137,13 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private void registerAtZooKeeper() throws KeeperException, InterruptedException {
-        createZKPath(
-                getBaseString() + "/" + clusterKey,
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        createZKPath(
-                getBaseString() + "/" + clusterKey + "/rs",
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        createZKPath(getBaseString() + "/" + clusterKey, null, CreateMode.PERSISTENT);
+        createZKPath(getBaseString() + "/" + clusterKey + "/rs", null, CreateMode.PERSISTENT);
 
         UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
         createZKPath(
                 getBaseString() + "/" + clusterKey + "/hbaseid",
                 Bytes.toBytes(uuid.toString()),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
 
         ServerName serverName =
@@ -161,10 +151,9 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                         hostName,
                         rpcServer.getListenerAddress().getPort(),
                         System.currentTimeMillis());
-        zooKeeper.create(
+        createZKPath(
                 getBaseString() + "/" + clusterKey + "/rs/" + serverName.getServerName(),
                 null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
 
         LOG.debug("Registered rpc server node at zookeeper");
@@ -269,11 +258,11 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
     }
 
-    private void createZKPath(final String path, byte[] data, List<ACL> acl, CreateMode createMode)
+    private void createZKPath(final String path, byte[] data, CreateMode createMode)
             throws InterruptedException {
         try {
             if (zooKeeper.exists(path, false) == null) {
-                zooKeeper.create(path, data, acl, createMode);
+                zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
             }
         } catch (KeeperException e) {
             throw new RuntimeException("Error creating ZK path in Hbase replication endpoint", e);
