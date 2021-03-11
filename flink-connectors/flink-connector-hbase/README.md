@@ -40,7 +40,6 @@ You will need to specify a Deserializer which will transform each event from an 
 StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 Configuration hbaseConfig = HBaseConfiguration.create();
-hbaseConfig.setBoolean("hbase.replication", true);
 String tableName = "TestTable";
 
 HBaseSource<String> hbaseSource =
