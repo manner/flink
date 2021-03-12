@@ -50,9 +50,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignalThrowOnFailure;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignal;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSuccess;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.cleanupSignal;
+import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitThrowOnFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signal;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalFailure;
 import static org.apache.flink.connector.hbase.testutil.FileSignal.signalSuccess;
@@ -220,7 +220,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                                     "Unique value " + value + " was not seen only once");
                         }
                         checkForSuccess();
-                        signal(collectedValueSignal);
+                        signal(collectedValueSignal + value);
                     }
 
                     @Override
@@ -237,16 +237,22 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
             int putsPerPackage = 5;
             for (int i = 0; i < expectedValues.length; i += putsPerPackage) {
                 LOG.info("Sending next package ...");
+                CompletableFuture[] signalsToWait = new CompletableFuture[putsPerPackage];
                 for (int j = i; j < expectedValues.length && j < i + putsPerPackage; j++) {
                     cluster.put(baseTableName, expectedValues[j]);
+                    signalsToWait[j - i] = awaitSignal(collectedValueSignal + expectedValues[j]);
                 }
 
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
-                awaitSignalThrowOnFailure(collectedValueSignal, 240, TimeUnit.SECONDS);
+                awaitThrowOnFailure(
+                        CompletableFuture.allOf(signalsToWait),
+                        240,
+                        TimeUnit.SECONDS,
+                        "Failure occured while waiting for package to be collected ");
+
                 Thread.sleep(3000);
                 LOG.info("Consuming collection signal");
-                cleanupSignal(collectedValueSignal);
             }
             LOG.info("Finished sending packages, awaiting success ...");
             awaitSuccess(120, TimeUnit.SECONDS);

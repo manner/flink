@@ -82,13 +82,21 @@ public class FileSignal {
 
     public static void awaitSignalThrowOnFailure(String signalName, long timeout, TimeUnit timeUnit)
             throws InterruptedException, ExecutionException, TimeoutException {
-        String result =
-                (String)
-                        CompletableFuture.anyOf(
-                                        awaitSignal(signalName), awaitSignal(FAILURE_SIGNAL))
-                                .get(timeout, timeUnit);
-        if (result.equals(FAILURE_SIGNAL)) {
-            throw new RuntimeException("Waiting for signal " + signalName + " yielded failure");
+        awaitThrowOnFailure(
+                awaitSignal(signalName),
+                timeout,
+                timeUnit,
+                "Waiting for signal " + signalName + " yielded failure");
+    }
+
+    public static void awaitThrowOnFailure(
+            CompletableFuture<?> toAwait, long timeout, TimeUnit timeUnit, String errorMsg)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        Object result =
+                CompletableFuture.anyOf(toAwait, awaitSignal(FAILURE_SIGNAL))
+                        .get(timeout, timeUnit);
+        if (FAILURE_SIGNAL.equals(result)) {
+            throw new RuntimeException(errorMsg);
         }
     }
 
