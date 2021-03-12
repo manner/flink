@@ -151,10 +151,10 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     public void close() throws Exception {
         Closer closer = Closer.create();
         try {
-            flushBuffer();
-            batchSendTimer.cancel();
             closer.register(table);
             closer.register(connection);
+            batchSendTimer.cancel();
+            flushBuffer();
         } catch (Throwable e) {
             throw closer.rethrow(e);
         } finally {
