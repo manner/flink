@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeoutException;
  * Utility class to signal events of tests such as success or failure. Allows to get signals out of
  * flink without using web sockets or success exceptions or similar.
  */
-public class FileSignal extends ExternalResource {
+public class FileSignal extends ExternalResource implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileSignal.class);
 

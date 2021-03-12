@@ -24,6 +24,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
+import org.apache.flink.connector.hbase.testutil.FileSignal;
 import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.testutil.Util;
@@ -173,6 +174,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     @Test
     public void testRecordsAreProducedExactlyOnceWithCheckpoints() throws Exception {
         final String collectedValueSignal = "collectedValue";
+        final FileSignal testOracle = this.testOracle;
         String[] expectedValues = uniqueValues(20);
         cluster.makeTable(baseTableName);
 
