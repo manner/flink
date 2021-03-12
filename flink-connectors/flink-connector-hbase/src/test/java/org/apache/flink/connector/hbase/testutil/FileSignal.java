@@ -98,12 +98,14 @@ public class FileSignal {
     }
 
     public static void makeFolder() {
-        SIGNAL_FOLDER.mkdirs();
+        assert SIGNAL_FOLDER.mkdirs();
+        LOG.info("Created signal folder");
     }
 
     public static void cleanupSignal(String signalName) {
         File signalFile = signalFile(signalName);
         signalFile.delete();
+        LOG.info("Deleted signal folder");
     }
 
     public static void cleanupFolder() throws IOException {
