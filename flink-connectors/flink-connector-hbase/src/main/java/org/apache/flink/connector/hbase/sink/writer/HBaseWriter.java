@@ -25,6 +25,8 @@ import org.apache.flink.connector.hbase.sink.HBaseSinkOptions;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
+import org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.io.Closer;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -147,9 +149,16 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
 
     @Override
     public void close() throws Exception {
-        flushBuffer();
-        batchSendTimer.cancel();
-        table.close();
-        connection.close();
+        Closer closer = Closer.create();
+        try {
+            flushBuffer();
+            batchSendTimer.cancel();
+            closer.register(table);
+            closer.register(connection);
+        } catch (Throwable e) {
+            throw closer.rethrow(e);
+        } finally {
+            closer.close();
+        }
     }
 }
