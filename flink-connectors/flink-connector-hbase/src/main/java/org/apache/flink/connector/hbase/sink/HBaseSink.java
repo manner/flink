@@ -36,7 +36,48 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
-/** HBaseSink. */
+/**
+ * A Sink Connector for HBase. Please use an {@link HBaseSinkBuilder} to construct a {@link
+ * HBaseSink}. The following example shows how to create an HBaseSink that writes Long values to
+ * HBase.
+ *
+ * <pre>{@code
+ * HBaseSink<Long> hbaseSink =
+ *      HBaseSink.<Long>builder()
+ *          .setTableName(tableName)
+ *          .setSinkSerializer(new HBaseLongSerializer())
+ *          .setHBaseConfiguration(hbaseConfig)
+ *          .build();
+ * }</pre>
+ *
+ * <p>Here is an example for the Serializer:
+ *
+ * <pre>{@code
+ * static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
+ *     @Override
+ *     public byte[] serializePayload(Long event) {
+ *         return Bytes.toBytes(event);
+ *     }
+ *
+ *     @Override
+ *     public byte[] serializeColumnFamily(Long event) {
+ *         return Bytes.toBytes("exampleColumnFamily");
+ *     }
+ *
+ *     @Override
+ *     public byte[] serializeQualifier(Long event) {
+ *         return Bytes.toBytes("exampleQualifier");
+ *     }
+ *
+ *     @Override
+ *     public byte[] serializeRowKey(Long event) {
+ *         return Bytes.toBytes(event.toString());
+ *     }
+ * }
+ * }</pre>
+ *
+ * <p>See {@link HBaseSinkBuilder} for more details.
+ */
 public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriterState, Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSink.class);

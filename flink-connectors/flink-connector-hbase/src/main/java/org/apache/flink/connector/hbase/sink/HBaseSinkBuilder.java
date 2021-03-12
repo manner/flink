@@ -24,7 +24,53 @@ import java.util.Properties;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** The builder class for {@link HBaseSink} to create. */
+/**
+ * The builder class to create an {@link HBaseSink}. The following example shows how to create an
+ * HBaseSink that writes Long values to HBase.
+ *
+ * <pre>{@code
+ * HBaseSink<Long> hbaseSink =
+ *      HBaseSink.<Long>builder()
+ *          .setTableName(tableName)
+ *          .setSinkSerializer(new HBaseLongSerializer())
+ *          .setHBaseConfiguration(hbaseConfig)
+ *          .build();
+ * }</pre>
+ *
+ * <p>Here is an example for the Serializer:
+ *
+ * <pre>{@code
+ * static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
+ *     @Override
+ *     public byte[] serializePayload(Long event) {
+ *         return Bytes.toBytes(event);
+ *     }
+ *
+ *     @Override
+ *     public byte[] serializeColumnFamily(Long event) {
+ *         return Bytes.toBytes("exampleColumnFamily");
+ *     }
+ *
+ *     @Override
+ *     public byte[] serializeQualifier(Long event) {
+ *         return Bytes.toBytes("exampleQualifier");
+ *     }
+ *
+ *     @Override
+ *     public byte[] serializeRowKey(Long event) {
+ *         return Bytes.toBytes(event.toString());
+ *     }
+ * }
+ * }</pre>
+ *
+ * <p>A SerializationSchema is always required, as well as a table name to write to and an
+ * HBaseConfiguration.
+ *
+ * <p>By default each HBaseWriter has a queue limit of 1000 entries used for batching. This can be
+ * changed with {@link #setQueueLimit(int)}. The maximum allowed latency of an event can be set by
+ * {@link #setMaxLatencyMs(int)}. After the specified elements will be sent to HBase no matter how
+ * many elements are currently in the batching queue.
+ */
 public class HBaseSinkBuilder<IN> {
 
     private static final String[] REQUIRED_CONFIGS = {HBaseSinkOptions.TABLE_NAME.key()};
