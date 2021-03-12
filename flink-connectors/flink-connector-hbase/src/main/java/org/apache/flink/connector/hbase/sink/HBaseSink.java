@@ -55,23 +55,13 @@ import java.util.Properties;
  * <pre>{@code
  * static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
  *     @Override
- *     public byte[] serializePayload(Long event) {
- *         return Bytes.toBytes(event);
- *     }
- *
- *     @Override
- *     public byte[] serializeColumnFamily(Long event) {
- *         return Bytes.toBytes("exampleColumnFamily");
- *     }
- *
- *     @Override
- *     public byte[] serializeQualifier(Long event) {
- *         return Bytes.toBytes("exampleQualifier");
- *     }
- *
- *     @Override
- *     public byte[] serializeRowKey(Long event) {
- *         return Bytes.toBytes(event.toString());
+ *     public HBaseEvent serialize(Long event) {
+ *         return new HBaseEvent(
+ *                 Cell.Type.Put,                      // or Cell.Type.Delete
+ *                 event.toString(),                   // rowId
+ *                 "exampleColumnFamily",              // column family
+ *                 "exampleQualifier",                 // qualifier
+ *                 Bytes.toBytes(event.toString()));   // payload
  *     }
  * }
  * }</pre>

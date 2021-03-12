@@ -1,6 +1,6 @@
 # Flink HBase Connector
 
-This module provides connectors that allow Flink to access [HBase](https://hbase.apache.org/) using [CDC](https://en.wikipedia.org/wiki/Change_data_capture) . 
+This module provides connectors that allow Flink to access [HBase](https://hbase.apache.org/) using [CDC](https://en.wikipedia.org/wiki/Change_data_capture). 
 It supports the new Source and Sink API specified in [FLIP-27](https://cwiki.apache.org/confluence/display/FLINK/FLIP-27%3A+Refactor+Source+Interface) and [FLIP-143](https://cwiki.apache.org/confluence/display/FLINK/FLIP-143%3A+Unified+Sink+API).
 
 ## Installing HBase
@@ -33,8 +33,8 @@ This needs be done only once per cluster:
   ...
 </configuration>
 ```
-All incoming events to Flink will be processed as an `HBaseEvent`. 
-You will need to specify a Deserializer which will transform each event from an `HBaseEvent` to the desired DataStream type.
+All incoming events to Flink will be processed as an `HBaseSourceEvent`. 
+You will need to specify a Deserializer which will transform each event from an `HBaseSourceEvent` to the desired DataStream type.
 
 ```java
 StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -61,7 +61,7 @@ The Deserializer is created as follows:
 ```java
 static class HBaseStringDeserializer extends HBaseSourceDeserializer<String> {
     @Override
-    public String deserialize(HBaseEvent event) {
+    public String deserialize(HBaseSourceEvent event) {
         return new String(event.getPayload());
     }
 }
@@ -94,30 +94,13 @@ knows how to save the data to HBase.
 ```java
 static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
     @Override
-    public byte[] serializePayload(Long event) {
-        // This is the actual value written to HBase.
-        return Bytes.toBytes(event);
-    }
-
-    @Override
-    public byte[] serializeColumnFamily(Long event) {
-        return Bytes.toBytes("exampleColumnFamily");
-    }
-
-    @Override
-    public byte[] serializeQualifier(Long event) {
-        return Bytes.toBytes("exampleQualifier");
-    }
-
-    @Override
-    public byte[] serializeRowKey(Long event) {
-        return Bytes.toBytes(event.toString());
-    }
-
-    @Override
-    public Class<? extends Mutation> serializeRowType(Long event) {
-        // You can also send deletion events with Delete.class 
-        return Put.class;
+    public HBaseEvent serialize(Long event) {
+        return new HBaseEvent(
+                Cell.Type.Put,                      // or Cell.Type.Delete
+                event.toString(),                   // rowId
+                "exampleColumnFamily",              // column family
+                "exampleQualifier",                 // qualifier
+                Bytes.toBytes(event.toString()));   // payload
     }
 }
 ```
