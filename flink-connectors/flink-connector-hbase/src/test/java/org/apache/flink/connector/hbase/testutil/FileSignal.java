@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -35,17 +36,17 @@ import java.util.concurrent.TimeoutException;
  * Utility class to signal events of tests such as success or failure. Allows to get signals out of
  * flink without using web sockets or success exceptions or similar.
  */
-public class FileSignal {
+public class FileSignal extends ExternalResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileSignal.class);
 
     private static final long POLL_INTERVAL = 100; // ms
-    private static final File SIGNAL_FOLDER = new File("signal");
-
     private static final String SUCCESS_SIGNAL = "success";
     private static final String FAILURE_SIGNAL = "failure";
 
-    public static void signal(String signalName) {
+    private final File signalFolder = new File("signal" + UUID.randomUUID());
+
+    public void signal(String signalName) {
         File signalFile = signalFile(signalName);
         try {
             signalFile.createNewFile();
@@ -55,15 +56,15 @@ public class FileSignal {
         }
     }
 
-    public static void signalSuccess() {
+    public void signalSuccess() {
         signal(SUCCESS_SIGNAL);
     }
 
-    public static void signalFailure() {
+    public void signalFailure() {
         signal(FAILURE_SIGNAL);
     }
 
-    public static CompletableFuture<String> awaitSignal(String signalName) {
+    public CompletableFuture<String> awaitSignal(String signalName) {
         File signalFile = signalFile(signalName);
         return CompletableFuture.supplyAsync(
                 () -> {
@@ -80,7 +81,7 @@ public class FileSignal {
                 });
     }
 
-    public static void awaitSignalThrowOnFailure(String signalName, long timeout, TimeUnit timeUnit)
+    public void awaitSignalThrowOnFailure(String signalName, long timeout, TimeUnit timeUnit)
             throws InterruptedException, ExecutionException, TimeoutException {
         awaitThrowOnFailure(
                 awaitSignal(signalName),
@@ -89,7 +90,7 @@ public class FileSignal {
                 "Waiting for signal " + signalName + " yielded failure");
     }
 
-    public static void awaitThrowOnFailure(
+    public void awaitThrowOnFailure(
             CompletableFuture<?> toAwait, long timeout, TimeUnit timeUnit, String errorMsg)
             throws InterruptedException, ExecutionException, TimeoutException {
         Object result =
@@ -100,44 +101,41 @@ public class FileSignal {
         }
     }
 
-    public static void awaitSuccess(long timeout, TimeUnit timeUnit)
+    public void awaitSuccess(long timeout, TimeUnit timeUnit)
             throws InterruptedException, ExecutionException, TimeoutException {
         awaitSignalThrowOnFailure(SUCCESS_SIGNAL, timeout, timeUnit);
     }
 
-    public static void makeFolder() {
-        assert SIGNAL_FOLDER.mkdirs();
+    public void makeFolder() {
+        assert signalFolder.mkdirs();
         LOG.info("Created signal folder");
     }
 
-    public static void cleanupSignal(String signalName) {
+    public void cleanupSignal(String signalName) {
         File signalFile = signalFile(signalName);
         signalFile.delete();
+    }
+
+    public void cleanupFolder() throws IOException {
+        FileUtils.deleteDirectory(signalFolder);
         LOG.info("Deleted signal folder");
     }
 
-    public static void cleanupFolder() throws IOException {
-        FileUtils.deleteDirectory(SIGNAL_FOLDER);
+    private File signalFile(String signalName) {
+        return signalFolder.toPath().resolve(signalName + ".signal").toFile();
     }
 
-    private static File signalFile(String signalName) {
-        return SIGNAL_FOLDER.toPath().resolve(signalName + ".signal").toFile();
+    @Override
+    protected void before() throws Throwable {
+        makeFolder();
     }
 
-    /** Test rule for setting up the signal folder for each test. */
-    public static class FileSignalFolderSetup extends ExternalResource {
-        @Override
-        protected void before() throws Throwable {
-            makeFolder();
-        }
-
-        @Override
-        protected void after() {
-            try {
-                cleanupFolder();
-            } catch (IOException e) {
-                throw new RuntimeException("Could not clean up signal folder", e);
-            }
+    @Override
+    protected void after() {
+        try {
+            cleanupFolder();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not clean up signal folder", e);
         }
     }
 }

@@ -50,12 +50,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSignal;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitSuccess;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.awaitThrowOnFailure;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.signal;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.signalFailure;
-import static org.apache.flink.connector.hbase.testutil.FileSignal.signalSuccess;
 import static org.junit.Assert.assertArrayEquals;
 
 /** Tests the most basic use cases of the source with a mocked HBase system. */
@@ -201,10 +195,10 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                                         "Wrong values were produced.",
                                         expectedValues,
                                         checkpointed.toArray());
-                                signalSuccess();
+                                testOracle.signalSuccess();
                             } catch (ArrayComparisonFailure e) {
                                 LOG.error("Comparison failed", e);
-                                signalFailure();
+                                testOracle.signalFailure();
                                 throw e;
                             }
                         }
@@ -215,12 +209,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
                         if (getCheckpointedValues().contains(value)) {
                             LOG.error("Unique value {} was not seen only once", value);
-                            signalFailure();
+                            testOracle.signalFailure();
                             throw new RuntimeException(
                                     "Unique value " + value + " was not seen only once");
                         }
                         checkForSuccess();
-                        signal(collectedValueSignal + value);
+                        testOracle.signal(collectedValueSignal + value);
                     }
 
                     @Override
@@ -240,12 +234,13 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 CompletableFuture[] signalsToWait = new CompletableFuture[putsPerPackage];
                 for (int j = i; j < expectedValues.length && j < i + putsPerPackage; j++) {
                     cluster.put(baseTableName, expectedValues[j]);
-                    signalsToWait[j - i] = awaitSignal(collectedValueSignal + expectedValues[j]);
+                    signalsToWait[j - i] =
+                            testOracle.awaitSignal(collectedValueSignal + expectedValues[j]);
                 }
 
                 // Assert that values have actually been sent over so there was an opportunity to
                 // checkpoint them
-                awaitThrowOnFailure(
+                testOracle.awaitThrowOnFailure(
                         CompletableFuture.allOf(signalsToWait),
                         240,
                         TimeUnit.SECONDS,
@@ -255,7 +250,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 LOG.info("Consuming collection signal");
             }
             LOG.info("Finished sending packages, awaiting success ...");
-            awaitSuccess(120, TimeUnit.SECONDS);
+            testOracle.awaitSuccess(120, TimeUnit.SECONDS);
             LOG.info("Received success, ending test ...");
         } finally {
             LOG.info("Cancelling job client");

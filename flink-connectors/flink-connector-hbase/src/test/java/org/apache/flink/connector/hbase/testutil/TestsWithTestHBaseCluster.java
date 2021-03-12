@@ -36,9 +36,7 @@ public abstract class TestsWithTestHBaseCluster {
 
     protected static final Logger LOG = LoggerFactory.getLogger(TestsWithTestHBaseCluster.class);
 
-    @Rule
-    public FileSignal.FileSignalFolderSetup fileSignalFolderSetup =
-            new FileSignal.FileSignalFolderSetup();
+    @Rule public FileSignal testOracle = new FileSignal();
 
     public static final int DEFAULT_CF_COUNT = 4;
 
