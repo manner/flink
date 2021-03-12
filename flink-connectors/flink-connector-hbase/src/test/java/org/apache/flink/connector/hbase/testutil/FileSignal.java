@@ -114,6 +114,7 @@ public class FileSignal {
         return SIGNAL_FOLDER.toPath().resolve(signalName + ".signal").toFile();
     }
 
+    /** Test rule for setting up the signal folder for each test. */
     public static class FileSignalFolderSetup extends ExternalResource {
         @Override
         protected void before() throws Throwable {
