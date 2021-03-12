@@ -40,7 +40,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /** A {@link SplitReader} implementation for Hbase. */
-public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSourceSplit> {
+public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBaseSourceSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceSplitReader.class);
 
@@ -60,13 +60,13 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseEvent, HBaseSour
     }
 
     @Override
-    public RecordsWithSplitIds<HBaseEvent> fetch() throws IOException {
+    public RecordsWithSplitIds<HBaseSourceEvent> fetch() throws IOException {
         final HBaseSourceSplit nextSplit = splits.poll();
         if (nextSplit != null) {
             currentSplitId = nextSplit.splitId();
         }
-        HBaseEvent nextValue = hbaseEndpoint.next();
-        List<HBaseEvent> records = Collections.singletonList(nextValue);
+        HBaseSourceEvent nextValue = hbaseEndpoint.next();
+        List<HBaseSourceEvent> records = Collections.singletonList(nextValue);
         return new HBaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
     }
 

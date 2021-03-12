@@ -18,7 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
-import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 
@@ -53,7 +53,8 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         consumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, "foobar");
-        HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
+        HBaseSourceEvent result =
+                CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
         assertNotNull(result);
         assertEquals(Cell.Type.Put, result.getType());
     }
@@ -75,7 +76,8 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 HBaseTestCluster.DEFAULT_QUALIFIER);
 
         CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
-        HBaseEvent result = CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
+        HBaseSourceEvent result =
+                CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
 
         assertNotNull(result);
         assertEquals(Cell.Type.Delete, result.getType());
@@ -99,7 +101,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         long lastTimeStamp = -1;
         int lastIndex = -1;
         for (int i = 0; i < numPuts * putSize; i++) {
-            HBaseEvent nextEvent =
+            HBaseSourceEvent nextEvent =
                     CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
             assertTrue(
                     "Events were not collected with strictly ordered, unique timestamp x index",

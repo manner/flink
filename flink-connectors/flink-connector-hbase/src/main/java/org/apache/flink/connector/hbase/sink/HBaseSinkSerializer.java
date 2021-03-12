@@ -18,22 +18,11 @@
 
 package org.apache.flink.connector.hbase.sink;
 
-import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.flink.connector.hbase.HBaseEvent;
 
 import java.io.Serializable;
 
 /** TODO docs. */
 public interface HBaseSinkSerializer<T> extends Serializable {
-    byte[] serializePayload(T event);
-
-    byte[] serializeColumnFamily(T event);
-
-    byte[] serializeQualifier(T event);
-
-    byte[] serializeRowKey(T event);
-
-    default Class<? extends Mutation> serializeRowType(T event) {
-        return Put.class;
-    }
+    HBaseEvent serialize(T event);
 }

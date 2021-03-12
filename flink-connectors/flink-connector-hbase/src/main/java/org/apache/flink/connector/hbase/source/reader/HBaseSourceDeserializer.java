@@ -45,7 +45,7 @@ public abstract class HBaseSourceDeserializer<T> implements Serializable, Result
         }
     }
 
-    public abstract T deserialize(HBaseEvent event);
+    public abstract T deserialize(HBaseSourceEvent event);
 
     @Override
     public TypeInformation<T> getProducedType() {

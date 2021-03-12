@@ -20,6 +20,7 @@ package org.apache.flink.connector.hbase.sink.writer;
 
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
+import org.apache.flink.connector.hbase.HBaseEvent;
 import org.apache.flink.connector.hbase.sink.HBaseSinkCommittable;
 import org.apache.flink.connector.hbase.sink.HBaseSinkOptions;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
@@ -28,6 +29,7 @@ import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.io.Closer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -114,22 +116,17 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
 
     @Override
     public void write(IN element, Context context) {
-        Class<? extends Mutation> mutationClass = sinkSerializer.serializeRowType(element);
-        if (mutationClass.isAssignableFrom(Put.class)) {
-            Put put = new Put(sinkSerializer.serializeRowKey(element));
-            put.addColumn(
-                    sinkSerializer.serializeColumnFamily(element),
-                    sinkSerializer.serializeQualifier(element),
-                    sinkSerializer.serializePayload(element));
+        HBaseEvent event = sinkSerializer.serialize(element);
+        if (event.getType() == Cell.Type.Put) {
+            Put put = new Put(event.getRowId());
+            put.addColumn(event.getCf(), event.getQualifier(), event.getPayload());
             pendingMutations.add(put);
-        } else if (mutationClass.isAssignableFrom(Delete.class)) {
-            Delete delete = new Delete(sinkSerializer.serializeRowKey(element));
-            delete.addColumn(
-                    sinkSerializer.serializeColumnFamily(element),
-                    sinkSerializer.serializeQualifier(element));
+        } else if (event.getType() == Cell.Type.Delete) {
+            Delete delete = new Delete(event.getRowId());
+            delete.addColumn(event.getCf(), event.getQualifier());
             pendingMutations.add(delete);
         } else {
-            throw new UnsupportedOperationException("row type not supported");
+            throw new UnsupportedOperationException("event type not supported");
         }
 
         if (pendingMutations.size() >= queueLimit) {

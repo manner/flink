@@ -21,8 +21,8 @@ package org.apache.flink.connector.hbase.source;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
 import org.apache.flink.connector.hbase.testutil.FileSignal;
 import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
@@ -300,7 +300,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     /** Simple Deserialization Scheme to get event payloads as String. */
     public static class HBaseStringDeserializationScheme extends HBaseSourceDeserializer<String> {
         @Override
-        public String deserialize(HBaseEvent event) {
+        public String deserialize(HBaseSourceEvent event) {
             return new String(event.getPayload());
         }
     }

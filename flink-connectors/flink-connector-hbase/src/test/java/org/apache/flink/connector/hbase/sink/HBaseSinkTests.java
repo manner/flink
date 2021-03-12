@@ -18,12 +18,14 @@
 
 package org.apache.flink.connector.hbase.sink;
 
+import org.apache.flink.connector.hbase.HBaseEvent;
 import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -83,23 +85,13 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
 
     private static class HBaseTestSerializer implements HBaseSinkSerializer<Long> {
         @Override
-        public byte[] serializePayload(Long event) {
-            return Bytes.toBytes(event.toString());
-        }
-
-        @Override
-        public byte[] serializeColumnFamily(Long event) {
-            return Bytes.toBytes(HBaseTestCluster.DEFAULT_COLUMN_FAMILY);
-        }
-
-        @Override
-        public byte[] serializeQualifier(Long event) {
-            return Bytes.toBytes(HBaseTestCluster.DEFAULT_QUALIFIER);
-        }
-
-        @Override
-        public byte[] serializeRowKey(Long event) {
-            return Bytes.toBytes(event.toString());
+        public HBaseEvent serialize(Long event) {
+            return new HBaseEvent(
+                    Cell.Type.Put,
+                    event.toString(),
+                    HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
+                    HBaseTestCluster.DEFAULT_QUALIFIER,
+                    Bytes.toBytes(event.toString()));
         }
     }
 }

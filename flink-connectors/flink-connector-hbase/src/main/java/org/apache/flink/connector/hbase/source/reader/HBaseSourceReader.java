@@ -33,7 +33,7 @@ import java.util.Properties;
 /** The source reader for Hbase. */
 public class HBaseSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
-                HBaseEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
+                HBaseSourceEvent, T, HBaseSourceSplit, HBaseSourceSplitState> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceReader.class);
 

@@ -20,7 +20,7 @@ package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
-import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
@@ -71,10 +71,10 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private final Configuration hbaseConf;
     private final RecoverableZooKeeper zooKeeper;
     private final RpcServer rpcServer;
-    private final FutureCompletingBlockingQueue<HBaseEvent> walEdits;
+    private final FutureCompletingBlockingQueue<HBaseSourceEvent> walEdits;
     private final String hostName;
-    private boolean isRunning = false;
     private final String tableName;
+    private boolean isRunning = false;
 
     public HBaseEndpoint(byte[] serializedConfig, Properties properties)
             throws IOException, KeeperException, InterruptedException {
@@ -159,7 +159,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         LOG.debug("Registered rpc server node at zookeeper");
     }
 
-    public HBaseEvent next() {
+    public HBaseSourceEvent next() {
         if (!isRunning) {
             // Protects from infinite waiting
             throw new RuntimeException("Consumer is not running");
@@ -225,7 +225,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                     }
 
                     Cell cell = cellScanner.current();
-                    HBaseEvent event = HBaseEvent.fromCell(table, cell, i);
+                    HBaseSourceEvent event = HBaseSourceEvent.fromCell(table, cell, i);
                     walEdits.put(0, event);
                 }
             }

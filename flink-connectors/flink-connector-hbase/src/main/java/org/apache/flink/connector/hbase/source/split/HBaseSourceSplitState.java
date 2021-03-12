@@ -18,7 +18,8 @@
 
 package org.apache.flink.connector.hbase.source.split;
 
-import org.apache.flink.connector.hbase.source.reader.HBaseEvent;
+import org.apache.flink.connector.hbase.HBaseEvent;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 
 /**
  * State of source split. Tracks the stamp of the last emitted event to ensure no duplicates on
@@ -46,12 +47,12 @@ public class HBaseSourceSplitState {
      * @param event An {@link HBaseEvent} that has been emitted by the {@link
      *     org.apache.flink.connector.hbase.source.reader.HBaseRecordEmitter}
      */
-    public void notifyEmittedEvent(HBaseEvent event) {
+    public void notifyEmittedEvent(HBaseSourceEvent event) {
         lastTimeStamp = event.getTimestamp();
         lastIndex = event.getIndex();
     }
 
-    public boolean isAlreadyProcessedEvent(HBaseEvent event) {
+    public boolean isAlreadyProcessedEvent(HBaseSourceEvent event) {
         return !event.isLaterThan(lastTimeStamp, lastIndex);
     }
 }

@@ -23,7 +23,8 @@ import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitState;
 
 /** The {@link RecordEmitter} implementation for {@link HBaseSourceReader}. */
-public class HBaseRecordEmitter<T> implements RecordEmitter<HBaseEvent, T, HBaseSourceSplitState> {
+public class HBaseRecordEmitter<T>
+        implements RecordEmitter<HBaseSourceEvent, T, HBaseSourceSplitState> {
 
     private final HBaseSourceDeserializer<T> sourceDeserializer;
 
@@ -33,7 +34,7 @@ public class HBaseRecordEmitter<T> implements RecordEmitter<HBaseEvent, T, HBase
 
     @Override
     public void emitRecord(
-            HBaseEvent event, SourceOutput<T> output, HBaseSourceSplitState splitState)
+            HBaseSourceEvent event, SourceOutput<T> output, HBaseSourceSplitState splitState)
             throws Exception {
         if (!splitState.isAlreadyProcessedEvent(event)) {
             splitState.notifyEmittedEvent(event);
