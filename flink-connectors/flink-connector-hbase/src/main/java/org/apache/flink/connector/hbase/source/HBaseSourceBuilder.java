@@ -27,10 +27,10 @@ import java.util.Properties;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- *  The builder class to create an {@link HBaseSource}.
+ * The builder class to create an {@link HBaseSource}.
  *
- * <p> The following example shows a minimum setup to create a HBase Source that reads String
- * values from each cell.</p>
+ * <p>The following example shows a minimum setup to create a HBase Source that reads String values
+ * from each cell.
  *
  * <pre>{@code
  * HBaseSource<String> source = HBaseSource
@@ -49,13 +49,12 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *     }
  * }</pre>
  *
- * <p>A DeserializationSchema is always required to be set, as well as a TableName to read from
- * and a HBaseConfiguration.</p>
+ * <p>A DeserializationSchema is always required to be set, as well as a TableName to read from and
+ * a HBaseConfiguration.
  *
  * <p>By default each HBaseEndpoint has a queue capacity of 1000 entries for WALedits, this can be
- * changed with {@link #setQueueCapacity(int queueSize)}.The hostname of the created RPC Servers can
- * be changed with {@link #setHostName(String hostname)}.</p>
- *
+ * changed with {@link #setQueueCapacity(int queueSize)}. The hostname of the created RPC Servers
+ * can be changed with {@link #setHostName(String hostname)}.
  */
 public class HBaseSourceBuilder<IN> {
 

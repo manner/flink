@@ -40,8 +40,8 @@ import java.util.Collection;
 import java.util.Properties;
 
 /**
- *  A Source Connector for HBase. Please use a {@link HBaseSourceBuilder} to construct a {@link
- * HBaseSource} The following example shows how to create a HBaseSource that reads String values
+ * A Source Connector for HBase. Please use a {@link HBaseSourceBuilder} to construct a {@link
+ * HBaseSource}. The following example shows how to create a HBaseSource that reads String values
  * from each cell.
  *
  * <pre>{@code
@@ -59,7 +59,6 @@ import java.util.Properties;
  *             return new String(event.getPayload());
  *         }
  *     }
- *
  * }</pre>
  *
  * <p>See {@link HBaseSourceBuilder} for more details.
