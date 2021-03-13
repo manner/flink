@@ -19,9 +19,7 @@
 package org.apache.flink.connector.hbase.testutil;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,13 +38,6 @@ public abstract class TestsWithTestHBaseCluster {
 
     public static final int DEFAULT_CF_COUNT = 4;
 
-    /**
-     * For local debug purposes. Allows to run the test quickly without starting a fresh cluster for
-     * each new test.
-     */
-    public static final boolean SHARE_CLUSTER = false;
-
-    private static final HBaseTestCluster sharedCluster = new HBaseTestCluster();
     protected HBaseTestCluster cluster;
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
@@ -65,50 +56,18 @@ public abstract class TestsWithTestHBaseCluster {
                         "%s-table-%s", getClass().getSimpleName().toLowerCase(), UUID.randomUUID());
     }
 
-    @BeforeClass
-    public static void setupSharedCluster()
-            throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        if (SHARE_CLUSTER) {
-            sharedCluster.startCluster();
-            assert sharedCluster.isClusterAlreadyRunning();
-        }
-    }
-
-    @AfterClass
-    public static void teardownSharedCluster()
-            throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        if (SHARE_CLUSTER) {
-            sharedCluster.shutdownCluster();
-        }
-    }
-
-    @After
-    public void clearReplicationPeers() {
-        if (SHARE_CLUSTER) {
-            cluster.clearReplicationPeers();
-            assert cluster.getReplicationPeers().size() == 0;
-            cluster.clearTables();
-        }
-    }
-
     @Before
     public void setupIndividualCluster()
-            throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        if (!SHARE_CLUSTER) {
-            cluster = new HBaseTestCluster();
-            cluster.startCluster();
-            assert cluster.isClusterAlreadyRunning();
-        } else {
-            cluster = sharedCluster;
-        }
+            throws IOException, InterruptedException, ExecutionException {
+        cluster = new HBaseTestCluster();
+        cluster.startCluster();
+        assert cluster.isClusterAlreadyRunning();
     }
 
     @After
     public void teardownIndividualCluster()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        if (!SHARE_CLUSTER) {
-            cluster.shutdownCluster();
-        }
+        cluster.shutdownCluster();
     }
 
     protected static boolean causedBySuccess(Exception exception) {
