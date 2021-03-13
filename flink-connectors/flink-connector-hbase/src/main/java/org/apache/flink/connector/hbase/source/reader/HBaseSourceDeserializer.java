@@ -22,13 +22,14 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /** Deserialization Interface. */
 @FunctionalInterface
 public interface HBaseSourceDeserializer<T> extends Serializable, ResultTypeQueryable<T> {
 
-    T deserialize(HBaseSourceEvent event);
+    T deserialize(HBaseSourceEvent event) throws IOException;
 
     @Override
     default TypeInformation<T> getProducedType() {

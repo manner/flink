@@ -17,11 +17,7 @@ public class HBaseSourceDeserializerWrapper<T> implements HBaseSourceDeserialize
     }
 
     @Override
-    public T deserialize(HBaseSourceEvent event) {
-        try {
-            return deserializationSchema.deserialize(event.getPayload());
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't deserialize event", e);
-        }
+    public T deserialize(HBaseSourceEvent event) throws IOException {
+        return deserializationSchema.deserialize(event.getPayload());
     }
 }

@@ -301,7 +301,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public static class HBaseStringDeserializationScheme
             implements HBaseSourceDeserializer<String> {
         @Override
-        public String deserialize(HBaseSourceEvent event) {
+        public String deserialize(HBaseSourceEvent event) throws IOException {
             return new String(event.getPayload());
         }
     }
