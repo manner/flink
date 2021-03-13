@@ -39,11 +39,11 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Queue;
+
 
 /** The enumerator class for Hbase source. */
 @Internal
@@ -80,7 +80,9 @@ public class HBaseSplitEnumerator
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
             List<ArrayList<String>> parallelInstances = new ArrayList<>(context.currentParallelism());
-            for (int i = 0; i < context.currentParallelism() ; i++) {
+
+            for (int i = 0; i < context.currentParallelism(); i++)
+            {
                 parallelInstances.add(new ArrayList<>());
             }
             int index = 0;
@@ -89,7 +91,8 @@ public class HBaseSplitEnumerator
                 index = (index + 1) % parallelInstances.size();
             }
 
-            parallelInstances.forEach((list) -> {
+            parallelInstances.forEach((list) ->
+            {
                 if (!list.isEmpty()) {
                     splits.add(
                             new HBaseSourceSplit(
