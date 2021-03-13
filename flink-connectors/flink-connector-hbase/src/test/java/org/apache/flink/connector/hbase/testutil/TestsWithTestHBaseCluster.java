@@ -18,27 +18,21 @@
 
 package org.apache.flink.connector.hbase.testutil;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 /** Abstract test class that provides that {@link HBaseTestCluster} is up and running. */
 public abstract class TestsWithTestHBaseCluster {
 
     protected static final Logger LOG = LoggerFactory.getLogger(TestsWithTestHBaseCluster.class);
-
-    @Rule public FileSignal testOracle = new FileSignal();
-
     public static final int DEFAULT_CF_COUNT = 4;
 
-    protected HBaseTestCluster cluster;
+    @Rule public FileSignal testOracle = new FileSignal();
+    @Rule public HBaseTestCluster cluster = new HBaseTestCluster();
 
     /** Shadowed from org.apache.flink.test.util.SuccessException. */
     public static class SuccessException extends RuntimeException {}
@@ -54,20 +48,6 @@ public abstract class TestsWithTestHBaseCluster {
         baseTableName =
                 String.format(
                         "%s-table-%s", getClass().getSimpleName().toLowerCase(), UUID.randomUUID());
-    }
-
-    @Before
-    public void setupIndividualCluster()
-            throws IOException, InterruptedException, ExecutionException {
-        cluster = new HBaseTestCluster();
-        cluster.startCluster();
-        assert cluster.canConnectToCluster();
-    }
-
-    @After
-    public void teardownIndividualCluster()
-            throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        cluster.shutdownCluster();
     }
 
     protected static boolean causedBySuccess(Exception exception) {

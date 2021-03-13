@@ -39,6 +39,8 @@ import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hbase.thirdparty.com.google.common.io.Closer;
+import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /** Provides static access to a {@link MiniHBaseCluster} for testing. */
-public class HBaseTestCluster {
+public class HBaseTestCluster extends ExternalResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseTestCluster.class);
 
@@ -77,6 +79,7 @@ public class HBaseTestCluster {
         hbaseTestCluster.startCluster();
         hbaseTestCluster.makeTable("tableName");
         // ...
+        hbaseTestCluster.shutdownCluster();
     }
 
     public void startCluster() throws IOException, InterruptedException, ExecutionException {
@@ -125,17 +128,43 @@ public class HBaseTestCluster {
         assert canConnectToCluster();
     }
 
-    public void shutdownCluster()
-            throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    public void shutdownCluster() {
         LOG.info("Shutting down HBase test cluster");
         try {
-            clearTables();
-            clearReplicationPeers();
-        } finally {
-            cluster.shutdown();
+            try (Closer closer = Closer.create()) {
+                closer.register(this::clearTables);
+                closer.register(this::clearReplicationPeers);
+            }
+            try {
+                // Closer is not able to call this method correctly, instead logs process dump
+                cluster.shutdown();
+            } catch (IOException e) {
+                LOG.error("Error while shutting down HBase test cluster", e);
+            }
+            try (Closer closer = Closer.create()) {
+                closer.register(this::waitForShutDown);
+                closer.register(Paths.get(testFolder).toFile()::delete);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Failed to shut down HBase test cluster. Future program state might be compromised.",
+                    e);
+        }
+        LOG.info("HBase test cluster shut down");
+    }
+
+    public void waitForShutDown() {
+        try {
             CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
-            Paths.get(testFolder).toFile().delete();
-            LOG.info("HBase test cluster shut down");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.error("Interrupted while waiting for HBase test cluster to shut down", e);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            LOG.error("Exception while waiting for HBase test cluster to shut down", e);
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+            LOG.error("Waiting for HBase test cluster to shut down timed out", e);
         }
     }
 
@@ -285,5 +314,15 @@ public class HBaseTestCluster {
         Properties p = new Properties();
         p.setProperty(HBaseSourceOptions.TABLE_NAME.key(), tableName);
         return p;
+    }
+
+    @Override
+    protected void before() throws Throwable {
+        startCluster();
+    }
+
+    @Override
+    protected void after() {
+        shutdownCluster();
     }
 }
