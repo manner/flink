@@ -35,15 +35,18 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 /** Test for {@link org.apache.flink.connector.hbase.sink.HBaseSink}. */
 public class HBaseSinkTests extends TestsWithTestHBaseCluster {
 
     @Test
-    public void testSimpleSink() throws Exception {
+    public void testSinkPut() throws Exception {
         cluster.makeTable(baseTableName);
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -57,7 +60,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         final HBaseSink<Long> hbaseSink =
                 HBaseSink.<Long>builder()
                         .setTableName(baseTableName)
-                        .setSinkSerializer(new HBaseTestSerializer())
+                        .setSinkSerializer(new HBasePutLongSerializer())
                         .setHBaseConfiguration(hbaseConfiguration)
                         .build();
         numberStream.sinkTo(hbaseSink);
@@ -83,7 +86,43 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         assertArrayEquals(expected, actual);
     }
 
-    private static class HBaseTestSerializer implements HBaseSinkSerializer<Long> {
+    @Test
+    public void testSinkDelete() throws Exception {
+        cluster.makeTable(baseTableName);
+        List<String> rows = new ArrayList<>();
+        String rowId;
+
+        for (int i = 0; i < 10; i++) {
+            rowId = cluster.put(baseTableName, String.valueOf(i));
+            rows.add(rowId);
+        }
+
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        Configuration hbaseConfiguration = cluster.getConfig();
+
+        DataStream<String> numberStream = env.fromCollection(rows);
+
+        final HBaseSink<String> hbaseSink =
+                HBaseSink.<String>builder()
+                        .setTableName(baseTableName)
+                        .setSinkSerializer(new HBaseDeleteStringSerializer())
+                        .setHBaseConfiguration(hbaseConfiguration)
+                        .build();
+
+        numberStream.sinkTo(hbaseSink);
+        env.execute();
+
+        try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration)) {
+            Table table = connection.getTable(TableName.valueOf(baseTableName));
+            for (String row : rows) {
+                Get get = new Get(Bytes.toBytes(row));
+                Result r = table.get(get);
+                assertTrue(r.isEmpty());
+            }
+        }
+    }
+
+    private static class HBasePutLongSerializer implements HBaseSinkSerializer<Long> {
         @Override
         public HBaseEvent serialize(Long event) {
             return new HBaseEvent(
@@ -92,6 +131,18 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
                     HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
                     HBaseTestCluster.DEFAULT_QUALIFIER,
                     Bytes.toBytes(event.toString()));
+        }
+    }
+
+    private static class HBaseDeleteStringSerializer implements HBaseSinkSerializer<String> {
+        @Override
+        public HBaseEvent serialize(String event) {
+            return new HBaseEvent(
+                    Cell.Type.Delete,
+                    event,
+                    HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
+                    HBaseTestCluster.DEFAULT_QUALIFIER,
+                    null);
         }
     }
 }
