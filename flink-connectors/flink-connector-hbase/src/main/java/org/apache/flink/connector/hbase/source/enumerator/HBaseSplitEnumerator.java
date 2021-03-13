@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Queue;
 
-
 /** The enumerator class for Hbase source. */
 @Internal
 public class HBaseSplitEnumerator
@@ -79,28 +78,24 @@ public class HBaseSplitEnumerator
             ColumnFamilyDescriptor[] colFamDes =
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
-            List<ArrayList<String>> parallelInstances = new ArrayList<>(context.currentParallelism());
+            List<ArrayList<String>> parallelInstances =
+                    new ArrayList<>(context.currentParallelism());
 
-            for (int i = 0; i < context.currentParallelism(); i++)
-            {
+            for (int i = 0; i < context.currentParallelism(); i++) {
                 parallelInstances.add(new ArrayList<>());
             }
             int index = 0;
-            for (ColumnFamilyDescriptor colFamDe: colFamDes) {
+            for (ColumnFamilyDescriptor colFamDe : colFamDes) {
                 parallelInstances.get(index).add(colFamDe.getNameAsString());
                 index = (index + 1) % parallelInstances.size();
             }
 
-            parallelInstances.forEach((list) ->
-            {
-                if (!list.isEmpty()) {
-                    splits.add(
-                            new HBaseSourceSplit(
-                                    list.get(0),
-                                    host,
-                                    list));
-                }
-            });
+            parallelInstances.forEach(
+                    (list) -> {
+                        if (!list.isEmpty()) {
+                            splits.add(new HBaseSourceSplit(list.get(0), host, list));
+                        }
+                    });
             addSplits(splits);
         } catch (IOException e) {
             throw new RuntimeException("could not start split enumerator", e);

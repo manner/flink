@@ -75,7 +75,6 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
     }
 
     public HBaseSourceSplit withStamp(long lastTimeStamp, int lastIndex) {
-        return new HBaseSourceSplit(
-                id, host, columnFamilies, Tuple2.of(lastTimeStamp, lastIndex));
+        return new HBaseSourceSplit(id, host, columnFamilies, Tuple2.of(lastTimeStamp, lastIndex));
     }
 }
