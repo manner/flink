@@ -59,7 +59,7 @@ DataStream<String> stream = env.fromSource(
 The Deserializer is created as follows:
 
 ```java
-static class HBaseStringDeserializer extends HBaseSourceDeserializer<String> {
+static class HBaseStringDeserializer implements HBaseSourceDeserializer<String> {
     @Override
     public String deserialize(HBaseSourceEvent event) {
         return new String(event.getPayload());

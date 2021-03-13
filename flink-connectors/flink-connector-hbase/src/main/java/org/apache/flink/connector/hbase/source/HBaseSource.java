@@ -52,7 +52,7 @@ import java.util.Properties;
  *      .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
  *      .build();
  *
- * public static class CustomHBaseDeserializationSchema extends HBaseSourceDeserializer<String> {
+ * public static class CustomHBaseDeserializationSchema implements HBaseSourceDeserializer<String> {
  *
  *         @Override
  *         public String deserialize(HBaseEvent event) {

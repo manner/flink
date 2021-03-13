@@ -298,7 +298,8 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     }
 
     /** Simple Deserialization Scheme to get event payloads as String. */
-    public static class HBaseStringDeserializationScheme extends HBaseSourceDeserializer<String> {
+    public static class HBaseStringDeserializationScheme
+            implements HBaseSourceDeserializer<String> {
         @Override
         public String deserialize(HBaseSourceEvent event) {
             return new String(event.getPayload());
