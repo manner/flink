@@ -61,7 +61,7 @@ public abstract class TestsWithTestHBaseCluster {
             throws IOException, InterruptedException, ExecutionException {
         cluster = new HBaseTestCluster();
         cluster.startCluster();
-        assert cluster.isClusterAlreadyRunning();
+        assert cluster.canConnectToCluster();
     }
 
     @After

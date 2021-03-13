@@ -38,7 +38,6 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -71,14 +69,17 @@ public class HBaseTestCluster {
 
     public HBaseTestCluster() {}
 
-    public static void main(String[] args) throws IOException {
-        Arrays.asList(HdfsConstants.class.getDeclaredFields()).forEach(System.out::println);
+    /*
+     * How to use it
+     */
+    public static void main(String[] args) throws Exception {
         HBaseTestCluster hbaseTestCluster = new HBaseTestCluster();
         hbaseTestCluster.startCluster();
         hbaseTestCluster.makeTable("tableName");
+        // ...
     }
 
-    public void startCluster() throws IOException {
+    public void startCluster() throws IOException, InterruptedException, ExecutionException {
         LOG.info("Starting HBase test cluster ...");
         testFolder = Files.createTempDirectory(null).toString();
 
@@ -120,6 +121,8 @@ public class HBaseTestCluster {
         } catch (Exception e) {
             throw new RuntimeException("Could not start HBase test mini cluster", e);
         }
+
+        assert canConnectToCluster();
     }
 
     public void shutdownCluster()
@@ -136,7 +139,7 @@ public class HBaseTestCluster {
         }
     }
 
-    public boolean isClusterAlreadyRunning() throws InterruptedException, ExecutionException {
+    public boolean canConnectToCluster() throws InterruptedException, ExecutionException {
         try {
             return CompletableFuture.supplyAsync(
                             () -> {
