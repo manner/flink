@@ -56,6 +56,7 @@ public class HBaseSplitEnumerator
     private final Queue<HBaseSourceSplit> remainingSplits;
     private final String table;
     private final byte[] serializedConfig;
+    private final String host;
 
     public HBaseSplitEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> context,
@@ -63,6 +64,7 @@ public class HBaseSplitEnumerator
             Properties properties) {
         this.context = context;
         this.remainingSplits = new ArrayDeque<>();
+        this.host = HBaseSourceOptions.getHostName(properties);
         this.table = HBaseSourceOptions.getTableName(properties);
         this.serializedConfig = serializedConfig;
         LOG.debug("Constructed HBase Split enumerator");
@@ -70,7 +72,6 @@ public class HBaseSplitEnumerator
 
     @Override
     public void start() {
-        // TODO simplify duplicates
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(this.serializedConfig, null);
         try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration);
@@ -78,46 +79,25 @@ public class HBaseSplitEnumerator
             ColumnFamilyDescriptor[] colFamDes =
                     admin.getDescriptor(TableName.valueOf(this.table)).getColumnFamilies();
             List<HBaseSourceSplit> splits = new ArrayList<>();
-
-            int parallelism = context.currentParallelism();
-            int colFamilies = colFamDes.length;
-
-            if (parallelism > colFamilies) {
-                for (ColumnFamilyDescriptor colFamDe : colFamDes) {
-                    splits.add(
-                            new HBaseSourceSplit(
-                                    String.format("%s", new String(colFamDe.getName())),
-                                    "localhost",
-                                    new ArrayList<>(Arrays.asList(colFamDe.getNameAsString()))));
-                }
-            } else {
-                int splitsPerReader = colFamilies / parallelism;
-                int remainingColumns = colFamilies % parallelism;
-
-                for (int i = 0; i < parallelism - 1; i++) {
-                    ArrayList<String> colFamiliesForSplit = new ArrayList<>();
-                    for (int j = 0; j < splitsPerReader; j++) {
-                        colFamiliesForSplit.add(colFamDes[i + j].getNameAsString());
-                    }
-
-                    splits.add(
-                            new HBaseSourceSplit(
-                                    String.format("%s", colFamiliesForSplit.get(0)),
-                                    "localhost",
-                                    colFamiliesForSplit));
-                }
-                ArrayList<String> colFamiliesForLastSplit = new ArrayList<>();
-                for (int i = 0; i < splitsPerReader + remainingColumns; i++) {
-                    colFamiliesForLastSplit.add(
-                            colFamDes[colFamDes.length - i - 1].getNameAsString());
-                }
-                splits.add(
-                        new HBaseSourceSplit(
-                                String.format("%s", colFamiliesForLastSplit.get(0)),
-                                "localhost",
-                                colFamiliesForLastSplit));
+            List<ArrayList<String>> parallelInstances = new ArrayList<>(context.currentParallelism());
+            for (int i = 0; i < context.currentParallelism() ; i++) {
+                parallelInstances.add(new ArrayList<>());
+            }
+            int index = 0;
+            for (ColumnFamilyDescriptor colFamDe: colFamDes) {
+                parallelInstances.get(index).add(colFamDe.getNameAsString());
+                index = (index + 1) % parallelInstances.size();
             }
 
+            parallelInstances.forEach((list) -> {
+                if (!list.isEmpty()) {
+                    splits.add(
+                            new HBaseSourceSplit(
+                                    list.get(0),
+                                    host,
+                                    list));
+                }
+            });
             addSplits(splits);
         } catch (IOException e) {
             throw new RuntimeException("could not start split enumerator", e);
