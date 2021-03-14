@@ -23,11 +23,11 @@ import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.connector.hbase.sink.writer.HBaseWriter;
-import org.apache.flink.connector.hbase.sink.writer.HBaseWriterState;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +67,7 @@ import java.util.Properties;
  *
  * <p>See {@link HBaseSinkBuilder} for more details.
  */
-public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriterState, Void> {
+public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, Mutation, Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSink.class);
 
@@ -90,9 +90,9 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriter
     }
 
     @Override
-    public SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> createWriter(
-            InitContext context, List<HBaseWriterState> states) throws IOException {
-        return new HBaseWriter<>(context, sinkSerializer, serializedConfig, properties);
+    public SinkWriter<IN, HBaseSinkCommittable, Mutation> createWriter(
+            InitContext context, List<Mutation> states) throws IOException {
+        return new HBaseWriter<>(context, states, sinkSerializer, serializedConfig, properties);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, HBaseWriter
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<HBaseWriterState>> getWriterStateSerializer() {
-        return Optional.empty();
+    public Optional<SimpleVersionedSerializer<Mutation>> getWriterStateSerializer() {
+        return Optional.of(new HBaseSinkMutationSerializer());
     }
 }

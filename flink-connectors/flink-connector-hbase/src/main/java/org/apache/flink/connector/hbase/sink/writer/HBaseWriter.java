@@ -49,7 +49,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /** HBaseWriter. */
-public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBaseWriterState> {
+public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mutation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseWriter.class);
 
@@ -64,6 +64,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
 
     public HBaseWriter(
             Sink.InitContext context,
+            List<Mutation> states,
             HBaseSinkSerializer<IN> sinkSerializer,
             byte[] serializedConfig,
             Properties properties) {
@@ -73,6 +74,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
         String tableName = HBaseSinkOptions.getTableName(properties);
 
         this.pendingMutations = new ArrayList<>(queueLimit);
+        pendingMutations.addAll(states);
 
         Configuration hbaseConfiguration =
                 HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
@@ -94,6 +96,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
                     public void run() {
                         long diff = System.currentTimeMillis() - lastFlushTimeStamp;
                         if (diff > maxLatencyMs) {
+                            LOG.debug("Time based flushing of mutations");
                             flushBuffer();
                         }
                     }
@@ -130,6 +133,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
         }
 
         if (pendingMutations.size() >= queueLimit) {
+            LOG.debug("Capacity based flushing of mutations");
             flushBuffer();
         }
     }
@@ -140,8 +144,9 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, HBa
     }
 
     @Override
-    public List<HBaseWriterState> snapshotState() throws IOException {
-        return Collections.emptyList();
+    public List<Mutation> snapshotState() throws IOException {
+        LOG.debug("Snapshotting state");
+        return pendingMutations;
     }
 
     @Override
