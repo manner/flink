@@ -56,8 +56,7 @@ import java.util.Properties;
  * static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
  *     @Override
  *     public HBaseEvent serialize(Long event) {
- *         return new HBaseEvent(
- *                 Cell.Type.Put,                      // or Cell.Type.Delete
+ *         return HBaseEvent.putWith(                  // or deleteWith()
  *                 event.toString(),                   // rowId
  *                 "exampleColumnFamily",              // column family
  *                 "exampleQualifier",                 // qualifier
