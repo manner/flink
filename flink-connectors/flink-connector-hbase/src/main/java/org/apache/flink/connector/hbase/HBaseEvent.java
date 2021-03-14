@@ -34,12 +34,20 @@ public class HBaseEvent {
     private final byte[] payload;
     private final Cell.Type type;
 
-    public HBaseEvent(Cell.Type type, String rowId, String cf, String qualifier, byte[] payload) {
+    HBaseEvent(Cell.Type type, String rowId, String cf, String qualifier, byte[] payload) {
         this.rowId = rowId;
         this.cf = cf;
         this.qualifier = qualifier;
         this.payload = payload;
         this.type = type;
+    }
+
+    public static HBaseEvent deleteWith(String rowId, String cf, String qualifier) {
+        return new HBaseEvent(Cell.Type.Delete, rowId, cf, qualifier, null);
+    }
+
+    public static HBaseEvent putWith(String rowId, String cf, String qualifier, byte[] payload) {
+        return new HBaseEvent(Cell.Type.Put, rowId, cf, qualifier, payload);
     }
 
     @Override

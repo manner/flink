@@ -25,7 +25,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -125,8 +124,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
     private static class HBasePutLongSerializer implements HBaseSinkSerializer<Long> {
         @Override
         public HBaseEvent serialize(Long event) {
-            return new HBaseEvent(
-                    Cell.Type.Put,
+            return HBaseEvent.putWith(
                     event.toString(),
                     HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
                     HBaseTestCluster.DEFAULT_QUALIFIER,
@@ -137,12 +135,10 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
     private static class HBaseDeleteStringSerializer implements HBaseSinkSerializer<String> {
         @Override
         public HBaseEvent serialize(String event) {
-            return new HBaseEvent(
-                    Cell.Type.Delete,
+            return HBaseEvent.deleteWith(
                     event,
                     HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
-                    HBaseTestCluster.DEFAULT_QUALIFIER,
-                    null);
+                    HBaseTestCluster.DEFAULT_QUALIFIER);
         }
     }
 }
