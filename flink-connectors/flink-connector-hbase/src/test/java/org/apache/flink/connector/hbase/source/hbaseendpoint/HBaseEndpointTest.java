@@ -25,7 +25,9 @@ import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.hadoop.hbase.Cell;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -53,10 +55,10 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         consumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, "foobar");
-        HBaseSourceEvent result =
-                CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
-        assertNotNull(result);
-        assertEquals(Cell.Type.Put, result.getType());
+        List<HBaseSourceEvent> result =
+                CompletableFuture.supplyAsync(consumer::getAll).get(30, TimeUnit.SECONDS);
+        assertNotNull(result.get(0));
+        assertEquals(Cell.Type.Put, result.get(0).getType());
     }
 
     @Test
@@ -75,12 +77,14 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
                 HBaseTestCluster.DEFAULT_COLUMN_FAMILY,
                 HBaseTestCluster.DEFAULT_QUALIFIER);
 
-        CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
-        HBaseSourceEvent result =
-                CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
+        List<HBaseSourceEvent> results = new ArrayList<>();
+        while (results.size() < 2) {
+            results.addAll(
+                    CompletableFuture.supplyAsync(consumer::getAll).get(30, TimeUnit.SECONDS));
+        }
 
-        assertNotNull(result);
-        assertEquals(Cell.Type.Delete, result.getType());
+        assertNotNull(results.get(1));
+        assertEquals(Cell.Type.Delete, results.get(1).getType());
     }
 
     @Test
@@ -100,9 +104,15 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
 
         long lastTimeStamp = -1;
         int lastIndex = -1;
+
+        List<HBaseSourceEvent> events = new ArrayList<>();
+        while (events.size() < numPuts * putSize) {
+            events.addAll(
+                    CompletableFuture.supplyAsync(consumer::getAll).get(30, TimeUnit.SECONDS));
+        }
+
         for (int i = 0; i < numPuts * putSize; i++) {
-            HBaseSourceEvent nextEvent =
-                    CompletableFuture.supplyAsync(consumer::next).get(30, TimeUnit.SECONDS);
+            HBaseSourceEvent nextEvent = events.get(i);
             assertTrue(
                     "Events were not collected with strictly ordered, unique timestamp x index",
                     nextEvent.isLaterThan(lastTimeStamp, lastIndex));
@@ -123,7 +133,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         firstConsumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, firstValue);
-        String firstResult = new String(firstConsumer.next().getPayload());
+        String firstResult = new String(firstConsumer.getAll().get(0).getPayload());
         assertEquals(firstValue, firstResult);
         firstConsumer.close();
 
@@ -134,7 +144,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         secondConsumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, secondValue);
-        String secondResult = new String(secondConsumer.next().getPayload());
+        String secondResult = new String(secondConsumer.getAll().get(0).getPayload());
         assertEquals(secondValue, secondResult);
         firstConsumer.close();
     }

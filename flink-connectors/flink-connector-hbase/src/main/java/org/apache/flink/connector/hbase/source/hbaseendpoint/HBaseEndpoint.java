@@ -53,12 +53,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 /** Consumer of HBase WAL edits. */
 public class HBaseEndpoint implements ReplicationTargetInterface {
@@ -159,18 +161,34 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         LOG.debug("Registered rpc server node at zookeeper");
     }
 
-    public HBaseSourceEvent next() {
+    /**
+     * Blocks as long as the queue is empty. If the queue isn't empty it will try and get as many
+     * elements as possible from the queue. It is not guaranteed that at least one element is in the
+     * returned list.
+     *
+     * @return a list of {@link HBaseSourceEvent}.
+     */
+    public List<HBaseSourceEvent> getAll() {
         if (!isRunning) {
             // Protects from infinite waiting
             throw new RuntimeException("Consumer is not running");
         }
+        List<HBaseSourceEvent> elements = new ArrayList<>();
+        HBaseSourceEvent event;
 
         try {
-            return walEdits.take();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(
-                    "HBase replication endpoint couldn't retrieve element from queue", e);
+            walEdits.getAvailabilityFuture().get();
+            while ((event = walEdits.poll()) != null) {
+                elements.add(event);
+            }
+            return elements;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Can't retrieve elements from queue", e);
         }
+    }
+
+    public void wakeup() {
+        walEdits.notifyAvailable();
     }
 
     public void close() throws InterruptedException {

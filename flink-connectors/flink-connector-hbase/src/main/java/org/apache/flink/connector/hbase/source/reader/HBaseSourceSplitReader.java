@@ -61,13 +61,17 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBa
 
     @Override
     public RecordsWithSplitIds<HBaseSourceEvent> fetch() throws IOException {
-        final HBaseSourceSplit nextSplit = splits.poll();
-        if (nextSplit != null) {
-            currentSplitId = nextSplit.splitId();
+        if (currentSplitId == null) {
+            HBaseSourceSplit nextSplit = splits.poll();
+            if (nextSplit != null) {
+                currentSplitId = nextSplit.splitId();
+            } else {
+                throw new IOException("No split remaining");
+            }
         }
-        HBaseSourceEvent nextValue = hbaseEndpoint.next();
-        List<HBaseSourceEvent> records = Collections.singletonList(nextValue);
-        return new HBaseSplitRecords<>(currentSplitId, records.iterator(), Collections.emptySet());
+        List<HBaseSourceEvent> records = hbaseEndpoint.getAll();
+        LOG.debug("{} records in the queue", records.size());
+        return new HBaseSplitRecords<>(currentSplitId, records.iterator());
     }
 
     @Override
@@ -91,24 +95,23 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBa
     }
 
     @Override
-    public void wakeUp() {}
+    public void wakeUp() {
+        LOG.debug("Waking up HBaseEndpoint");
+        hbaseEndpoint.wakeup();
+    }
 
     @Override
     public void close() throws Exception {
-        // TODO close consumer and add test for that
+        hbaseEndpoint.close();
     }
 
     private static class HBaseSplitRecords<T> implements RecordsWithSplitIds<T> {
-        private final Set<String> finishedSplits;
         private Iterator<T> recordsForSplit;
-
         private String splitId;
 
-        private HBaseSplitRecords(
-                String splitId, Iterator<T> recordsForSplit, Set<String> finishedSplits) {
+        private HBaseSplitRecords(String splitId, Iterator<T> recordsForSplit) {
             this.splitId = splitId;
             this.recordsForSplit = recordsForSplit;
-            this.finishedSplits = finishedSplits;
         }
 
         @Nullable
@@ -133,7 +136,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBa
 
         @Override
         public Set<String> finishedSplits() {
-            return finishedSplits;
+            return Collections.emptySet();
         }
     }
 }
