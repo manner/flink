@@ -200,7 +200,7 @@ public class HBaseTestCluster extends ExternalResource {
 
     public void clearReplicationPeers() {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
-            StringBuilder logMessage = new StringBuilder("Cleard existing replication peers:");
+            StringBuilder logMessage = new StringBuilder("Clearing existing replication peers:");
             for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
                 logMessage.append("\n\t").append(desc.getPeerId()).append(" | ").append(desc);
                 admin.removeReplicationPeer(desc.getPeerId());

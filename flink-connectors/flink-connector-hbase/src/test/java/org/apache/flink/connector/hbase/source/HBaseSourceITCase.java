@@ -246,7 +246,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                         CompletableFuture.allOf(signalsToWait),
                         240,
                         TimeUnit.SECONDS,
-                        "Failure occured while waiting for package to be collected ");
+                        "Failure occurred while waiting for package to be collected");
 
                 Thread.sleep(3000);
                 LOG.info("Consuming collection signal");
