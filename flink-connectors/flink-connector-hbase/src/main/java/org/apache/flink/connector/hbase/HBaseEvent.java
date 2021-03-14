@@ -20,6 +20,7 @@ package org.apache.flink.connector.hbase;
 
 import org.apache.hadoop.hbase.Cell;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -28,13 +29,17 @@ import java.nio.charset.StandardCharsets;
  * additional information and is used by the HBaseSource to represent an incoming event from HBase.
  */
 public class HBaseEvent {
+
+    protected static final Charset CHARSET = StandardCharsets.UTF_8;
+
     private final String rowId;
     private final String cf;
     private final String qualifier;
     private final byte[] payload;
     private final Cell.Type type;
 
-    HBaseEvent(Cell.Type type, String rowId, String cf, String qualifier, byte[] payload) {
+    protected HBaseEvent(
+            Cell.Type type, String rowId, String cf, String qualifier, byte[] payload) {
         this.rowId = rowId;
         this.cf = cf;
         this.qualifier = qualifier;
@@ -64,14 +69,14 @@ public class HBaseEvent {
     }
 
     public byte[] getRowId() {
-        return rowId.getBytes(StandardCharsets.UTF_8);
+        return rowId.getBytes(CHARSET);
     }
 
     public byte[] getCf() {
-        return cf.getBytes(StandardCharsets.UTF_8);
+        return cf.getBytes(CHARSET);
     }
 
     public byte[] getQualifier() {
-        return qualifier.getBytes(StandardCharsets.UTF_8);
+        return qualifier.getBytes(CHARSET);
     }
 }

@@ -5,8 +5,6 @@ import org.apache.flink.connector.hbase.HBaseEvent;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 
-import java.nio.charset.StandardCharsets;
-
 /** The HBaseSourceEvent is used to represent incoming events from HBase. */
 public class HBaseSourceEvent extends HBaseEvent {
 
@@ -31,9 +29,9 @@ public class HBaseSourceEvent extends HBaseEvent {
     }
 
     public static HBaseSourceEvent fromCell(String table, Cell cell, int index) {
-        final String row = new String(CellUtil.cloneRow(cell), StandardCharsets.UTF_8);
-        final String cf = new String(CellUtil.cloneFamily(cell), StandardCharsets.UTF_8);
-        final String qualifier = new String(CellUtil.cloneQualifier(cell), StandardCharsets.UTF_8);
+        final String row = new String(CellUtil.cloneRow(cell), CHARSET);
+        final String cf = new String(CellUtil.cloneFamily(cell), CHARSET);
+        final String qualifier = new String(CellUtil.cloneQualifier(cell), CHARSET);
         final byte[] payload = CellUtil.cloneValue(cell);
         final long timestamp = cell.getTimestamp();
         final Cell.Type type = cell.getType();
