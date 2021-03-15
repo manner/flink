@@ -273,8 +273,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private String getBaseString() {
-        // TODO hbasesep.* will never be resolved
-        return hbaseConf.get("hbasesep.zookeeper.znode.parent", "/hbase");
+        return hbaseConf.get("zookeeper.znode.parent", "/hbase");
     }
 
     private void createZKPath(final String path, byte[] data, CreateMode createMode)
