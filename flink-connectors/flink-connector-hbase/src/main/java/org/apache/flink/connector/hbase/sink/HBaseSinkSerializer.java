@@ -23,6 +23,7 @@ import org.apache.flink.connector.hbase.HBaseEvent;
 import java.io.Serializable;
 
 /** TODO docs. */
+@FunctionalInterface
 public interface HBaseSinkSerializer<T> extends Serializable {
     HBaseEvent serialize(T event);
 }
