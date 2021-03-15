@@ -192,6 +192,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     public void close() throws InterruptedException {
+        // TODO unregister replication peer [and delete zookeeper paths]
         isRunning = false;
         try {
             zooKeeper.close();
