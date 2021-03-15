@@ -80,10 +80,7 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             long firstTimestamp = in.readLong();
             int firstIndex = in.readInt();
             return new HBaseSourceSplit(
-                    id,
-                    host,
-                    columnFamilies,
-                    Tuple2.of(firstTimestamp, firstIndex)); // TODO find real configuration
+                    id, host, columnFamilies, Tuple2.of(firstTimestamp, firstIndex));
         }
     }
 }
