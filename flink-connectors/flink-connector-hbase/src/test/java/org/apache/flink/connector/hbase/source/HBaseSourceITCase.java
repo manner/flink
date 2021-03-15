@@ -29,14 +29,15 @@ import org.apache.flink.connector.hbase.testutil.HBaseTestCluster;
 import org.apache.flink.connector.hbase.testutil.TestsWithTestHBaseCluster;
 import org.apache.flink.connector.hbase.testutil.Util;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.runtime.minicluster.MiniCluster;
-import org.apache.flink.runtime.minicluster.MiniClusterJobClient;
+import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.Collector;
 
 import org.apache.hadoop.hbase.client.Put;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.internal.ArrayComparisonFailure;
 import org.xml.sax.SAXException;
@@ -56,6 +57,14 @@ import static org.junit.Assert.assertArrayEquals;
 /** Tests the most basic use cases of the source with a mocked HBase system. */
 public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
 
+    @Rule
+    public final MiniClusterWithClientResource miniClusterResource =
+            new MiniClusterWithClientResource(
+                    new MiniClusterResourceConfiguration.Builder()
+                            .setNumberTaskManagers(1)
+                            .setNumberSlotsPerTaskManager(8)
+                            .build());
+
     private DataStream<String> streamFromHBaseSource(
             StreamExecutionEnvironment environment, String tableName)
             throws ParserConfigurationException, SAXException, IOException {
@@ -63,8 +72,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     }
 
     private DataStream<String> streamFromHBaseSource(
-            StreamExecutionEnvironment environment, String tableName, int parallelism)
-            throws ParserConfigurationException, SAXException, IOException {
+            StreamExecutionEnvironment environment, String tableName, int parallelism) {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
@@ -102,12 +110,10 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 });
     }
 
-    private static void doAndWaitForSuccess(
-            StreamExecutionEnvironment env, Runnable action, int timeout) {
+    private void doAndWaitForSuccess(StreamExecutionEnvironment env, Runnable action, int timeout) {
         try {
             JobClient jobClient = env.executeAsync();
-            MiniCluster miniCluster = Util.miniCluster((MiniClusterJobClient) jobClient);
-            Util.waitForClusterStart(miniCluster);
+            Util.waitForClusterStart(miniClusterResource.getMiniCluster());
 
             action.run();
             jobClient.getJobExecutionResult().get(timeout, TimeUnit.SECONDS);
@@ -127,6 +133,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         CompletableFuture.runAsync(
                         () -> {
                             while (cluster.getReplicationPeers().size() != n) {
+                                System.out.println(cluster.getReplicationPeers().size());
                                 sleep(1000);
                             }
                         })
@@ -226,8 +233,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 });
 
         JobClient jobClient = env.executeAsync();
-        MiniCluster miniCluster = Util.miniCluster((MiniClusterJobClient) jobClient);
-        Util.waitForClusterStart(miniCluster);
+        Util.waitForClusterStart(miniClusterResource.getMiniCluster());
         try {
             Thread.sleep(8000);
             int putsPerPackage = 5;
@@ -295,6 +301,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 expectedValues,
                 "HBase source did not produce the right values after a multi-cf put");
         doAndWaitForSuccess(env, () -> {}, 120);
+        assert cluster.getReplicationPeers().size() == parallelism;
     }
 
     /** Simple Deserialization Scheme to get event payloads as String. */
