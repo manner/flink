@@ -139,12 +139,13 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private void registerAtZooKeeper() throws KeeperException, InterruptedException {
-        createZKPath(getBaseString() + "/" + clusterKey, null, CreateMode.PERSISTENT);
-        createZKPath(getBaseString() + "/" + clusterKey + "/rs", null, CreateMode.PERSISTENT);
+        createZKPath(getZookeeperRootNode() + "/" + clusterKey, null, CreateMode.PERSISTENT);
+        createZKPath(
+                getZookeeperRootNode() + "/" + clusterKey + "/rs", null, CreateMode.PERSISTENT);
 
         UUID uuid = UUID.nameUUIDFromBytes(Bytes.toBytes(clusterKey));
         createZKPath(
-                getBaseString() + "/" + clusterKey + "/hbaseid",
+                getZookeeperRootNode() + "/" + clusterKey + "/hbaseid",
                 Bytes.toBytes(uuid.toString()),
                 CreateMode.PERSISTENT);
 
@@ -154,7 +155,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                         rpcServer.getListenerAddress().getPort(),
                         System.currentTimeMillis());
         createZKPath(
-                getBaseString() + "/" + clusterKey + "/rs/" + serverName.getServerName(),
+                getZookeeperRootNode() + "/" + clusterKey + "/rs/" + serverName.getServerName(),
                 null,
                 CreateMode.EPHEMERAL);
 
@@ -260,7 +261,11 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         tableCFsMap.put(TableName.valueOf(table), columnFamilies);
         return ReplicationPeerConfig.newBuilder()
                 .setClusterKey(
-                        getZookeeperClientAddress() + ":" + getBaseString() + "/" + clusterKey)
+                        getZookeeperClientAddress()
+                                + ":"
+                                + getZookeeperRootNode()
+                                + "/"
+                                + clusterKey)
                 .setReplicateAllUserTables(false)
                 .setTableCFsMap(tableCFsMap)
                 .build();
@@ -272,7 +277,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                 + hbaseConf.get("hbase.zookeeper.property.clientPort");
     }
 
-    private String getBaseString() {
+    private String getZookeeperRootNode() {
         return hbaseConf.get("zookeeper.znode.parent", "/hbase");
     }
 
