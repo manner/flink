@@ -22,6 +22,7 @@ import org.apache.flink.api.common.state.CheckpointListener;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.runtime.state.FunctionInitializationContext;
 import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
@@ -35,14 +36,17 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/** TODO documentation. */
+/**
+ * Utility sink for testing checkpointing. Throws exception after at least one value has been
+ * processed and one checkpoint has been completed. Provides callbacks for value collection and
+ * checkpointing.
+ */
 public abstract class FailureSink<T> extends RichSinkFunction<T>
         implements CheckpointedFunction, CheckpointListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(FailureSink.class);
 
     private final long activateAfter;
-    private final TypeInformation<T> typeInfo;
     private boolean active = false;
     private boolean completedAtLeastOneCheckpoint = false;
     private boolean hasSeenAtLeastOneInput = false;
@@ -50,9 +54,23 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
     protected final List<T> unCheckpointedValues = new ArrayList<>();
     protected transient ListState<T> checkpointedValues;
 
-    public FailureSink(long activateAfter, TypeInformation<T> typeInfo) {
+    public FailureSink(long activateAfter) {
         this.activateAfter = activateAfter;
-        this.typeInfo = typeInfo;
+    }
+
+    public void collectValue(T value) throws Exception {}
+
+    public void checkpoint() throws Exception {}
+
+    public List<T> getCheckpointedValues() {
+        try {
+            List<T> checkpointed = new ArrayList<>();
+            checkpointedValues.get().forEach(checkpointed::add);
+            return checkpointed;
+        } catch (Exception e) {
+            LOG.error("Could not retrieve checkpointed values", e);
+            return null;
+        }
     }
 
     @Override
@@ -63,10 +81,6 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         hasSeenAtLeastOneInput = true;
         throwFailureIfActive();
     }
-
-    public void collectValue(T value) throws Exception {}
-
-    public void checkpoint() throws Exception {}
 
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
@@ -93,22 +107,12 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
         completedAtLeastOneCheckpoint = false;
         hasSeenAtLeastOneInput = false;
 
-        ListStateDescriptor<T> descriptor = new ListStateDescriptor<>("checkpointed", typeInfo);
+        ListStateDescriptor<T> descriptor =
+                new ListStateDescriptor<>("checkpointed", getTypeInfo());
 
         checkpointedValues = context.getOperatorStateStore().getListState(descriptor);
 
         new Timer().schedule(activation(), activateAfter);
-    }
-
-    public List<T> getCheckpointedValues() {
-        try {
-            List<T> checkpointed = new ArrayList<>();
-            checkpointedValues.get().forEach(checkpointed::add);
-            return checkpointed;
-        } catch (Exception e) {
-            LOG.error("Could not retrieve checkpointed values", e);
-            return null;
-        }
     }
 
     private TimerTask activation() {
@@ -130,5 +134,9 @@ public abstract class FailureSink<T> extends RichSinkFunction<T>
             LOG.info("FailureSink triggered");
             throw new RuntimeException("Failure Sink throws error");
         }
+    }
+
+    private TypeInformation<T> getTypeInfo() {
+        return TypeExtractor.createTypeInfo(FailureSink.class, getClass(), 0, null, null);
     }
 }

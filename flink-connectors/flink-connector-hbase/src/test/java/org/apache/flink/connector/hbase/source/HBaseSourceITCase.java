@@ -20,7 +20,6 @@ package org.apache.flink.connector.hbase.source;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 import org.apache.flink.connector.hbase.testutil.FailureSink;
@@ -190,7 +189,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
         stream.addSink(
-                new FailureSink<String>(3500, TypeInformation.of(String.class)) {
+                new FailureSink<String>(3500) {
 
                     private void checkForSuccess() {
                         List<String> checkpointed = getCheckpointedValues();
