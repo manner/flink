@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /** HBaseWriter. */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mutation> {
@@ -56,7 +57,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
     private final int queueLimit;
     private final int maxLatencyMs;
     private final HBaseSinkSerializer<IN> sinkSerializer;
-    private final List<Mutation> pendingMutations;
+    private final ArrayBlockingQueue<Mutation> pendingMutations;
     private final Connection connection;
     private final Table table;
     private long lastFlushTimeStamp = 0;
@@ -73,7 +74,8 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
         this.maxLatencyMs = HBaseSinkOptions.getMaxLatency(properties);
         String tableName = HBaseSinkOptions.getTableName(properties);
 
-        this.pendingMutations = new ArrayList<>(queueLimit);
+        // Queue limit is multiplied by 2, to reduce the probability of blocking while committing
+        this.pendingMutations = new ArrayBlockingQueue<>(2 * queueLimit);
         pendingMutations.addAll(states);
 
         Configuration hbaseConfiguration =
@@ -110,7 +112,9 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
             return;
         }
         try {
-            table.batch(pendingMutations, null);
+            ArrayList<Mutation> batch = new ArrayList<>();
+            pendingMutations.drainTo(batch);
+            table.batch(batch, null);
             pendingMutations.clear();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Failed storing batch data in HBase", e);
@@ -146,7 +150,9 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
     @Override
     public List<Mutation> snapshotState() throws IOException {
         LOG.debug("Snapshotting state");
-        return pendingMutations;
+        ArrayList<Mutation> snapshot = new ArrayList<>();
+        pendingMutations.drainTo(snapshot);
+        return snapshot;
     }
 
     @Override
