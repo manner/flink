@@ -22,6 +22,8 @@ import org.apache.flink.connector.hbase.HBaseEvent;
 
 import org.apache.hadoop.hbase.Cell;
 
+import java.util.Arrays;
+
 /** The HBaseSourceEvent is used to represent incoming events from HBase. */
 public class HBaseSourceEvent extends HBaseEvent {
 
@@ -49,7 +51,7 @@ public class HBaseSourceEvent extends HBaseEvent {
         final String row = new String(cell.getRowArray(), CHARSET);
         final String cf = new String(cell.getFamilyArray(), CHARSET);
         final String qualifier = new String(cell.getQualifierArray(), CHARSET);
-        final byte[] payload = cell.getValueArray();
+        final byte[] payload = Arrays.copyOf(cell.getValueArray(), cell.getValueLength());
         final long timestamp = cell.getTimestamp();
         final Cell.Type type = cell.getType();
         return new HBaseSourceEvent(type, row, table, cf, qualifier, payload, timestamp, index);
