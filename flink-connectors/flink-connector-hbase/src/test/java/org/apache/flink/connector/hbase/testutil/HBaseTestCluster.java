@@ -187,18 +187,18 @@ public class HBaseTestCluster extends ExternalResource {
         }
     }
 
-    public void clearTables() {
+    public void clearTables() throws IOException {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             for (TableDescriptor table : admin.listTableDescriptors()) {
                 admin.disableTable(table.getTableName());
                 admin.deleteTable(table.getTableName());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not clear test cluster tables", e);
+            throw new IOException("Could not clear test cluster tables", e);
         }
     }
 
-    public void clearReplicationPeers() {
+    public void clearReplicationPeers() throws IOException {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             StringBuilder logMessage = new StringBuilder("Clearing existing replication peers:");
             for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
@@ -207,7 +207,7 @@ public class HBaseTestCluster extends ExternalResource {
             }
             LOG.info(logMessage.toString());
         } catch (IOException e) {
-            throw new RuntimeException("Could not clear test cluster replication peers", e);
+            throw new IOException("Could not clear test cluster replication peers", e);
         }
     }
 
@@ -220,7 +220,7 @@ public class HBaseTestCluster extends ExternalResource {
         }
     }
 
-    public void makeTable(String tableName) {
+    public void makeTable(String tableName) throws IOException {
         makeTable(tableName, 1);
     }
 
@@ -229,7 +229,7 @@ public class HBaseTestCluster extends ExternalResource {
      * start with {@link HBaseTestCluster#COLUMN_FAMILY_BASE} and are indexed, if more than one is
      * requested
      */
-    public void makeTable(String tableName, int numColumnFamilies) {
+    public void makeTable(String tableName, int numColumnFamilies) throws IOException {
         assert numColumnFamilies >= 1;
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             TableName tableNameObj = TableName.valueOf(tableName);
@@ -246,26 +246,27 @@ public class HBaseTestCluster extends ExternalResource {
                 admin.createTable(tableBuilder.build());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not create test cluster table", e);
+            throw new IOException("Could not create test cluster table", e);
         }
     }
 
-    public void commitPut(String tableName, Put put) {
+    public void commitPut(String tableName, Put put) throws IOException {
         try (Table htable =
                 ConnectionFactory.createConnection(getConfig())
                         .getTable(TableName.valueOf(tableName))) {
             htable.put(put);
             LOG.info("Commited put to row {}", Bytes.toString(put.getRow()));
         } catch (IOException e) {
-            throw new RuntimeException("Could not commit put to test cluster", e);
+            throw new IOException("Could not commit put to test cluster", e);
         }
     }
 
-    public String put(String tableName, String value) {
+    public String put(String tableName, String value) throws IOException {
         return put(tableName, 1, value);
     }
 
-    public void delete(String tableName, String rowKey, String columnFamily, String qualifier) {
+    public void delete(String tableName, String rowKey, String columnFamily, String qualifier)
+            throws IOException {
         try (Table htable =
                 ConnectionFactory.createConnection(getConfig())
                         .getTable(TableName.valueOf(tableName))) {
@@ -274,11 +275,12 @@ public class HBaseTestCluster extends ExternalResource {
             htable.delete(delete);
             LOG.info("Deleted row {}", rowKey);
         } catch (IOException e) {
-            throw new RuntimeException("Could not delete row in test cluster", e);
+            throw new IOException("Could not delete row in test cluster", e);
         }
     }
 
-    public String put(String tableName, int numColumnFamilies, String... values) {
+    public String put(String tableName, int numColumnFamilies, String... values)
+            throws IOException {
         assert numColumnFamilies >= 1;
         assert values.length >= numColumnFamilies;
         try (Table htable =
@@ -302,7 +304,7 @@ public class HBaseTestCluster extends ExternalResource {
             LOG.info("Added row " + rowKey);
             return rowKey;
         } catch (IOException e) {
-            throw new RuntimeException("Could not put to test cluster", e);
+            throw new IOException("Could not put to test cluster", e);
         }
     }
 

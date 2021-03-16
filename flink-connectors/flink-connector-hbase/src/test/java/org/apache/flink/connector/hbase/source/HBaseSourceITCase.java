@@ -34,6 +34,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.function.RunnableWithException;
 
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Rule;
@@ -109,7 +110,8 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 });
     }
 
-    private void doAndWaitForSuccess(StreamExecutionEnvironment env, Runnable action, int timeout) {
+    private void doAndWaitForSuccess(
+            StreamExecutionEnvironment env, RunnableWithException action, int timeout) {
         try {
             JobClient jobClient = env.executeAsync();
             Util.waitForClusterStart(miniClusterResource.getMiniCluster());
