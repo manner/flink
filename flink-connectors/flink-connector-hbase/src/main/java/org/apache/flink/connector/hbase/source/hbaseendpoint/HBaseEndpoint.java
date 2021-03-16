@@ -65,6 +65,9 @@ import java.util.concurrent.ExecutionException;
 /** Consumer of HBase WAL edits. */
 public class HBaseEndpoint implements ReplicationTargetInterface {
 
+    private static final AdminProtos.ReplicateWALEntryResponse REPLICATE_WAL_ENTRY_RESPONSE =
+            AdminProtos.ReplicateWALEntryResponse.newBuilder().build();
+
     private static final Logger LOG = LoggerFactory.getLogger(HBaseEndpoint.class);
     private final String clusterKey;
     /** The id under which the replication target is made known to the source cluster. */
@@ -253,7 +256,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
             throw new ServiceException("Could not replicate WAL entry in HBase endpoint", e);
         }
 
-        return AdminProtos.ReplicateWALEntryResponse.newBuilder().build();
+        return REPLICATE_WAL_ENTRY_RESPONSE;
     }
 
     private ReplicationPeerConfig createPeerConfig(String table, List<String> columnFamilies) {
