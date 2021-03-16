@@ -15,6 +15,10 @@ Connecting to HBase always requires a `Configuration` instance.
 If there is an HBase gateway on the same host as the Flink gateway where the application is started, this can be obtained by invoking `HBaseConfiguration.create()` as in the examples below.
 If that's not the case a configuration should be provided where the proper core-site, hdfs-site, and hbase-site are added as resources.
 
+The application needs the following permissions for HBase: 
+- Create/delete ZooKeeper paths
+- Register/unregister replication peers
+
 ## DataStream API
 
 ### Reading data from HBase
