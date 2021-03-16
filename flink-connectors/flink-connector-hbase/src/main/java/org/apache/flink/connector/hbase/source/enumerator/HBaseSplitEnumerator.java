@@ -21,11 +21,11 @@ package org.apache.flink.connector.hbase.source.enumerator;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
@@ -41,7 +41,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.Queue;
 
 /** The enumerator class for Hbase source. */
@@ -54,25 +53,25 @@ public class HBaseSplitEnumerator
     private final SplitEnumeratorContext<HBaseSourceSplit> context;
     private final Queue<HBaseSourceSplit> remainingSplits;
     private final String table;
-    private final byte[] serializedConfig;
+    private final byte[] serializedHBaseConfig;
     private final String host;
 
     public HBaseSplitEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> context,
-            byte[] serializedConfig,
-            Properties properties) {
+            byte[] serializedHBaseConfig,
+            Configuration sourceConfiguration) {
         this.context = context;
         this.remainingSplits = new ArrayDeque<>();
-        this.host = HBaseSourceOptions.getHostName(properties);
-        this.table = HBaseSourceOptions.getTableName(properties);
-        this.serializedConfig = serializedConfig;
+        this.host = sourceConfiguration.get(HBaseSourceOptions.HOST_NAME);
+        this.table = sourceConfiguration.get(HBaseSourceOptions.TABLE_NAME);
+        this.serializedHBaseConfig = serializedHBaseConfig;
         LOG.debug("Constructed HBase Split enumerator");
     }
 
     @Override
     public void start() {
-        Configuration hbaseConfiguration =
-                HBaseConfigurationUtil.deserializeConfiguration(this.serializedConfig, null);
+        org.apache.hadoop.conf.Configuration hbaseConfiguration =
+                HBaseConfigurationUtil.deserializeConfiguration(this.serializedHBaseConfig, null);
         try (Connection connection = ConnectionFactory.createConnection(hbaseConfiguration);
                 Admin admin = connection.getAdmin()) {
             ColumnFamilyDescriptor[] colFamDes =

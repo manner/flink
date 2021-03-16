@@ -18,11 +18,11 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.Server;
@@ -57,7 +57,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -76,7 +75,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
      */
     private final String replicationPeerId;
 
-    private final Configuration hbaseConf;
+    private final org.apache.hadoop.conf.Configuration hbaseConf;
     private final RecoverableZooKeeper zooKeeper;
     private final RpcServer rpcServer;
     private final FutureCompletingBlockingQueue<HBaseSourceEvent> walEdits;
@@ -84,19 +83,23 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private final String tableName;
     private boolean isRunning = false;
 
-    public HBaseEndpoint(Configuration hbaseConf, Properties properties)
+    public HBaseEndpoint(
+            org.apache.hadoop.conf.Configuration hbaseConf, Configuration sourceConfiguration)
             throws InterruptedException, KeeperException, IOException {
-        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf, properties);
+        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf, sourceConfiguration);
     }
 
-    public HBaseEndpoint(String peerId, Configuration hbaseConf, Properties properties)
+    public HBaseEndpoint(
+            String peerId,
+            org.apache.hadoop.conf.Configuration hbaseConf,
+            Configuration sourceConfiguration)
             throws IOException, KeeperException, InterruptedException {
         this.hbaseConf = hbaseConf;
         this.clusterKey = peerId + "_clusterKey";
         this.replicationPeerId = peerId;
-        this.hostName = HBaseSourceOptions.getHostName(properties);
-        this.tableName = HBaseSourceOptions.getTableName(properties);
-        int queueCapacity = HBaseSourceOptions.getEndpointQueueCapacity(properties);
+        this.hostName = sourceConfiguration.get(HBaseSourceOptions.HOST_NAME);
+        this.tableName = sourceConfiguration.get(HBaseSourceOptions.TABLE_NAME);
+        int queueCapacity = sourceConfiguration.get(HBaseSourceOptions.ENDPOINT_QUEUE_CAPACITY);
         this.walEdits = new FutureCompletingBlockingQueue<>(queueCapacity);
 
         // Setup

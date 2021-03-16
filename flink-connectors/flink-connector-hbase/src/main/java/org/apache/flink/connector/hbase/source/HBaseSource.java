@@ -24,6 +24,7 @@ import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.source.enumerator.HBaseSourceEnumeratorCheckpointSerializer;
 import org.apache.flink.connector.hbase.source.enumerator.HBaseSplitEnumerator;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
@@ -37,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Properties;
 
 /**
  * A Source Connector for HBase. Please use a {@link HBaseSourceBuilder} to construct a {@link
@@ -70,16 +70,17 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     private static final long serialVersionUID = 1L;
 
     private final HBaseSourceDeserializer<T> sourceDeserializer;
-    private final byte[] serializedConfig;
-    private final Properties properties;
+    private final byte[] serializedHBaseConfig;
+    private final Configuration sourceConfiguration;
 
     HBaseSource(
             HBaseSourceDeserializer<T> sourceDeserializer,
             org.apache.hadoop.conf.Configuration hbaseConfiguration,
-            Properties properties) {
-        this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
+            Configuration sourceConfiguration) {
+        this.serializedHBaseConfig =
+                HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
         this.sourceDeserializer = sourceDeserializer;
-        this.properties = properties;
+        this.sourceConfiguration = sourceConfiguration;
         LOG.debug("constructed source");
     }
 
@@ -97,7 +98,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
             throws Exception {
         LOG.debug("createReader");
         return new HBaseSourceReader<>(
-                serializedConfig, sourceDeserializer, properties, readerContext);
+                serializedHBaseConfig, sourceDeserializer, sourceConfiguration, readerContext);
     }
 
     @Override
@@ -108,7 +109,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
         LOG.debug("restoreEnumerator");
 
         HBaseSplitEnumerator enumerator =
-                new HBaseSplitEnumerator(enumContext, serializedConfig, properties);
+                new HBaseSplitEnumerator(enumContext, serializedHBaseConfig, sourceConfiguration);
         enumerator.addSplits(checkpoint);
         return enumerator;
     }
@@ -117,7 +118,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
         LOG.debug("createEnumerator");
-        return new HBaseSplitEnumerator(enumContext, serializedConfig, properties);
+        return new HBaseSplitEnumerator(enumContext, serializedHBaseConfig, sourceConfiguration);
     }
 
     @Override

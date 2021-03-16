@@ -18,11 +18,9 @@
 
 package org.apache.flink.connector.hbase.source;
 
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
-
-import org.apache.hadoop.conf.Configuration;
-
-import java.util.Properties;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -58,15 +56,15 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  */
 public class HBaseSourceBuilder<IN> {
 
-    private static final String[] REQUIRED_CONFIGS = {HBaseSourceOptions.TABLE_NAME.key()};
-    private final Properties properties;
-    private Configuration hbaseConfiguration;
+    private static final ConfigOption<?>[] REQUIRED_CONFIGS = {HBaseSourceOptions.TABLE_NAME};
+    private final Configuration sourceConfiguration;
+    private org.apache.hadoop.conf.Configuration hbaseConfiguration;
     private HBaseSourceDeserializer<IN> sourceDeserializer;
 
     protected HBaseSourceBuilder() {
         this.sourceDeserializer = null;
         this.hbaseConfiguration = null;
-        this.properties = new Properties();
+        this.sourceConfiguration = new Configuration();
     }
 
     /**
@@ -76,7 +74,8 @@ public class HBaseSourceBuilder<IN> {
      * @return this HBaseSourceBuilder.
      */
     public HBaseSourceBuilder<IN> setTableName(String tableName) {
-        return setProperty(HBaseSourceOptions.TABLE_NAME.key(), tableName);
+        sourceConfiguration.setString(HBaseSourceOptions.TABLE_NAME, tableName);
+        return this;
     }
 
     /**
@@ -97,7 +96,8 @@ public class HBaseSourceBuilder<IN> {
      * @param hbaseConfiguration the HBaseConfiguration.
      * @return this HBaseSourceBuilder.
      */
-    public HBaseSourceBuilder<IN> setHBaseConfiguration(Configuration hbaseConfiguration) {
+    public HBaseSourceBuilder<IN> setHBaseConfiguration(
+            org.apache.hadoop.conf.Configuration hbaseConfiguration) {
         this.hbaseConfiguration = hbaseConfiguration;
         return this;
     }
@@ -109,8 +109,8 @@ public class HBaseSourceBuilder<IN> {
      * @return this KafkaSourceBuilder.
      */
     public HBaseSourceBuilder<IN> setQueueCapacity(int queueCapacity) {
-        return setProperty(
-                HBaseSourceOptions.ENDPOINT_QUEUE_CAPACITY.key(), String.valueOf(queueCapacity));
+        sourceConfiguration.setInteger(HBaseSourceOptions.ENDPOINT_QUEUE_CAPACITY, queueCapacity);
+        return this;
     }
 
     /**
@@ -120,29 +120,20 @@ public class HBaseSourceBuilder<IN> {
      * @return this KafkaSourceBuilder.
      */
     public HBaseSourceBuilder<IN> setHostName(String hostName) {
-        return setProperty(HBaseSourceOptions.HOST_NAME.key(), hostName);
-    }
-
-    public HBaseSourceBuilder<IN> setProperty(final String key, final String value) {
-        this.properties.setProperty(key, value);
-        return this;
-    }
-
-    public HBaseSourceBuilder<IN> setProperties(final Properties properties) {
-        this.properties.putAll(properties);
+        sourceConfiguration.setString(HBaseSourceOptions.HOST_NAME, hostName);
         return this;
     }
 
     public HBaseSource<IN> build() {
         sanityCheck();
-        return new HBaseSource<>(sourceDeserializer, hbaseConfiguration, properties);
+        return new HBaseSource<>(sourceDeserializer, hbaseConfiguration, sourceConfiguration);
     }
 
     private void sanityCheck() {
-        for (String requiredConfig : REQUIRED_CONFIGS) {
+        for (ConfigOption<?> requiredConfig : REQUIRED_CONFIGS) {
             checkNotNull(
-                    properties.getProperty(requiredConfig),
-                    String.format("Property %s is required but not provided", requiredConfig));
+                    sourceConfiguration.get(requiredConfig),
+                    String.format("Config option %s is required but not provided", requiredConfig));
         }
 
         checkNotNull(sourceDeserializer, "No source deserializer was specified.");

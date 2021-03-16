@@ -41,7 +41,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
 
     @Test
     public void testSetup() throws Exception {
-        new HBaseEndpoint(cluster.getConfig(), cluster.getPropertiesForTable(baseTableName))
+        new HBaseEndpoint(cluster.getConfig(), cluster.getConfigurationForTable(baseTableName))
                 .startReplication(
                         Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
     }
@@ -51,7 +51,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         cluster.makeTable(baseTableName);
         HBaseEndpoint consumer =
                 new HBaseEndpoint(
-                        cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
+                        cluster.getConfig(), cluster.getConfigurationForTable(baseTableName));
         consumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, "foobar");
@@ -66,7 +66,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         cluster.makeTable(baseTableName);
         HBaseEndpoint consumer =
                 new HBaseEndpoint(
-                        cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
+                        cluster.getConfig(), cluster.getConfigurationForTable(baseTableName));
         consumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
 
@@ -91,7 +91,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
     public void testTimestampsAndIndicesDefineStrictOrder() throws Exception {
         HBaseEndpoint consumer =
                 new HBaseEndpoint(
-                        cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
+                        cluster.getConfig(), cluster.getConfigurationForTable(baseTableName));
         consumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.makeTable(baseTableName);
@@ -129,7 +129,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         String firstValue = UUID.randomUUID().toString();
         HBaseEndpoint firstConsumer =
                 new HBaseEndpoint(
-                        id, cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
+                        id, cluster.getConfig(), cluster.getConfigurationForTable(baseTableName));
         firstConsumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, firstValue);
@@ -140,7 +140,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         String secondValue = UUID.randomUUID().toString();
         HBaseEndpoint secondConsumer =
                 new HBaseEndpoint(
-                        id, cluster.getConfig(), cluster.getPropertiesForTable(baseTableName));
+                        id, cluster.getConfig(), cluster.getConfigurationForTable(baseTableName));
         secondConsumer.startReplication(
                 Collections.singletonList(HBaseTestCluster.DEFAULT_COLUMN_FAMILY));
         cluster.put(baseTableName, secondValue);

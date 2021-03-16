@@ -21,9 +21,6 @@ package org.apache.flink.connector.hbase.source;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
-import java.util.Properties;
-import java.util.function.Function;
-
 /** Configuration options for {@link HBaseSource}. */
 public class HBaseSourceOptions {
 
@@ -45,23 +42,4 @@ public class HBaseSourceOptions {
                     .defaultValue("localhost")
                     .withDescription(
                             "The hostname of the RPC server in the HBaseEndpoint receiving events from HBase");
-
-    @SuppressWarnings("unchecked")
-    public static <T> T getOption(
-            Properties props, ConfigOption configOption, Function<String, T> parser) {
-        String value = props.getProperty(configOption.key());
-        return (T) (value == null ? configOption.defaultValue() : parser.apply(value));
-    }
-
-    public static String getTableName(Properties properties) {
-        return getOption(properties, TABLE_NAME, Function.identity());
-    }
-
-    public static int getEndpointQueueCapacity(Properties properties) {
-        return getOption(properties, ENDPOINT_QUEUE_CAPACITY, Integer::parseInt);
-    }
-
-    public static String getHostName(Properties properties) {
-        return getOption(properties, HOST_NAME, Function.identity());
-    }
 }

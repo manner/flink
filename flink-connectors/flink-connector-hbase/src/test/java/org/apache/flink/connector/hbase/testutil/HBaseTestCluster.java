@@ -18,9 +18,9 @@
 
 package org.apache.flink.connector.hbase.testutil;
 
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
@@ -48,7 +48,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -66,7 +65,7 @@ public class HBaseTestCluster extends ExternalResource {
     public static final String DEFAULT_QUALIFIER = QUALIFIER_BASE + 0;
 
     private MiniHBaseCluster cluster;
-    private Configuration hbaseConf;
+    private org.apache.hadoop.conf.Configuration hbaseConf;
     private String testFolder;
 
     public HBaseTestCluster() {}
@@ -305,14 +304,14 @@ public class HBaseTestCluster extends ExternalResource {
         }
     }
 
-    public Configuration getConfig() {
+    public org.apache.hadoop.conf.Configuration getConfig() {
         return hbaseConf;
     }
 
-    public Properties getPropertiesForTable(String tableName) {
-        Properties p = new Properties();
-        p.setProperty(HBaseSourceOptions.TABLE_NAME.key(), tableName);
-        return p;
+    public Configuration getConfigurationForTable(String tableName) {
+        Configuration config = new Configuration();
+        config.setString(HBaseSourceOptions.TABLE_NAME, tableName);
+        return config;
     }
 
     @Override

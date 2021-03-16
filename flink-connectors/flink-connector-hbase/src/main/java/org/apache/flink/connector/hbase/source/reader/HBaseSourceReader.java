@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Properties;
 
 /** The source reader for Hbase. */
 public class HBaseSourceReader<T>
@@ -38,14 +37,14 @@ public class HBaseSourceReader<T>
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceReader.class);
 
     public HBaseSourceReader(
-            byte[] serializedConfig,
+            byte[] serializedHBaseConfig,
             HBaseSourceDeserializer<T> sourceDeserializer,
-            Properties properties,
+            Configuration sourceConfiguration,
             SourceReaderContext context) {
         super(
-                () -> new HBaseSourceSplitReader(serializedConfig, properties),
+                () -> new HBaseSourceSplitReader(serializedHBaseConfig, sourceConfiguration),
                 new HBaseRecordEmitter<T>(sourceDeserializer),
-                new Configuration(),
+                sourceConfiguration,
                 context);
         LOG.debug("constructing Source Reader");
     }
