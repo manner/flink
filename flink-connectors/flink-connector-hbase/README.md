@@ -43,7 +43,7 @@ Configuration hbaseConfig = HBaseConfiguration.create();
 String tableName = "TestTable";
 
 HBaseSource<String> hbaseSource =
-    HBaseSource.<String>builder()
+    HBaseSource.builder()
         .setTableName(tableName)
         .setSourceDeserializer(new HBaseStringDeserializer())
         .setHBaseConfiguration(hbaseConfig)
@@ -80,7 +80,7 @@ String tableName = "TestTable";
 DataStream<Long> longStream = env.fromSequence(0, 100);
 
 HBaseSink<Long> hbaseSink =
-    HBaseSink.<Long>builder()
+    HBaseSink.builder()
         .setTableName(tableName)
         .setSinkSerializer(new HBaseLongSerializer())
         .setHBaseConfiguration(hbaseConfig)

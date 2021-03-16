@@ -42,7 +42,7 @@ import java.util.Optional;
  *
  * <pre>{@code
  * HBaseSink<Long> hbaseSink =
- *      HBaseSink.<Long>builder()
+ *      HBaseSink.builder()
  *          .setTableName(tableName)
  *          .setSinkSerializer(new HBaseLongSerializer())
  *          .setHBaseConfiguration(hbaseConfig)

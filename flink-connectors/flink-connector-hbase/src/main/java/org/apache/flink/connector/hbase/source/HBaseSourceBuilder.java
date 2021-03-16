@@ -31,8 +31,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * from each cell.
  *
  * <pre>{@code
- * HBaseSource<String> source = HBaseSource
- *      .<String>builder()
+ * HBaseSource<String> source = HBaseSource.builder()
  *      .setSourceDeserializer(new CustomHBaseDeserializationSchema())
  *      .setTableName("test-table")
  *      .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
@@ -84,10 +83,11 @@ public class HBaseSourceBuilder<IN> {
      * @param sourceDeserializer the HBase Source Deserializer.
      * @return this HBaseSourceBuilder.
      */
-    public HBaseSourceBuilder<IN> setSourceDeserializer(
-            HBaseSourceDeserializer<IN> sourceDeserializer) {
-        this.sourceDeserializer = sourceDeserializer;
-        return this;
+    public <T> HBaseSourceBuilder<T> setSourceDeserializer(
+            HBaseSourceDeserializer<T> sourceDeserializer) {
+        final HBaseSourceBuilder<T> sourceBuilder = (HBaseSourceBuilder<T>) this;
+        sourceBuilder.sourceDeserializer = sourceDeserializer;
+        return sourceBuilder;
     }
 
     /**

@@ -78,7 +78,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         HBaseStringDeserializationScheme deserializationScheme =
                 new HBaseStringDeserializationScheme();
         HBaseSource<String> source =
-                HBaseSource.<String>builder()
+                HBaseSource.builder()
                         .setTableName(tableName)
                         .setSourceDeserializer(deserializationScheme)
                         .setHBaseConfiguration(cluster.getConfig())

@@ -57,7 +57,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         DataStream<Long> numberStream = env.fromSequence(start, end);
 
         final HBaseSink<Long> hbaseSink =
-                HBaseSink.<Long>builder()
+                HBaseSink.builder()
                         .setTableName(baseTableName)
                         .setSinkSerializer(new HBasePutLongSerializer())
                         .setHBaseConfiguration(hbaseConfiguration)
@@ -102,7 +102,7 @@ public class HBaseSinkTests extends TestsWithTestHBaseCluster {
         DataStream<String> numberStream = env.fromCollection(rows);
 
         final HBaseSink<String> hbaseSink =
-                HBaseSink.<String>builder()
+                HBaseSink.builder()
                         .setTableName(baseTableName)
                         .setSinkSerializer(new HBaseDeleteStringSerializer())
                         .setHBaseConfiguration(hbaseConfiguration)

@@ -45,12 +45,12 @@ import java.util.Collection;
  * from each cell.
  *
  * <pre>{@code
- * HBaseSource<String> source = HBaseSource
- *      .<String>builder()
- *      .setSourceDeserializer(new CustomHBaseDeserializationSchema())
- *      .setTableName("test-table")
- *      .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
- *      .build();
+ * HBaseSource<String> source =
+ *      HBaseSource.builder()
+ *          .setSourceDeserializer(new CustomHBaseDeserializationSchema())
+ *          .setTableName("test-table")
+ *          .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
+ *          .build();
  *
  * public static class CustomHBaseDeserializationSchema implements HBaseSourceDeserializer<String> {
  *

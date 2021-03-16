@@ -28,8 +28,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * HBaseSink that writes Long values to HBase.
  *
  * <pre>{@code
- * HBaseSink<Long> hbaseSink =
- *      HBaseSink.<Long>builder()
+ * HBaseSink<Long> hbaseSink = HBaseSink.builder()
  *          .setTableName(tableName)
  *          .setSinkSerializer(new HBaseLongSerializer())
  *          .setHBaseConfiguration(hbaseConfig)
@@ -77,9 +76,11 @@ public class HBaseSinkBuilder<IN> {
         return this;
     }
 
-    public HBaseSinkBuilder<IN> setSinkSerializer(HBaseSinkSerializer<IN> sinkSerializer) {
-        this.sinkSerializer = sinkSerializer;
-        return this;
+    public <T extends IN> HBaseSinkBuilder<T> setSinkSerializer(
+            HBaseSinkSerializer<T> sinkSerializer) {
+        final HBaseSinkBuilder<T> sinkBuilder = (HBaseSinkBuilder<T>) this;
+        sinkBuilder.sinkSerializer = sinkSerializer;
+        return sinkBuilder;
     }
 
     public HBaseSinkBuilder<IN> setHBaseConfiguration(
