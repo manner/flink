@@ -36,6 +36,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.function.RunnableWithException;
+import org.apache.flink.util.function.ThrowingRunnable;
 
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Rule;
@@ -133,12 +134,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     private void waitUntilNReplicationPeers(int n)
             throws InterruptedException, ExecutionException, TimeoutException {
         CompletableFuture.runAsync(
-                        () -> {
-                            while (cluster.getReplicationPeers().size() != n) {
-                                System.out.println(cluster.getReplicationPeers().size());
-                                sleep(1000);
-                            }
-                        })
+                        ThrowingRunnable.unchecked(
+                                () -> {
+                                    while (cluster.getReplicationPeers().size() != n) {
+                                        sleep(1000);
+                                    }
+                                }))
                 .get(90, TimeUnit.SECONDS);
     }
 

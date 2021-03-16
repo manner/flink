@@ -206,13 +206,11 @@ public class HBaseTestCluster extends ExternalResource {
         }
     }
 
-    public List<ReplicationPeerDescription> getReplicationPeers() {
+    public List<ReplicationPeerDescription> getReplicationPeers() throws IOException {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             return admin.listReplicationPeers();
         } catch (IOException e) {
-            // Throws RuntimeException to avoid error handling clutter in runnables that use this
-            // method
-            throw new RuntimeException("Error retrieving replication peers", e);
+            throw new IOException("Error retrieving replication peers", e);
         }
     }
 
