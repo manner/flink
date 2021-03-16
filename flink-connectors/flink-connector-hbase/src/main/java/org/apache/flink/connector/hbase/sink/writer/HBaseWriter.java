@@ -49,7 +49,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 
-/** HBaseWriter. */
+/**
+ * The HBaseWriter is responsible for committing incoming events to HBase.
+ *
+ * <p>Stored events will be flushed to HBase eiter if the {@link #queueLimit} is reached or if the
+ * {@link #maxLatencyMs} is elapsed.
+ */
 public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mutation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseWriter.class);

@@ -25,7 +25,24 @@ import org.apache.flink.api.java.typeutils.TypeExtractor;
 import java.io.IOException;
 import java.io.Serializable;
 
-/** Deserialization Interface. */
+/**
+ * The Deserialization Interface that needs to be implemented for constructing a {@link
+ * org.apache.flink.connector.hbase.source.HBaseSource}.
+ *
+ * <p>A minimal implementation can be seen in the following example.
+ *
+ * <pre>{@code
+ * public static class CustomHBaseDeserializationSchema implements HBaseSourceDeserializer<String> {
+ *     @Override
+ *     public String deserialize(HBaseEvent event) {
+ *         return new String(event.getPayload());
+ *     }
+ * }
+ * }</pre>
+ *
+ * {@link #getProducedType()} should be overridden if the type information cannot be extracted this
+ * way.
+ */
 @FunctionalInterface
 public interface HBaseSourceDeserializer<T> extends Serializable, ResultTypeQueryable<T> {
 
