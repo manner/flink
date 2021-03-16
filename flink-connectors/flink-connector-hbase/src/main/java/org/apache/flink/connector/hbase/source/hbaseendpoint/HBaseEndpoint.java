@@ -100,8 +100,8 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         this.walEdits = new FutureCompletingBlockingQueue<>(queueCapacity);
 
         // Setup
-        zooKeeper = connectToZooKeeper();
         rpcServer = createServer();
+        zooKeeper = connectToZooKeeper();
         registerAtZooKeeper();
     }
 
