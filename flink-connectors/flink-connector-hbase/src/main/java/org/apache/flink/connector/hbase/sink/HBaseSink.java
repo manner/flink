@@ -64,7 +64,8 @@ import java.util.Optional;
  * }
  * }</pre>
  *
- * <p>See {@link HBaseSinkBuilder} for more details.
+ * @see HBaseSinkBuilder HBaseSinkBuilder for more details on creation
+ * @see HBaseSinkSerializer HBaseSinkSerializer for more details on serialization
  */
 public class HBaseSink<IN> implements Sink<IN, Void, Mutation, Void> {
 
