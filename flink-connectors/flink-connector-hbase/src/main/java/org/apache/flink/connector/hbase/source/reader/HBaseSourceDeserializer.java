@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.reader;
 
+import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
@@ -45,6 +46,11 @@ import java.io.Serializable;
  */
 @FunctionalInterface
 public interface HBaseSourceDeserializer<T> extends Serializable, ResultTypeQueryable<T> {
+
+    static <T> HBaseSourceDeserializer<T> valueOnly(
+            DeserializationSchema<T> deserializationSchema) {
+        return new HBaseSourceDeserializerWrapper<>(deserializationSchema);
+    }
 
     T deserialize(HBaseSourceEvent event) throws IOException;
 
