@@ -91,7 +91,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
         }
 
         startBatchSendTimer();
-        LOG.debug("started sink writer");
+        LOG.debug("started sink writer for table {}", tableName);
     }
 
     private void startBatchSendTimer() {
@@ -152,9 +152,9 @@ public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
 
     @Override
     public List<Mutation> snapshotState() throws IOException {
-        LOG.debug("Snapshotting state");
         ArrayList<Mutation> snapshot = new ArrayList<>();
         pendingMutations.drainTo(snapshot);
+        LOG.debug("Snapshotting state with {} elements", snapshot.size());
         return snapshot;
     }
 

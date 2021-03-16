@@ -48,7 +48,7 @@ public class HBaseSinkMutationSerializer implements SimpleVersionedSerializer<Mu
 
     @Override
     public byte[] serialize(Mutation mutation) throws IOException {
-        LOG.debug("serializing mutation");
+        LOG.debug("serializing mutation {}", mutation);
         ClientProtos.MutationProto.MutationType type;
 
         if (mutation instanceof Put) {
