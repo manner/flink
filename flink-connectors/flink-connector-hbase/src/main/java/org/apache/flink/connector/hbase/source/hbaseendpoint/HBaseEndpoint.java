@@ -21,7 +21,6 @@ package org.apache.flink.connector.hbase.source.hbaseendpoint;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
-import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -70,7 +69,11 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseEndpoint.class);
     private final String clusterKey;
-    /** The id under which the replication target is made known to the source cluster. */
+    /**
+     * The id under which the replication target is made known to the source cluster. Using the same
+     * id as a previous consumer - that has not been unregistered - prevents that already
+     * acknowledged events are sent again.
+     */
     private final String replicationPeerId;
 
     private final Configuration hbaseConf;
@@ -80,11 +83,6 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     private final String hostName;
     private final String tableName;
     private boolean isRunning = false;
-
-    public HBaseEndpoint(byte[] serializedConfig, Properties properties)
-            throws IOException, KeeperException, InterruptedException {
-        this(HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null), properties);
-    }
 
     public HBaseEndpoint(Configuration hbaseConf, Properties properties)
             throws InterruptedException, KeeperException, IOException {
