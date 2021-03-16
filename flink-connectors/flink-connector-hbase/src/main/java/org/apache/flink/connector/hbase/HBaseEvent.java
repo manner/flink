@@ -68,15 +68,27 @@ public class HBaseEvent {
         return payload;
     }
 
-    public byte[] getRowId() {
+    public String getRowId() {
+        return rowId;
+    }
+
+    public String getCf() {
+        return cf;
+    }
+
+    public String getQualifier() {
+        return qualifier;
+    }
+
+    public byte[] getRowIdBytes() {
         return rowId.getBytes(DEFAULT_CHARSET);
     }
 
-    public byte[] getCf() {
+    public byte[] getCfBytes() {
         return cf.getBytes(DEFAULT_CHARSET);
     }
 
-    public byte[] getQualifier() {
+    public byte[] getQualifierBytes() {
         return qualifier.getBytes(DEFAULT_CHARSET);
     }
 }
