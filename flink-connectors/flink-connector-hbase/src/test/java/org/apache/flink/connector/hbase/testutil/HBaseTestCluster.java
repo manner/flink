@@ -132,22 +132,16 @@ public class HBaseTestCluster extends ExternalResource {
         LOG.info("Shutting down HBase test cluster");
         try {
             try (Closer closer = Closer.create()) {
-                closer.register(this::clearTables);
-                closer.register(this::clearReplicationPeers);
-            }
-            try {
-                // Closer is not able to call this method correctly, instead logs process dump
-                cluster.shutdown();
-            } catch (IOException e) {
-                LOG.error("Error while shutting down HBase test cluster", e);
-            }
-            try (Closer closer = Closer.create()) {
-                closer.register(this::waitForShutDown);
+                // Is executed in reverse order!
                 closer.register(Paths.get(testFolder).toFile()::delete);
+                closer.register(this::waitForShutDown);
+                closer.register(cluster::shutdown);
+                closer.register(this::clearReplicationPeers);
+                closer.register(this::clearTables);
             }
         } catch (IOException e) {
             throw new RuntimeException(
-                    "Failed to shut down HBase test cluster. Future program state might be compromised.",
+                    "Failed to shut down HBase test cluster correctly. Future program state might be compromised.",
                     e);
         }
         LOG.info("HBase test cluster shut down");
@@ -155,7 +149,7 @@ public class HBaseTestCluster extends ExternalResource {
 
     public void waitForShutDown() {
         try {
-            CompletableFuture.runAsync(cluster::waitUntilShutDown).get(240, TimeUnit.SECONDS);
+            CompletableFuture.runAsync(cluster::waitUntilShutDown).get(20, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.error("Interrupted while waiting for HBase test cluster to shut down", e);
