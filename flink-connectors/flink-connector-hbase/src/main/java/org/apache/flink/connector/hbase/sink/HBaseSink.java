@@ -37,8 +37,10 @@ import java.util.Optional;
 
 /**
  * A Sink Connector for HBase. Please use an {@link HBaseSinkBuilder} to construct a {@link
- * HBaseSink}. The following example shows how to create an HBaseSink that writes Long values to
- * HBase.
+ * HBaseSink}. As HBase does not support transactions, this sink does not guarantee exactly-once,
+ * but at-least-once.
+ *
+ * <p>The following example shows how to create an HBaseSink that writes Long values to HBase.
  *
  * <pre>{@code
  * HBaseSink<Long> hbaseSink =
