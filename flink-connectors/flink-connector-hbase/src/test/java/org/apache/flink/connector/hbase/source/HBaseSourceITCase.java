@@ -304,7 +304,6 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                 expectedValues,
                 "HBase source did not produce the right values after a multi-cf put");
         doAndWaitForSuccess(env, () -> {}, 120);
-        assert cluster.getReplicationPeers().size() == parallelism;
     }
 
     /** Simple Deserialization Scheme to get event payloads as String. */

@@ -85,18 +85,10 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
 
     public HBaseEndpoint(
             org.apache.hadoop.conf.Configuration hbaseConf, Configuration sourceConfiguration)
-            throws InterruptedException, KeeperException, IOException {
-        this(UUID.randomUUID().toString().substring(0, 5), hbaseConf, sourceConfiguration);
-    }
-
-    public HBaseEndpoint(
-            String peerId,
-            org.apache.hadoop.conf.Configuration hbaseConf,
-            Configuration sourceConfiguration)
             throws IOException, KeeperException, InterruptedException {
         this.hbaseConf = hbaseConf;
-        this.clusterKey = peerId + "_clusterKey";
-        this.replicationPeerId = peerId;
+        this.replicationPeerId = UUID.randomUUID().toString().substring(0, 5);
+        this.clusterKey = replicationPeerId + "_clusterKey";
         this.hostName = sourceConfiguration.get(HBaseSourceOptions.HOST_NAME);
         this.tableName = sourceConfiguration.get(HBaseSourceOptions.TABLE_NAME);
         int queueCapacity = sourceConfiguration.get(HBaseSourceOptions.ENDPOINT_QUEUE_CAPACITY);
@@ -197,8 +189,26 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     public void close() throws InterruptedException {
-        // TODO unregister replication peer [and delete zookeeper paths]
         isRunning = false;
+
+        try (Connection connection = ConnectionFactory.createConnection(hbaseConf);
+                Admin admin = connection.getAdmin()) {
+            admin.removeReplicationPeer(replicationPeerId);
+        } catch (IOException e) {
+            LOG.error(
+                    "Error unregistering HBase endpoint replication peer. Will proceed with shutdown, but source cluster might be dirty.",
+                    e);
+        }
+
+        try {
+            org.apache.zookeeper.ZKUtil.deleteRecursive(
+                    zooKeeper.getZooKeeper(), getZookeeperRootNode() + "/" + clusterKey);
+        } catch (KeeperException e) {
+            LOG.error(
+                    "Error unregistering up HBase endpoint from zookeeper. Will proceed with shutdown, but source cluster might be dirty.",
+                    e);
+        }
+
         try {
             zooKeeper.close();
             LOG.debug("Closed connection to ZooKeeper");
