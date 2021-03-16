@@ -201,11 +201,13 @@ public class HBaseTestCluster extends ExternalResource {
     public void clearReplicationPeers() throws IOException {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             StringBuilder logMessage = new StringBuilder("Clearing existing replication peers:");
-            for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
-                logMessage.append("\n\t").append(desc.getPeerId()).append(" | ").append(desc);
-                admin.removeReplicationPeer(desc.getPeerId());
+            try (Closer closer = Closer.create()) {
+                for (ReplicationPeerDescription desc : admin.listReplicationPeers()) {
+                    logMessage.append("\n\t").append(desc.getPeerId()).append(" | ").append(desc);
+                    closer.register(() -> admin.removeReplicationPeer(desc.getPeerId()));
+                }
+                LOG.info(logMessage.toString());
             }
-            LOG.info(logMessage.toString());
         } catch (IOException e) {
             throw new IOException("Could not clear test cluster replication peers", e);
         }
@@ -215,8 +217,9 @@ public class HBaseTestCluster extends ExternalResource {
         try (Admin admin = ConnectionFactory.createConnection(getConfig()).getAdmin()) {
             return admin.listReplicationPeers();
         } catch (IOException e) {
-            LOG.error("Error retrieving replication peers", e);
-            return null;
+            // Throws RuntimeException to avoid error handling clutter in runnables that use this
+            // method
+            throw new RuntimeException("Error retrieving replication peers", e);
         }
     }
 
