@@ -60,7 +60,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-/** Consumer of HBase WAL edits. */
+/**
+ * Endpoint for HBase CDC via HBase replication. Runs an rpc server that is registered as
+ * replication peer at HBase. A table is specified in the constructor, and the column families to
+ * replicate are specified when the replication is started with {@link #startReplication}. The
+ * incoming WAL edits are internally buffered and can be retrieved with {@link #getAll}.
+ */
 public class HBaseEndpoint implements ReplicationTargetInterface {
 
     private static final AdminProtos.ReplicateWALEntryResponse REPLICATE_WAL_ENTRY_RESPONSE =
