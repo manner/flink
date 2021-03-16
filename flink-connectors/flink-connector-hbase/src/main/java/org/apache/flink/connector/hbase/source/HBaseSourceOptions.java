@@ -21,7 +21,7 @@ package org.apache.flink.connector.hbase.source;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
-/** Configuration options for {@link HBaseSource}. */
+/** Configuration options for the {@link HBaseSourceBuilder}. */
 public class HBaseSourceOptions {
 
     public static final ConfigOption<String> TABLE_NAME =

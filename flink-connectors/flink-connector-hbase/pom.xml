@@ -40,7 +40,7 @@ under the License.
 	<dependencies>
 
 
-		<!-- Add Hbase 2.x as a dependency -->
+		<!-- Add HBase 2.x as a dependency -->
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-testing-util</artifactId>

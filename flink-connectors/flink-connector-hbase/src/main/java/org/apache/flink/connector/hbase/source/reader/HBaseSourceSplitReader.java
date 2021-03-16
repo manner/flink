@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
-/** A {@link SplitReader} implementation for Hbase. */
+/** A {@link SplitReader} implementation for HBase. */
 public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBaseSourceSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceSplitReader.class);
@@ -100,7 +100,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBa
 
     @Override
     public void wakeUp() {
-        LOG.debug("Waking up HBaseEndpoint");
+        LOG.debug("waking up HBaseEndpoint");
         hbaseEndpoint.wakeup();
     }
 

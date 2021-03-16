@@ -292,7 +292,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                 zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
             }
         } catch (KeeperException e) {
-            throw new RuntimeException("Error creating ZK path in Hbase replication endpoint", e);
+            throw new RuntimeException("Error creating ZK path in HBase replication endpoint", e);
         }
     }
 }

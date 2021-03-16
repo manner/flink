@@ -18,15 +18,19 @@
 
 package org.apache.flink.connector.hbase;
 
+import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
+import org.apache.flink.connector.hbase.source.HBaseSource;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
+
 import org.apache.hadoop.hbase.Cell;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
- * The base HBaseEvent which needs to be created in the SinkSerializer to write data to HBase. The
- * subclass {@link org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent} contains
- * additional information and is used by the HBaseSource to represent an incoming event from HBase.
+ * The base HBaseEvent which needs to be created in the {@link HBaseSinkSerializer} to write data to
+ * HBase. The subclass {@link HBaseSourceEvent} contains additional information and is used by the
+ * {@link HBaseSource} to represent an incoming event from HBase.
  */
 public class HBaseEvent {
 

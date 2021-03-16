@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 
 /**
- * A Source Connector for HBase. Please use a {@link HBaseSourceBuilder} to construct a {@link
+ * A source connector for HBase. Please use an {@link HBaseSourceBuilder} to construct an {@link
  * HBaseSource}. The following example shows how to create a HBaseSource that reads String values
  * from each cell.
  *
@@ -60,7 +60,7 @@ import java.util.Collection;
  * }
  * }</pre>
  *
- * <p>See {@link HBaseSourceBuilder} for more details.
+ * @see HBaseSourceBuilder HBaseSourceBuilder for more details.
  */
 public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HBaseSourceSplit>> {
 
@@ -95,7 +95,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
-        LOG.debug("createReader");
+        LOG.debug("creating reader");
         return new HBaseSourceReader<>(
                 serializedHBaseConfig, sourceDeserializer, sourceConfiguration, readerContext);
     }
@@ -105,7 +105,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
             SplitEnumeratorContext<HBaseSourceSplit> enumContext,
             Collection<HBaseSourceSplit> checkpoint)
             throws Exception {
-        LOG.debug("restoreEnumerator");
+        LOG.debug("restoring enumerator");
 
         HBaseSplitEnumerator enumerator =
                 new HBaseSplitEnumerator(enumContext, serializedHBaseConfig, sourceConfiguration);
@@ -116,7 +116,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
-        LOG.debug("createEnumerator");
+        LOG.debug("creating enumerator");
         return new HBaseSplitEnumerator(enumContext, serializedHBaseConfig, sourceConfiguration);
     }
 

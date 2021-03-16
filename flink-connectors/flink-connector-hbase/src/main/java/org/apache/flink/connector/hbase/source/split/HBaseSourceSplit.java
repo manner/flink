@@ -20,11 +20,15 @@ package org.apache.flink.connector.hbase.source.split;
 
 import org.apache.flink.api.connector.source.SourceSplit;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.connector.hbase.source.reader.HBaseSourceSplitReader;
 
 import java.io.Serializable;
 import java.util.List;
 
-/** A {@link SourceSplit} for a Hbase. */
+/**
+ * An HBaseSourceSplit contains all necessary information a {@link HBaseSourceSplitReader} needs to
+ * read from HBase.
+ */
 public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -67,7 +71,7 @@ public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     @Override
     public String toString() {
-        return String.format("HbaseSourceSplit: %s ", getHost());
+        return String.format("HBaseSourceSplit: %s ", getHost());
     }
 
     public Tuple2<Long, Integer> getFirstEventStamp() {

@@ -20,6 +20,7 @@ package org.apache.flink.connector.hbase.source;
 
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseEndpoint;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -27,8 +28,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * The builder class to create an {@link HBaseSource}.
  *
- * <p>The following example shows a minimum setup to create a HBase Source that reads String values
- * from each cell.
+ * <p>The following example shows a minimum setup to create an {@link HBaseSource} that reads String
+ * values from each cell.
  *
  * <pre>{@code
  * HBaseSource<String> source = HBaseSource.builder()
@@ -45,12 +46,14 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * }
  * }</pre>
  *
- * <p>A DeserializationSchema is always required to be set, as well as a TableName to read from and
- * a HBaseConfiguration.
+ * <p>A {@link HBaseSourceDeserializer} is always required to be set, as well as a table name to
+ * read from and a {@link org.apache.hadoop.conf.Configuration} for HBase.
  *
- * <p>By default each HBaseEndpoint has a queue capacity of 1000 entries for WALedits, this can be
- * changed with {@link #setQueueCapacity(int queueSize)}. The hostname of the created RPC Servers
- * can be changed with {@link #setHostName(String hostname)}.
+ * <p>By default each {@link HBaseEndpoint} has a queue capacity of 1000 entries for WALedits. This
+ * can be changed with {@link #setQueueCapacity(int queueSize)}. The hostname of the created RPC
+ * Servers can be changed with {@link #setHostName(String hostname)}.
+ *
+ * @see HBaseSourceOptions HBaseSourceOptions
  */
 public class HBaseSourceBuilder<IN> {
 
