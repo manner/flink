@@ -157,16 +157,11 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
 
     @Override
     public void close() throws Exception {
-        Closer closer = Closer.create();
-        try {
-            closer.register(table);
+        try (Closer closer = Closer.create()) {
             closer.register(connection);
-            batchSendTimer.cancel();
-            flushBuffer();
-        } catch (Throwable e) {
-            throw closer.rethrow(e);
-        } finally {
-            closer.close();
+            closer.register(table);
+            closer.register(this::flushBuffer);
+            closer.register(batchSendTimer::cancel);
         }
     }
 }
