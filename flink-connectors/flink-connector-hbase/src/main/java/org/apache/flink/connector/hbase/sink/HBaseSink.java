@@ -66,7 +66,7 @@ import java.util.Optional;
  *
  * <p>See {@link HBaseSinkBuilder} for more details.
  */
-public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, Mutation, Void> {
+public class HBaseSink<IN> implements Sink<IN, Void, Mutation, Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSink.class);
 
@@ -90,25 +90,24 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, Mutation, V
     }
 
     @Override
-    public SinkWriter<IN, HBaseSinkCommittable, Mutation> createWriter(
-            InitContext context, List<Mutation> states) throws IOException {
+    public SinkWriter<IN, Void, Mutation> createWriter(InitContext context, List<Mutation> states)
+            throws IOException {
         return new HBaseWriter<>(
                 context, states, sinkSerializer, serializedHBaseConfig, sinkConfiguration);
     }
 
     @Override
-    public Optional<Committer<HBaseSinkCommittable>> createCommitter() throws IOException {
+    public Optional<Committer<Void>> createCommitter() throws IOException {
         return Optional.empty();
     }
 
     @Override
-    public Optional<GlobalCommitter<HBaseSinkCommittable, Void>> createGlobalCommitter()
-            throws IOException {
+    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() throws IOException {
         return Optional.empty();
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<HBaseSinkCommittable>> getCommittableSerializer() {
+    public Optional<SimpleVersionedSerializer<Void>> getCommittableSerializer() {
         return Optional.empty();
     }
 

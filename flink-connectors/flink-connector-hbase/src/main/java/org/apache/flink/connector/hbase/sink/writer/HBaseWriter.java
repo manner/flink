@@ -22,7 +22,6 @@ import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.HBaseEvent;
-import org.apache.flink.connector.hbase.sink.HBaseSinkCommittable;
 import org.apache.flink.connector.hbase.sink.HBaseSinkOptions;
 import org.apache.flink.connector.hbase.sink.HBaseSinkSerializer;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
@@ -54,7 +53,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * <p>Stored events will be flushed to HBase eiter if the {@link #queueLimit} is reached or if the
  * {@link #maxLatencyMs} is elapsed.
  */
-public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mutation> {
+public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseWriter.class);
 
@@ -147,7 +146,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
     }
 
     @Override
-    public List<HBaseSinkCommittable> prepareCommit(boolean flush) throws IOException {
+    public List<Void> prepareCommit(boolean flush) throws IOException {
         return Collections.emptyList();
     }
 
