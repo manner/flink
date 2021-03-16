@@ -22,11 +22,11 @@ import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.sink.writer.HBaseWriter;
 import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 
 /**
  * A Sink Connector for HBase. Please use an {@link HBaseSinkBuilder} to construct a {@link
@@ -72,16 +71,17 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, Mutation, V
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSink.class);
 
     private final HBaseSinkSerializer<IN> sinkSerializer;
-    private final byte[] serializedConfig;
-    private final Properties properties;
+    private final byte[] serializedHBaseConfig;
+    private final Configuration sinkConfiguration;
 
     HBaseSink(
             HBaseSinkSerializer<IN> sinkSerializer,
-            Configuration hbaseConfiguration,
-            Properties properties) {
+            org.apache.hadoop.conf.Configuration hbaseConfiguration,
+            Configuration sinkConfiguration) {
         this.sinkSerializer = sinkSerializer;
-        this.serializedConfig = HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
-        this.properties = properties;
+        this.serializedHBaseConfig =
+                HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
+        this.sinkConfiguration = sinkConfiguration;
         LOG.debug("constructed sink");
     }
 
@@ -92,7 +92,8 @@ public class HBaseSink<IN> implements Sink<IN, HBaseSinkCommittable, Mutation, V
     @Override
     public SinkWriter<IN, HBaseSinkCommittable, Mutation> createWriter(
             InitContext context, List<Mutation> states) throws IOException {
-        return new HBaseWriter<>(context, states, sinkSerializer, serializedConfig, properties);
+        return new HBaseWriter<>(
+                context, states, sinkSerializer, serializedHBaseConfig, sinkConfiguration);
     }
 
     @Override

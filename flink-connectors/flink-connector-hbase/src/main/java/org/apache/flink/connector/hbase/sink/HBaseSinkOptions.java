@@ -21,9 +21,6 @@ package org.apache.flink.connector.hbase.sink;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
-import java.util.Properties;
-import java.util.function.Function;
-
 /** Configuration options for HBaseSink. */
 public class HBaseSinkOptions {
 
@@ -45,23 +42,4 @@ public class HBaseSinkOptions {
                     .defaultValue(1000)
                     .withDescription(
                             "The maximum time an element stays in the queue before being flushed.");
-
-    @SuppressWarnings("unchecked")
-    public static <T> T getOption(
-            Properties props, ConfigOption configOption, Function<String, T> parser) {
-        String value = props.getProperty(configOption.key());
-        return (T) (value == null ? configOption.defaultValue() : parser.apply(value));
-    }
-
-    public static String getTableName(Properties properties) {
-        return getOption(properties, TABLE_NAME, Function.identity());
-    }
-
-    public static int getQueueLimit(Properties properties) {
-        return getOption(properties, QUEUE_LIMIT, Integer::parseInt);
-    }
-
-    public static int getMaxLatency(Properties properties) {
-        return getOption(properties, MAX_LATENCY, Integer::parseInt);
-    }
 }

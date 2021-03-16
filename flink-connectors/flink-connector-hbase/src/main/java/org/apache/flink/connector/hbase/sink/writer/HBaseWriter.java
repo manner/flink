@@ -20,6 +20,7 @@ package org.apache.flink.connector.hbase.sink.writer;
 
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.HBaseEvent;
 import org.apache.flink.connector.hbase.sink.HBaseSinkCommittable;
 import org.apache.flink.connector.hbase.sink.HBaseSinkOptions;
@@ -28,7 +29,6 @@ import org.apache.flink.connector.hbase.util.HBaseConfigurationUtil;
 
 import org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.io.Closer;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -72,19 +71,19 @@ public class HBaseWriter<IN> implements SinkWriter<IN, HBaseSinkCommittable, Mut
             Sink.InitContext context,
             List<Mutation> states,
             HBaseSinkSerializer<IN> sinkSerializer,
-            byte[] serializedConfig,
-            Properties properties) {
+            byte[] serializedHBaseConfig,
+            Configuration sinkConfiguration) {
         this.sinkSerializer = sinkSerializer;
-        this.queueLimit = HBaseSinkOptions.getQueueLimit(properties);
-        this.maxLatencyMs = HBaseSinkOptions.getMaxLatency(properties);
-        String tableName = HBaseSinkOptions.getTableName(properties);
+        this.queueLimit = sinkConfiguration.get(HBaseSinkOptions.QUEUE_LIMIT);
+        this.maxLatencyMs = sinkConfiguration.get(HBaseSinkOptions.MAX_LATENCY);
+        String tableName = sinkConfiguration.get(HBaseSinkOptions.TABLE_NAME);
 
         // Queue limit is multiplied by 2, to reduce the probability of blocking while committing
         this.pendingMutations = new ArrayBlockingQueue<>(2 * queueLimit);
         pendingMutations.addAll(states);
 
-        Configuration hbaseConfiguration =
-                HBaseConfigurationUtil.deserializeConfiguration(serializedConfig, null);
+        org.apache.hadoop.conf.Configuration hbaseConfiguration =
+                HBaseConfigurationUtil.deserializeConfiguration(serializedHBaseConfig, null);
         try {
             connection = ConnectionFactory.createConnection(hbaseConfiguration);
             table = connection.getTable(TableName.valueOf(tableName));

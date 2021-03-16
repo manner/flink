@@ -18,9 +18,8 @@
 
 package org.apache.flink.connector.hbase.sink;
 
-import org.apache.hadoop.conf.Configuration;
-
-import java.util.Properties;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.Configuration;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -62,19 +61,20 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  */
 public class HBaseSinkBuilder<IN> {
 
-    private static final String[] REQUIRED_CONFIGS = {HBaseSinkOptions.TABLE_NAME.key()};
-    private final Properties properties;
-    private Configuration hbaseConfiguration;
+    private static final ConfigOption<?>[] REQUIRED_CONFIGS = {HBaseSinkOptions.TABLE_NAME};
+    private final Configuration sinkConfiguration;
+    private org.apache.hadoop.conf.Configuration hbaseConfiguration;
     private HBaseSinkSerializer<IN> sinkSerializer;
 
     protected HBaseSinkBuilder() {
         this.sinkSerializer = null;
         this.hbaseConfiguration = null;
-        this.properties = new Properties();
+        this.sinkConfiguration = new Configuration();
     }
 
     public HBaseSinkBuilder<IN> setTableName(String tableName) {
-        return setProperty(HBaseSinkOptions.TABLE_NAME.key(), tableName);
+        sinkConfiguration.setString(HBaseSinkOptions.TABLE_NAME, tableName);
+        return this;
     }
 
     public HBaseSinkBuilder<IN> setSinkSerializer(HBaseSinkSerializer<IN> sinkSerializer) {
@@ -82,39 +82,32 @@ public class HBaseSinkBuilder<IN> {
         return this;
     }
 
-    public HBaseSinkBuilder<IN> setHBaseConfiguration(Configuration hbaseConfiguration) {
+    public HBaseSinkBuilder<IN> setHBaseConfiguration(
+            org.apache.hadoop.conf.Configuration hbaseConfiguration) {
         this.hbaseConfiguration = hbaseConfiguration;
         return this;
     }
 
     public HBaseSinkBuilder<IN> setQueueLimit(int queueLimit) {
-        return setProperty(HBaseSinkOptions.QUEUE_LIMIT.key(), String.valueOf(queueLimit));
-    }
-
-    public HBaseSinkBuilder<IN> setMaxLatencyMs(int maxLatencyMs) {
-        return setProperty(HBaseSinkOptions.MAX_LATENCY.key(), String.valueOf(maxLatencyMs));
-    }
-
-    public HBaseSinkBuilder<IN> setProperty(final String key, final String value) {
-        this.properties.setProperty(key, value);
+        sinkConfiguration.setInteger(HBaseSinkOptions.QUEUE_LIMIT, queueLimit);
         return this;
     }
 
-    public HBaseSinkBuilder<IN> setProperties(final Properties properties) {
-        this.properties.putAll(properties);
+    public HBaseSinkBuilder<IN> setMaxLatencyMs(int maxLatencyMs) {
+        sinkConfiguration.setInteger(HBaseSinkOptions.MAX_LATENCY, maxLatencyMs);
         return this;
     }
 
     public HBaseSink<IN> build() {
         sanityCheck();
-        return new HBaseSink<>(sinkSerializer, hbaseConfiguration, properties);
+        return new HBaseSink<>(sinkSerializer, hbaseConfiguration, sinkConfiguration);
     }
 
     private void sanityCheck() {
-        for (String requiredConfig : REQUIRED_CONFIGS) {
+        for (ConfigOption<?> requiredConfig : REQUIRED_CONFIGS) {
             checkNotNull(
-                    properties.getProperty(requiredConfig),
-                    String.format("Property %s is required but not provided", requiredConfig));
+                    sinkConfiguration.get(requiredConfig),
+                    String.format("Config option %s is required but not provided", requiredConfig));
         }
 
         checkNotNull(sinkSerializer, "No sink serializer was specified.");
