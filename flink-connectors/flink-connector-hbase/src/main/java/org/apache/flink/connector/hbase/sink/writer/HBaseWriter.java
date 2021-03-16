@@ -63,7 +63,7 @@ public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
     private final ArrayBlockingQueue<Mutation> pendingMutations;
     private final Connection connection;
     private final Table table;
-    private long lastFlushTimeStamp = 0;
+    private volatile long lastFlushTimeStamp = 0;
     private TimerTask batchSendTimer;
 
     public HBaseWriter(
