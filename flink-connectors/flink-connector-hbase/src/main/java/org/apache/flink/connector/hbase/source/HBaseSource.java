@@ -46,19 +46,18 @@ import java.util.Collection;
  *
  * <pre>{@code
  * HBaseSource<String> source =
- *      HBaseSource.builder()
- *          .setSourceDeserializer(new CustomHBaseDeserializationSchema())
- *          .setTableName("test-table")
- *          .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
- *          .build();
+ *     HBaseSource.builder()
+ *         .setSourceDeserializer(new CustomHBaseDeserializationSchema())
+ *         .setTableName("test-table")
+ *         .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
+ *         .build();
  *
- * public static class CustomHBaseDeserializationSchema implements HBaseSourceDeserializer<String> {
- *
- *         @Override
- *         public String deserialize(HBaseEvent event) {
- *             return new String(event.getPayload());
- *         }
+ * static class HBaseStringDeserializer implements HBaseSourceDeserializer<String> {
+ *     @Override
+ *     public String deserialize(HBaseSourceEvent event) {
+ *         return new String(event.getPayload(), HBaseEvent.DEFAULT_CHARSET);
  *     }
+ * }
  * }</pre>
  *
  * <p>See {@link HBaseSourceBuilder} for more details.

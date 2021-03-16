@@ -32,18 +32,17 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * <pre>{@code
  * HBaseSource<String> source = HBaseSource.builder()
- *      .setSourceDeserializer(new CustomHBaseDeserializationSchema())
- *      .setTableName("test-table")
- *      .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
- *      .build();
+ *     .setSourceDeserializer(new CustomHBaseDeserializationSchema())
+ *     .setTableName("test-table")
+ *     .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
+ *     .build();
  *
- * public static class CustomHBaseDeserializationSchema implements HBaseSourceDeserializer<String> {
- *
- *         @Override
- *         public String deserialize(HBaseEvent event) {
- *             return new String(event.getPayload());
- *         }
+ * static class HBaseStringDeserializer implements HBaseSourceDeserializer<String> {
+ *     @Override
+ *     public String deserialize(HBaseSourceEvent event) {
+ *         return new String(event.getPayload(), HBaseEvent.DEFAULT_CHARSET);
  *     }
+ * }
  * }</pre>
  *
  * <p>A DeserializationSchema is always required to be set, as well as a TableName to read from and

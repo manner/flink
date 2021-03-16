@@ -33,10 +33,10 @@ import java.io.Serializable;
  * <p>A minimal implementation can be seen in the following example.
  *
  * <pre>{@code
- * public static class CustomHBaseDeserializationSchema implements HBaseSourceDeserializer<String> {
+ * static class HBaseStringDeserializer implements HBaseSourceDeserializer<String> {
  *     @Override
- *     public String deserialize(HBaseEvent event) {
- *         return new String(event.getPayload());
+ *     public String deserialize(HBaseSourceEvent event) {
+ *         return new String(event.getPayload(), HBaseEvent.DEFAULT_CHARSET);
  *     }
  * }
  * }</pre>

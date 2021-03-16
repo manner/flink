@@ -22,7 +22,24 @@ import org.apache.flink.connector.hbase.HBaseEvent;
 
 import java.io.Serializable;
 
-/** TODO docs. */
+/**
+ * The Serialization Interface that needs to be implemented for constructing a {@link HBaseSink}.
+ *
+ * <p>A minimal implementation can be seen in the following example.
+ *
+ * <pre>{@code
+ * static class HBaseLongSerializer implements HBaseSinkSerializer<Long> {
+ *     @Override
+ *     public HBaseEvent serialize(Long event) {
+ *         return HBaseEvent.putWith(                  // or deleteWith()
+ *                 event.toString(),                   // rowId
+ *                 "exampleColumnFamily",              // column family
+ *                 "exampleQualifier",                 // qualifier
+ *                 Bytes.toBytes(event.toString()));   // payload
+ *     }
+ * }
+ * }</pre>
+ */
 @FunctionalInterface
 public interface HBaseSinkSerializer<T> extends Serializable {
     HBaseEvent serialize(T event);
