@@ -32,7 +32,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * <pre>{@code
  * HBaseSource<String> source = HBaseSource.builder()
- *     .setSourceDeserializer(new CustomHBaseDeserializationSchema())
+ *     .setSourceDeserializer(new HBaseStringDeserializer())
  *     .setTableName("test-table")
  *     .setHBaseConfiguration(new HBaseTestClusterUtil().getConfig())
  *     .build();
