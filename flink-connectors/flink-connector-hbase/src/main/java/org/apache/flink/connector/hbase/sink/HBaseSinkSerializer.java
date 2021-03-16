@@ -23,7 +23,7 @@ import org.apache.flink.connector.hbase.HBaseEvent;
 import java.io.Serializable;
 
 /**
- * The Serialization Interface that needs to be implemented for constructing a {@link HBaseSink}.
+ * The serialization interface that needs to be implemented for constructing an {@link HBaseSink}.
  *
  * <p>A minimal implementation can be seen in the following example.
  *

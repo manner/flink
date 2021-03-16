@@ -43,7 +43,7 @@ public class HBaseSourceReader<T>
             SourceReaderContext context) {
         super(
                 () -> new HBaseSourceSplitReader(serializedHBaseConfig, sourceConfiguration),
-                new HBaseRecordEmitter<T>(sourceDeserializer),
+                new HBaseRecordEmitter<>(sourceDeserializer),
                 sourceConfiguration,
                 context);
         LOG.debug("constructing Source Reader");
@@ -51,13 +51,13 @@ public class HBaseSourceReader<T>
 
     @Override
     protected void onSplitFinished(Map<String, HBaseSourceSplitState> finishedSplitIds) {
-        LOG.debug("SourceReader onSplitFinished {}", finishedSplitIds);
+        LOG.debug("finished {} split(s)", finishedSplitIds.entrySet().size());
         context.sendSplitRequest();
     }
 
     @Override
     protected HBaseSourceSplitState initializedState(HBaseSourceSplit split) {
-        LOG.debug("SourceReader initializedState");
+        LOG.debug("initialized state for split {}", split.splitId());
         return new HBaseSourceSplitState(split);
     }
 

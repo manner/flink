@@ -22,13 +22,14 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.connector.hbase.source.HBaseSource;
 
 import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * The Deserialization Interface that needs to be implemented for constructing a {@link
- * org.apache.flink.connector.hbase.source.HBaseSource}.
+ * The deserialization interface that needs to be implemented for constructing an {@link
+ * HBaseSource}.
  *
  * <p>A minimal implementation can be seen in the following example.
  *
@@ -47,6 +48,10 @@ import java.io.Serializable;
 @FunctionalInterface
 public interface HBaseSourceDeserializer<T> extends Serializable, ResultTypeQueryable<T> {
 
+    /**
+     * This method wraps a {@link DeserializationSchema} in an HBaseSourceDeserializer. It will only
+     * have access to the payload of the {@link HBaseSourceEvent}.
+     */
     static <T> HBaseSourceDeserializer<T> valueOnly(
             DeserializationSchema<T> deserializationSchema) {
         return new HBaseSourceDeserializerWrapper<>(deserializationSchema);

@@ -21,7 +21,7 @@ package org.apache.flink.connector.hbase.sink;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
-/** Configuration options for HBaseSink. */
+/** HBaseSinkOptions contains configuration options used for building an {@link HBaseSink}. */
 public class HBaseSinkOptions {
 
     public static final ConfigOption<String> TABLE_NAME =

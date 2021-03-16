@@ -27,6 +27,8 @@ import java.io.IOException;
 /**
  * This class wraps a {@link DeserializationSchema} so it can be used in an {@link HBaseSource} as a
  * {@link HBaseSourceDeserializer}.
+ *
+ * @see HBaseSourceDeserializer#valueOnly(DeserializationSchema) valueOnly(DeserializationSchema).
  */
 class HBaseSourceDeserializerWrapper<T> implements HBaseSourceDeserializer<T> {
     DeserializationSchema<T> deserializationSchema;

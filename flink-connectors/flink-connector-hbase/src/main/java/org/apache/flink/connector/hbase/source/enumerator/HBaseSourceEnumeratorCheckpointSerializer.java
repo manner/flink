@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.enumerator;
 
+import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
@@ -34,23 +35,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/** Checkpoint serializer for hBase source. (De-)Serializes the collection of splits */
+/** Checkpoint serializer for {@link HBaseSource}. (De-)Serializes the collection of splits. */
 public class HBaseSourceEnumeratorCheckpointSerializer
         implements SimpleVersionedSerializer<Collection<HBaseSourceSplit>> {
-
-    private HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
 
     private static final Logger LOG =
             LoggerFactory.getLogger(HBaseSourceEnumeratorCheckpointSerializer.class);
 
+    private final HBaseSourceSplitSerializer splitSerializer = new HBaseSourceSplitSerializer();
+
     @Override
     public int getVersion() {
-        return 0;
+        return 1;
     }
 
     @Override
     public byte[] serialize(Collection<HBaseSourceSplit> checkpointState) throws IOException {
-        LOG.debug("serialize");
+        LOG.debug("serializing checkpoint state with {} splits", checkpointState.size());
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos)) {
             out.writeInt(checkpointState.size());
@@ -67,7 +68,7 @@ public class HBaseSourceEnumeratorCheckpointSerializer
     @Override
     public Collection<HBaseSourceSplit> deserialize(int version, byte[] serialized)
             throws IOException {
-        LOG.debug("deserialize");
+        LOG.debug("deserializing checkpoint state");
         List<HBaseSourceSplit> checkPointState = new ArrayList<>();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
                 DataInputStream in = new DataInputStream(bais)) {

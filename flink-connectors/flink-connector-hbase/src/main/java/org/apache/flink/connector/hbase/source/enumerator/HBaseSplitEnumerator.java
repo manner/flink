@@ -43,7 +43,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 
-/** The enumerator class for Hbase source. */
+/**
+ * The SourceEnumerator is responsible for work discovery and assignment of splits. The
+ * HBaseSourceEnumerator does the following:
+ *
+ * <ol>
+ *   <li>Connect to HBase to discover all column families of the table that is being watched.
+ *   <li>Equally distribute column families to HBaseSourceSplits depending on the parallelism. One
+ *       {@link HBaseSourceSplit} will be created per parallel reader. Each {@link HBaseSourceSplit}
+ *       can cover multiple column families.
+ * </ol>
+ */
 @Internal
 public class HBaseSplitEnumerator
         implements SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> {
@@ -65,7 +75,7 @@ public class HBaseSplitEnumerator
         this.host = sourceConfiguration.get(HBaseSourceOptions.HOST_NAME);
         this.table = sourceConfiguration.get(HBaseSourceOptions.TABLE_NAME);
         this.serializedHBaseConfig = serializedHBaseConfig;
-        LOG.debug("Constructed HBase Split enumerator");
+        LOG.debug("Constructed with {} remaining splits", remainingSplits.size());
     }
 
     @Override
@@ -97,7 +107,7 @@ public class HBaseSplitEnumerator
                     });
             addSplits(splits);
         } catch (IOException e) {
-            throw new RuntimeException("could not start split enumerator", e);
+            throw new RuntimeException("could not start HBaseSplitEnumerator", e);
         }
     }
 
@@ -121,7 +131,7 @@ public class HBaseSplitEnumerator
 
     @Override
     public void addReader(int subtaskId) {
-        LOG.debug("addReader {}", subtaskId);
+        LOG.debug("adding reader with id {}", subtaskId);
         HBaseSourceSplit nextSplit = remainingSplits.poll();
         if (nextSplit != null) {
             context.assignSplit(nextSplit, subtaskId);

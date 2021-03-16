@@ -26,6 +26,8 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.ipc.RpcScheduler;
+import org.apache.hadoop.hbase.ipc.RpcServer;
+import org.apache.hadoop.hbase.ipc.RpcServerFactory;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 
 import java.io.IOException;
@@ -33,10 +35,9 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
- * Minimal implementation of {@link Server} to enable the creation of {@link
- * org.apache.hadoop.hbase.ipc.RpcServer} via {@link
- * org.apache.hadoop.hbase.ipc.RpcServerFactory#createRpcServer(Server, String, List,
- * InetSocketAddress, Configuration, RpcScheduler)}.
+ * Minimal implementation of {@link Server} to enable the creation of {@link RpcServer} via {@link
+ * RpcServerFactory#createRpcServer(Server, String, List, InetSocketAddress, Configuration,
+ * RpcScheduler)}.
  */
 public class EmptyHBaseServer implements Server {
 
