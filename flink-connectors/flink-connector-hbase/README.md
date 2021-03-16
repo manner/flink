@@ -62,7 +62,7 @@ The Deserializer is created as follows:
 static class HBaseStringDeserializer implements HBaseSourceDeserializer<String> {
     @Override
     public String deserialize(HBaseSourceEvent event) {
-        return new String(event.getPayload());
+        return new String(event.getPayload(), HBaseEvent.DEFAULT_CHARSET);
     }
 }
 ```

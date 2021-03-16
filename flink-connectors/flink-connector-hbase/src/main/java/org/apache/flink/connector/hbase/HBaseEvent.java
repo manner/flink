@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class HBaseEvent {
 
-    protected static final Charset CHARSET = StandardCharsets.UTF_8;
+    public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     private final String rowId;
     private final String cf;
@@ -69,14 +69,14 @@ public class HBaseEvent {
     }
 
     public byte[] getRowId() {
-        return rowId.getBytes(CHARSET);
+        return rowId.getBytes(DEFAULT_CHARSET);
     }
 
     public byte[] getCf() {
-        return cf.getBytes(CHARSET);
+        return cf.getBytes(DEFAULT_CHARSET);
     }
 
     public byte[] getQualifier() {
-        return qualifier.getBytes(CHARSET);
+        return qualifier.getBytes(DEFAULT_CHARSET);
     }
 }

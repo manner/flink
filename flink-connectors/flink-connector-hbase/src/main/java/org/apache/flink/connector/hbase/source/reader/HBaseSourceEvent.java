@@ -48,9 +48,9 @@ public class HBaseSourceEvent extends HBaseEvent {
     }
 
     public static HBaseSourceEvent fromCell(String table, Cell cell, int index) {
-        final String row = new String(cell.getRowArray(), CHARSET);
-        final String cf = new String(cell.getFamilyArray(), CHARSET);
-        final String qualifier = new String(cell.getQualifierArray(), CHARSET);
+        final String row = new String(cell.getRowArray(), DEFAULT_CHARSET);
+        final String cf = new String(cell.getFamilyArray(), DEFAULT_CHARSET);
+        final String qualifier = new String(cell.getQualifierArray(), DEFAULT_CHARSET);
         final byte[] payload = Arrays.copyOf(cell.getValueArray(), cell.getValueLength());
         final long timestamp = cell.getTimestamp();
         final Cell.Type type = cell.getType();
