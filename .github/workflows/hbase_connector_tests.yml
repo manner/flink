@@ -20,7 +20,7 @@ jobs:
       with:
         java-version: ${{ matrix.java-version }}
     - name: Maven Clean
-      run: mvn clean --file flink-connectors/flink-connector-hbase/pom.xml
+      run: mvn clean --file flink-connectors/flink-connector-hbase-unified/pom.xml
     - name: Test with Maven
       run: mvn test --no-transfer-progress --file flink-connectors/flink-connector-hbase-unified/pom.xml
     - name: Integration Test with Maven
