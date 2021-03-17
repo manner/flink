@@ -23,6 +23,7 @@ import org.apache.flink.connector.hbase.HBaseEvent;
 import org.apache.hadoop.hbase.Cell;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /** The HBaseSourceEvent is used to represent incoming events from HBase. */
 public class HBaseSourceEvent extends HBaseEvent {
@@ -78,5 +79,25 @@ public class HBaseSourceEvent extends HBaseEvent {
     public boolean isLaterThan(long timestamp, int index) {
         return timestamp < this.getTimestamp()
                 || (timestamp == this.getTimestamp() && index < this.getIndex());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        HBaseSourceEvent that = (HBaseSourceEvent) o;
+        return timestamp == that.timestamp && index == that.index && table.equals(that.table);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), table, timestamp, index);
     }
 }

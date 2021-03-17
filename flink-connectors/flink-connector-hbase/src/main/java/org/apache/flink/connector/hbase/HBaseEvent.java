@@ -26,6 +26,8 @@ import org.apache.hadoop.hbase.Cell;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * The base HBaseEvent which needs to be created in the {@link HBaseSinkSerializer} to write data to
@@ -103,5 +105,28 @@ public class HBaseEvent {
 
     public byte[] getQualifierBytes() {
         return qualifier.getBytes(DEFAULT_CHARSET);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        HBaseEvent that = (HBaseEvent) o;
+        return rowId.equals(that.rowId)
+                && columnFamily.equals(that.columnFamily)
+                && qualifier.equals(that.qualifier)
+                && Arrays.equals(payload, that.payload)
+                && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(rowId, columnFamily, qualifier, type);
+        result = 31 * result + Arrays.hashCode(payload);
+        return result;
     }
 }
