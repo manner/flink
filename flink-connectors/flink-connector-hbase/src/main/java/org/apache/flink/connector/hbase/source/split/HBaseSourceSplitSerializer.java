@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.split;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /** A serializer for {@link HBaseSourceSplit}. */
+@Internal
 public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBaseSourceSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceSplitSerializer.class);

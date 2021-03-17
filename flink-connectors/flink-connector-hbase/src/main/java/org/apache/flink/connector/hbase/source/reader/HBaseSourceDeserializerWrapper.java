@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.reader;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.hbase.source.HBaseSource;
@@ -30,6 +31,7 @@ import java.io.IOException;
  *
  * @see HBaseSourceDeserializer#valueOnly(DeserializationSchema) valueOnly(DeserializationSchema).
  */
+@Internal
 class HBaseSourceDeserializerWrapper<T> implements HBaseSourceDeserializer<T> {
     private final DeserializationSchema<T> deserializationSchema;
 

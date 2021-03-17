@@ -18,6 +18,8 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
+import org.apache.flink.annotation.Internal;
+
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
@@ -27,6 +29,7 @@ import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
  * replication ({@link AdminProtos.AdminService.BlockingInterface#replicateWALEntry(RpcController,
  * AdminProtos.ReplicateWALEntryRequest)}) to keep implementing class small.
  */
+@Internal
 public interface ReplicationTargetInterface extends AdminProtos.AdminService.BlockingInterface {
 
     @Override

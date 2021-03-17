@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.split;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.hbase.HBaseEvent;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
 
@@ -25,6 +26,7 @@ import org.apache.flink.connector.hbase.source.reader.HBaseSourceEvent;
  * Contains the state of an {@link HBaseSourceSplit}. It tracks the timestamp of the last emitted
  * event to ensure no duplicates appear on recovery.
  */
+@Internal
 public class HBaseSourceSplitState {
     private final HBaseSourceSplit split;
 

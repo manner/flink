@@ -18,6 +18,8 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
+import org.apache.flink.annotation.Internal;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ChoreService;
 import org.apache.hadoop.hbase.CoordinatedStateManager;
@@ -38,6 +40,7 @@ import java.util.List;
  * RpcServerFactory#createRpcServer(Server, String, List, InetSocketAddress, Configuration,
  * RpcScheduler)}.
  */
+@Internal
 public class EmptyHBaseServer implements Server {
 
     private final Configuration configuration;

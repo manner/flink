@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.reader;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -41,6 +42,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /** A {@link SplitReader} implementation for HBase. */
+@Internal
 public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBaseSourceSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceSplitReader.class);

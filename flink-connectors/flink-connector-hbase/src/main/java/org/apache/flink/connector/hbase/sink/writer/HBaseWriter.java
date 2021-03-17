@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.sink.writer;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.configuration.Configuration;
@@ -53,6 +54,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * <p>Stored events will be flushed to HBase eiter if the {@link #queueLimit} is reached or if the
  * {@link #maxLatencyMs} has elapsed.
  */
+@Internal
 public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseWriter.class);

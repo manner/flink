@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.sink;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.hbase.sink.writer.HBaseWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
@@ -39,6 +40,7 @@ import java.io.IOException;
  * This class serializes {@link Mutation} and is used to serialize the state of the {@link
  * HBaseWriter}.
  */
+@Internal
 class HBaseSinkMutationSerializer implements SimpleVersionedSerializer<Mutation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSinkMutationSerializer.class);

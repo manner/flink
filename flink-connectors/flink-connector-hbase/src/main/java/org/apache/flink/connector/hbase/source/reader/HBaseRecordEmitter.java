@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.reader;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitState;
@@ -26,6 +27,7 @@ import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitState;
  * The {@link RecordEmitter} implementation for {@link HBaseSourceReader}. It updates the {@link
  * HBaseSourceSplitState} and deserializes the record before emitting it.
  */
+@Internal
 public class HBaseRecordEmitter<T>
         implements RecordEmitter<HBaseSourceEvent, T, HBaseSourceSplitState> {
 

@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.hbaseendpoint;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.hbase.source.HBaseSourceOptions;
@@ -66,6 +67,7 @@ import java.util.concurrent.ExecutionException;
  * replicate are specified when the replication is started with {@link #startReplication}. The
  * incoming WAL edits are internally buffered and can be retrieved with {@link #getAll}.
  */
+@Internal
 public class HBaseEndpoint implements ReplicationTargetInterface {
 
     private static final AdminProtos.ReplicateWALEntryResponse REPLICATE_WAL_ENTRY_RESPONSE =

@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.split;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SourceSplit;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceSplitReader;
@@ -29,6 +30,7 @@ import java.util.List;
  * An HBaseSourceSplit contains all necessary information a {@link HBaseSourceSplitReader} needs to
  * read from HBase.
  */
+@Internal
 public class HBaseSourceSplit implements SourceSplit, Serializable {
 
     private static final long serialVersionUID = 1L;

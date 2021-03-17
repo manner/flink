@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.hbase.source.enumerator;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.hbase.source.HBaseSource;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplit;
 import org.apache.flink.connector.hbase.source.split.HBaseSourceSplitSerializer;
@@ -36,6 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 /** Checkpoint serializer for {@link HBaseSource}. (De-)Serializes the collection of splits. */
+@Internal
 public class HBaseSourceEnumeratorCheckpointSerializer
         implements SimpleVersionedSerializer<Collection<HBaseSourceSplit>> {
 
