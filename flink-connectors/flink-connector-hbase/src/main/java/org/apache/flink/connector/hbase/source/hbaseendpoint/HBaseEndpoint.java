@@ -276,8 +276,8 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
     }
 
     private ReplicationPeerConfig createPeerConfig(String table, List<String> columnFamilies) {
-        Map<TableName, List<String>> tableCFsMap = new HashMap<>();
-        tableCFsMap.put(TableName.valueOf(table), columnFamilies);
+        Map<TableName, List<String>> tableColumnFamiliesMap = new HashMap<>();
+        tableColumnFamiliesMap.put(TableName.valueOf(table), columnFamilies);
         return ReplicationPeerConfig.newBuilder()
                 .setClusterKey(
                         getZookeeperClientAddress()
@@ -286,7 +286,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
                                 + "/"
                                 + clusterKey)
                 .setReplicateAllUserTables(false)
-                .setTableCFsMap(tableCFsMap)
+                .setTableCFsMap(tableColumnFamiliesMap)
                 .build();
     }
 

@@ -147,15 +147,17 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public void testBasicPut() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        cluster.makeTable(baseTableName, DEFAULT_CF_COUNT);
-        String[] expectedValues = uniqueValues(2 * DEFAULT_CF_COUNT);
+        cluster.makeTable(baseTableName, DEFAULT_COLUMNFAMILY_COUNT);
+        String[] expectedValues = uniqueValues(2 * DEFAULT_COLUMNFAMILY_COUNT);
 
         expectFirstValuesToBe(
                 stream,
                 expectedValues,
                 "HBase source did not produce the right values after a basic put operation");
         doAndWaitForSuccess(
-                env, () -> cluster.put(baseTableName, DEFAULT_CF_COUNT, expectedValues), 120);
+                env,
+                () -> cluster.put(baseTableName, DEFAULT_COLUMNFAMILY_COUNT, expectedValues),
+                120);
     }
 
     @Test
@@ -163,9 +165,9 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         String secondTable = baseTableName + "-table2";
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName);
-        cluster.makeTable(baseTableName, DEFAULT_CF_COUNT);
-        cluster.makeTable(secondTable, DEFAULT_CF_COUNT);
-        String[] expectedValues = uniqueValues(DEFAULT_CF_COUNT);
+        cluster.makeTable(baseTableName, DEFAULT_COLUMNFAMILY_COUNT);
+        cluster.makeTable(secondTable, DEFAULT_COLUMNFAMILY_COUNT);
+        String[] expectedValues = uniqueValues(DEFAULT_COLUMNFAMILY_COUNT);
 
         expectFirstValuesToBe(
                 stream,
@@ -174,9 +176,12 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         doAndWaitForSuccess(
                 env,
                 () -> {
-                    cluster.put(secondTable, DEFAULT_CF_COUNT, uniqueValues(DEFAULT_CF_COUNT));
+                    cluster.put(
+                            secondTable,
+                            DEFAULT_COLUMNFAMILY_COUNT,
+                            uniqueValues(DEFAULT_COLUMNFAMILY_COUNT));
                     sleep(2000);
-                    cluster.put(baseTableName, DEFAULT_CF_COUNT, expectedValues);
+                    cluster.put(baseTableName, DEFAULT_COLUMNFAMILY_COUNT, expectedValues);
                 },
                 180);
     }
@@ -282,7 +287,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     }
 
     @Test
-    public void testBasicPutWhenMoreCFsThanThreads() throws Exception {
+    public void testBasicPutWhenMoreColumnFamiliesThanThreads() throws Exception {
         int parallelism = 1;
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> stream = streamFromHBaseSource(env, baseTableName, parallelism);
@@ -302,7 +307,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
         expectFirstValuesToBe(
                 stream,
                 expectedValues,
-                "HBase source did not produce the right values after a multi-cf put");
+                "HBase source did not produce the right values after a multi-column-family put");
         doAndWaitForSuccess(env, () -> {}, 120);
     }
 

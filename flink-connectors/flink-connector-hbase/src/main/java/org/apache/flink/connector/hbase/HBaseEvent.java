@@ -37,31 +37,40 @@ public class HBaseEvent {
     public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     private final String rowId;
-    private final String cf;
+    private final String columnFamily;
     private final String qualifier;
     private final byte[] payload;
     private final Cell.Type type;
 
     protected HBaseEvent(
-            Cell.Type type, String rowId, String cf, String qualifier, byte[] payload) {
+            Cell.Type type, String rowId, String columnFamily, String qualifier, byte[] payload) {
         this.rowId = rowId;
-        this.cf = cf;
+        this.columnFamily = columnFamily;
         this.qualifier = qualifier;
         this.payload = payload;
         this.type = type;
     }
 
-    public static HBaseEvent deleteWith(String rowId, String cf, String qualifier) {
-        return new HBaseEvent(Cell.Type.Delete, rowId, cf, qualifier, null);
+    public static HBaseEvent deleteWith(String rowId, String columnFamily, String qualifier) {
+        return new HBaseEvent(Cell.Type.Delete, rowId, columnFamily, qualifier, null);
     }
 
-    public static HBaseEvent putWith(String rowId, String cf, String qualifier, byte[] payload) {
-        return new HBaseEvent(Cell.Type.Put, rowId, cf, qualifier, payload);
+    public static HBaseEvent putWith(
+            String rowId, String columnFamily, String qualifier, byte[] payload) {
+        return new HBaseEvent(Cell.Type.Put, rowId, columnFamily, qualifier, payload);
     }
 
     @Override
     public String toString() {
-        return type.name() + " " + rowId + " " + cf + " " + qualifier + " " + new String(payload);
+        return type.name()
+                + " "
+                + rowId
+                + " "
+                + columnFamily
+                + " "
+                + qualifier
+                + " "
+                + new String(payload);
     }
 
     public Cell.Type getType() {
@@ -76,8 +85,8 @@ public class HBaseEvent {
         return rowId;
     }
 
-    public String getCf() {
-        return cf;
+    public String getColumnFamily() {
+        return columnFamily;
     }
 
     public String getQualifier() {
@@ -88,8 +97,8 @@ public class HBaseEvent {
         return rowId.getBytes(DEFAULT_CHARSET);
     }
 
-    public byte[] getCfBytes() {
-        return cf.getBytes(DEFAULT_CHARSET);
+    public byte[] getColumnFamilyBytes() {
+        return columnFamily.getBytes(DEFAULT_CHARSET);
     }
 
     public byte[] getQualifierBytes() {

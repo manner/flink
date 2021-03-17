@@ -29,7 +29,7 @@ import java.util.UUID;
 public abstract class TestsWithTestHBaseCluster {
 
     protected static final Logger LOG = LoggerFactory.getLogger(TestsWithTestHBaseCluster.class);
-    public static final int DEFAULT_CF_COUNT = 4;
+    public static final int DEFAULT_COLUMNFAMILY_COUNT = 4;
 
     @Rule public FileSignal testOracle = new FileSignal();
     @Rule public HBaseTestCluster cluster = new HBaseTestCluster();

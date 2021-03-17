@@ -231,11 +231,11 @@ public class HBaseTestCluster extends ExternalResource {
                 TableDescriptorBuilder tableBuilder =
                         TableDescriptorBuilder.newBuilder(tableNameObj);
                 for (int i = 0; i < numColumnFamilies; i++) {
-                    ColumnFamilyDescriptorBuilder cfBuilder =
+                    ColumnFamilyDescriptorBuilder columnFamilyBuilder =
                             ColumnFamilyDescriptorBuilder.newBuilder(
                                     Bytes.toBytes(COLUMN_FAMILY_BASE + i));
-                    cfBuilder.setScope(1);
-                    tableBuilder.setColumnFamily(cfBuilder.build());
+                    columnFamilyBuilder.setScope(1);
+                    tableBuilder.setColumnFamily(columnFamilyBuilder.build());
                 }
                 admin.createTable(tableBuilder.build());
             }
@@ -284,15 +284,18 @@ public class HBaseTestCluster extends ExternalResource {
             String rowKey = UUID.randomUUID().toString();
             Put put = new Put(rowKey.getBytes());
             int index = 0;
-            for (int cf = 0; cf < numColumnFamilies; cf++) {
-                int cq = 0;
-                for (; index + cq < values.length * (cf + 1) / numColumnFamilies; cq++) {
+            for (int columnFamily = 0; columnFamily < numColumnFamilies; columnFamily++) {
+                int columnQualifier = 0;
+                for (;
+                        index + columnQualifier
+                                < values.length * (columnFamily + 1) / numColumnFamilies;
+                        columnQualifier++) {
                     put.addColumn(
-                            (COLUMN_FAMILY_BASE + cf).getBytes(),
-                            (QUALIFIER_BASE + cq).getBytes(),
-                            values[index + cq].getBytes());
+                            (COLUMN_FAMILY_BASE + columnFamily).getBytes(),
+                            (QUALIFIER_BASE + columnQualifier).getBytes(),
+                            values[index + columnQualifier].getBytes());
                 }
-                index += cq;
+                index += columnQualifier;
             }
             htable.put(put);
             LOG.info("Added row " + rowKey);

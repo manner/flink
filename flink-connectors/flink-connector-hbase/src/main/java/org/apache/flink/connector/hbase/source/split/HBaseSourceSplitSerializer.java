@@ -51,8 +51,8 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             out.writeUTF(split.splitId());
             out.writeUTF(split.getHost());
             out.writeInt(split.getColumnFamilies().size());
-            for (String cF : split.getColumnFamilies()) {
-                out.writeUTF(cF);
+            for (String columnFamily : split.getColumnFamilies()) {
+                out.writeUTF(columnFamily);
             }
             out.writeLong(split.getFirstEventStamp().f0);
             out.writeInt(split.getFirstEventStamp().f1);
@@ -69,8 +69,8 @@ public class HBaseSourceSplitSerializer implements SimpleVersionedSerializer<HBa
             String id = in.readUTF();
             String host = in.readUTF();
             ArrayList<String> columnFamilies = new ArrayList<>();
-            int noOfCfs = in.readInt();
-            for (int i = 0; i < noOfCfs; i++) {
+            int numberOfColumnFamilies = in.readInt();
+            for (int i = 0; i < numberOfColumnFamilies; i++) {
                 columnFamilies.add(in.readUTF());
             }
 

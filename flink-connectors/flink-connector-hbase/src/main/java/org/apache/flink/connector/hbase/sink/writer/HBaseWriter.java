@@ -129,11 +129,12 @@ public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
         HBaseEvent event = sinkSerializer.serialize(element);
         if (event.getType() == Cell.Type.Put) {
             Put put = new Put(event.getRowIdBytes());
-            put.addColumn(event.getCfBytes(), event.getQualifierBytes(), event.getPayload());
+            put.addColumn(
+                    event.getColumnFamilyBytes(), event.getQualifierBytes(), event.getPayload());
             pendingMutations.add(put);
         } else if (event.getType() == Cell.Type.Delete) {
             Delete delete = new Delete(event.getRowIdBytes());
-            delete.addColumn(event.getCfBytes(), event.getQualifierBytes());
+            delete.addColumn(event.getColumnFamilyBytes(), event.getQualifierBytes());
             pendingMutations.add(delete);
         } else {
             throw new UnsupportedOperationException("event type not supported");

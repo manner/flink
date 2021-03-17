@@ -96,7 +96,7 @@ public class HBaseEndpointTest extends TestsWithTestHBaseCluster {
         cluster.makeTable(baseTableName);
 
         int numPuts = 3;
-        int putSize = 2 * DEFAULT_CF_COUNT;
+        int putSize = 2 * DEFAULT_COLUMNFAMILY_COUNT;
         for (int i = 0; i < numPuts; i++) {
             cluster.put(baseTableName, 1, uniqueValues(putSize));
         }

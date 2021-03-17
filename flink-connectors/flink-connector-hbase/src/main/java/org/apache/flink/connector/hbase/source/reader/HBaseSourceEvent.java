@@ -36,12 +36,12 @@ public class HBaseSourceEvent extends HBaseEvent {
             Cell.Type type,
             String rowId,
             String table,
-            String cf,
+            String columnFamily,
             String qualifier,
             byte[] payload,
             long timestamp,
             int index) {
-        super(type, rowId, cf, qualifier, payload);
+        super(type, rowId, columnFamily, qualifier, payload);
         this.table = table;
         this.timestamp = timestamp;
         this.index = index;
@@ -49,12 +49,13 @@ public class HBaseSourceEvent extends HBaseEvent {
 
     public static HBaseSourceEvent fromCell(String table, Cell cell, int index) {
         final String row = new String(cell.getRowArray(), DEFAULT_CHARSET);
-        final String cf = new String(cell.getFamilyArray(), DEFAULT_CHARSET);
+        final String columnFamily = new String(cell.getFamilyArray(), DEFAULT_CHARSET);
         final String qualifier = new String(cell.getQualifierArray(), DEFAULT_CHARSET);
         final byte[] payload = Arrays.copyOf(cell.getValueArray(), cell.getValueLength());
         final long timestamp = cell.getTimestamp();
         final Cell.Type type = cell.getType();
-        return new HBaseSourceEvent(type, row, table, cf, qualifier, payload, timestamp, index);
+        return new HBaseSourceEvent(
+                type, row, table, columnFamily, qualifier, payload, timestamp, index);
     }
 
     public long getTimestamp() {
