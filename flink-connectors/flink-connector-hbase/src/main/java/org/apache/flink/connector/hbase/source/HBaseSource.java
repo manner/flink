@@ -93,8 +93,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     }
 
     @Override
-    public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext)
-            throws Exception {
+    public SourceReader<T, HBaseSourceSplit> createReader(SourceReaderContext readerContext) {
         LOG.debug("creating reader");
         return new HBaseSourceReader<>(
                 serializedHBaseConfig, sourceDeserializer, sourceConfiguration, readerContext);
@@ -103,8 +102,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     @Override
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> restoreEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext,
-            Collection<HBaseSourceSplit> checkpoint)
-            throws Exception {
+            Collection<HBaseSourceSplit> checkpoint) {
         LOG.debug("restoring enumerator");
 
         HBaseSplitEnumerator enumerator =
@@ -115,7 +113,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
 
     @Override
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> createEnumerator(
-            SplitEnumeratorContext<HBaseSourceSplit> enumContext) throws Exception {
+            SplitEnumeratorContext<HBaseSourceSplit> enumContext) {
         LOG.debug("creating enumerator");
         return new HBaseSplitEnumerator(enumContext, serializedHBaseConfig, sourceConfiguration);
     }

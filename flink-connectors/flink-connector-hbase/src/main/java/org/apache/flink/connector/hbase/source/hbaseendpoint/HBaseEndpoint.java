@@ -90,7 +90,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
 
     public HBaseEndpoint(
             org.apache.hadoop.conf.Configuration hbaseConf, Configuration sourceConfiguration)
-            throws IOException, KeeperException, InterruptedException {
+            throws IOException, InterruptedException {
         this.hbaseConf = hbaseConf;
         this.replicationPeerId = UUID.randomUUID().toString().substring(0, 5);
         this.clusterKey = replicationPeerId + "_clusterKey";
@@ -139,7 +139,7 @@ public class HBaseEndpoint implements ReplicationTargetInterface {
         return rpcServer;
     }
 
-    private void registerAtZooKeeper() throws KeeperException, InterruptedException {
+    private void registerAtZooKeeper() throws InterruptedException {
         createZKPath(getZookeeperRootNode() + "/" + clusterKey, null, CreateMode.PERSISTENT);
         createZKPath(
                 getZookeeperRootNode() + "/" + clusterKey + "/rs", null, CreateMode.PERSISTENT);

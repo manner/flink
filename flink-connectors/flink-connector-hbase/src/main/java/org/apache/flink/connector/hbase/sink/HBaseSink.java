@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,19 +92,18 @@ public class HBaseSink<IN> implements Sink<IN, Void, Mutation, Void> {
     }
 
     @Override
-    public SinkWriter<IN, Void, Mutation> createWriter(InitContext context, List<Mutation> states)
-            throws IOException {
+    public SinkWriter<IN, Void, Mutation> createWriter(InitContext context, List<Mutation> states) {
         return new HBaseWriter<>(
                 context, states, sinkSerializer, serializedHBaseConfig, sinkConfiguration);
     }
 
     @Override
-    public Optional<Committer<Void>> createCommitter() throws IOException {
+    public Optional<Committer<Void>> createCommitter() {
         return Optional.empty();
     }
 
     @Override
-    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() throws IOException {
+    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() {
         return Optional.empty();
     }
 

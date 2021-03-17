@@ -30,7 +30,6 @@ import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServerFactory;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 
@@ -89,7 +88,7 @@ public class EmptyHBaseServer implements Server {
     }
 
     @Override
-    public Connection createConnection(Configuration conf) throws IOException {
+    public Connection createConnection(Configuration conf) {
         throw new UnsupportedOperationException(
                 "Operation \"createConnection\" not implemented in class " + getClass());
     }

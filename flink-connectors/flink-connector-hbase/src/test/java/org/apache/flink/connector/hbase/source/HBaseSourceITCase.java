@@ -42,11 +42,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.internal.ArrayComparisonFailure;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -68,8 +64,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                             .build());
 
     private DataStream<String> streamFromHBaseSource(
-            StreamExecutionEnvironment environment, String tableName)
-            throws ParserConfigurationException, SAXException, IOException {
+            StreamExecutionEnvironment environment, String tableName) {
         return streamFromHBaseSource(environment, tableName, 1);
     }
 
@@ -222,7 +217,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     }
 
                     @Override
-                    public void collectValue(String value) throws Exception {
+                    public void collectValue(String value) {
 
                         if (getCheckpointedValues().contains(value)) {
                             LOG.error("Unique value {} was not seen only once", value);
@@ -235,7 +230,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
                     }
 
                     @Override
-                    public void checkpoint() throws Exception {
+                    public void checkpoint() {
                         checkForSuccess();
                     }
                 });
@@ -247,7 +242,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
             int putsPerPackage = 5;
             for (int i = 0; i < expectedValues.length; i += putsPerPackage) {
                 LOG.info("Sending next package ...");
-                CompletableFuture[] signalsToWait = new CompletableFuture[putsPerPackage];
+                CompletableFuture<String>[] signalsToWait = new CompletableFuture[putsPerPackage];
                 for (int j = i; j < expectedValues.length && j < i + putsPerPackage; j++) {
                     cluster.put(baseTableName, expectedValues[j]);
                     signalsToWait[j - i] =
@@ -315,7 +310,7 @@ public class HBaseSourceITCase extends TestsWithTestHBaseCluster {
     public static class HBaseStringDeserializationScheme
             implements HBaseSourceDeserializer<String> {
         @Override
-        public String deserialize(HBaseSourceEvent event) throws IOException {
+        public String deserialize(HBaseSourceEvent event) {
             return new String(event.getPayload(), HBaseEvent.DEFAULT_CHARSET);
         }
     }

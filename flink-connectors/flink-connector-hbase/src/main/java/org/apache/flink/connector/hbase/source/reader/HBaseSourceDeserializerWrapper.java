@@ -31,7 +31,7 @@ import java.io.IOException;
  * @see HBaseSourceDeserializer#valueOnly(DeserializationSchema) valueOnly(DeserializationSchema).
  */
 class HBaseSourceDeserializerWrapper<T> implements HBaseSourceDeserializer<T> {
-    DeserializationSchema<T> deserializationSchema;
+    private final DeserializationSchema<T> deserializationSchema;
 
     HBaseSourceDeserializerWrapper(DeserializationSchema<T> deserializationSchema) {
         this.deserializationSchema = deserializationSchema;

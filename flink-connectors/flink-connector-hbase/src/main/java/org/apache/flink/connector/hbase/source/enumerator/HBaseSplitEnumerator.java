@@ -141,7 +141,7 @@ public class HBaseSplitEnumerator
     }
 
     @Override
-    public Collection<HBaseSourceSplit> snapshotState() throws Exception {
+    public Collection<HBaseSourceSplit> snapshotState() {
         return remainingSplits;
     }
 

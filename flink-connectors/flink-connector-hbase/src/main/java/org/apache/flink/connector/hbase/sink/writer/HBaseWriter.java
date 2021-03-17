@@ -147,12 +147,12 @@ public class HBaseWriter<IN> implements SinkWriter<IN, Void, Mutation> {
     }
 
     @Override
-    public List<Void> prepareCommit(boolean flush) throws IOException {
+    public List<Void> prepareCommit(boolean flush) {
         return Collections.emptyList();
     }
 
     @Override
-    public List<Mutation> snapshotState() throws IOException {
+    public List<Mutation> snapshotState() {
         ArrayList<Mutation> snapshot = new ArrayList<>();
         pendingMutations.drainTo(snapshot);
         LOG.debug("Snapshotting state with {} elements", snapshot.size());

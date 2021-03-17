@@ -127,7 +127,7 @@ public class FileSignal extends ExternalResource implements Serializable {
     }
 
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
         makeFolder();
     }
 
