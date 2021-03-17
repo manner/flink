@@ -80,7 +80,6 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
                 HBaseConfigurationUtil.serializeConfiguration(hbaseConfiguration);
         this.sourceDeserializer = sourceDeserializer;
         this.sourceConfiguration = sourceConfiguration;
-        LOG.debug("constructed source");
     }
 
     public static <IN> HBaseSourceBuilder<IN> builder() {

@@ -23,6 +23,9 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.hbase.source.hbaseendpoint.HBaseEndpoint;
 import org.apache.flink.connector.hbase.source.reader.HBaseSourceDeserializer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
@@ -56,6 +59,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @see HBaseSourceOptions HBaseSourceOptions
  */
 public class HBaseSourceBuilder<IN> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseSourceBuilder.class);
 
     private static final ConfigOption<?>[] REQUIRED_CONFIGS = {HBaseSourceOptions.TABLE_NAME};
     private final Configuration sourceConfiguration;
@@ -128,6 +133,7 @@ public class HBaseSourceBuilder<IN> {
 
     public HBaseSource<IN> build() {
         sanityCheck();
+        LOG.debug("constructing source with config: {}", sourceConfiguration.toString());
         return new HBaseSource<>(sourceDeserializer, hbaseConfiguration, sourceConfiguration);
     }
 
