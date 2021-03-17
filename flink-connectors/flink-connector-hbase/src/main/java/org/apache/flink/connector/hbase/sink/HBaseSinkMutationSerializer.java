@@ -39,7 +39,7 @@ import java.io.IOException;
  * This class serializes {@link Mutation} and is used to serialize the state of the {@link
  * HBaseWriter}.
  */
-public class HBaseSinkMutationSerializer implements SimpleVersionedSerializer<Mutation> {
+class HBaseSinkMutationSerializer implements SimpleVersionedSerializer<Mutation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HBaseSinkMutationSerializer.class);
 
