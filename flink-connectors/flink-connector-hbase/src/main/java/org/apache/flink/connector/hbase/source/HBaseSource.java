@@ -102,7 +102,7 @@ public class HBaseSource<T> implements Source<T, HBaseSourceSplit, Collection<HB
     public SplitEnumerator<HBaseSourceSplit, Collection<HBaseSourceSplit>> restoreEnumerator(
             SplitEnumeratorContext<HBaseSourceSplit> enumContext,
             Collection<HBaseSourceSplit> checkpoint) {
-        LOG.debug("restoring enumerator");
+        LOG.debug("restoring enumerator with {} splits", checkpoint.size());
 
         HBaseSplitEnumerator enumerator =
                 new HBaseSplitEnumerator(enumContext, serializedHBaseConfig, sourceConfiguration);

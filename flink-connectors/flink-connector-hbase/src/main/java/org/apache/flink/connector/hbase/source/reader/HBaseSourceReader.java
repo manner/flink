@@ -48,7 +48,7 @@ public class HBaseSourceReader<T>
                 new HBaseRecordEmitter<>(sourceDeserializer),
                 sourceConfiguration,
                 context);
-        LOG.debug("constructing Source Reader");
+        LOG.debug("constructing Source Reader with config: {}", sourceConfiguration.toString());
     }
 
     @Override
