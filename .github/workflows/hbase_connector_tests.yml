@@ -22,6 +22,6 @@ jobs:
     - name: Maven Clean
       run: mvn clean --file flink-connectors/flink-connector-hbase/pom.xml
     - name: Test with Maven
-      run: mvn test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml
+      run: mvn test --no-transfer-progress --file flink-connectors/flink-connector-hbase-unified/pom.xml
     - name: Integration Test with Maven
-      run: mvn integration-test --no-transfer-progress --file flink-connectors/flink-connector-hbase/pom.xml
+      run: mvn integration-test --no-transfer-progress --file flink-connectors/flink-connector-hbase-unified/pom.xml
