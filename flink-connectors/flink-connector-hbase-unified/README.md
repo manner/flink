@@ -7,7 +7,7 @@ It supports the new Source and Sink API specified in [FLIP-27](https://cwiki.apa
 
 Follow the instructions from the [HBase Quick Start Guide](http://hbase.apache.org/book.html#quickstart) to install HBase.
 
-*Version Compatibility*: This module is compatible with Apache HBase *2.3.4*.
+*Version Compatibility*: This module is compatible with Apache HBase *2.0.0+*.
 
 ## HBase Configuration
 
