@@ -115,7 +115,7 @@ public class HBaseSourceSplitReader implements SplitReader<HBaseSourceEvent, HBa
         private Iterator<T> recordsForSplit;
         private String splitId;
 
-        private HBaseSplitRecords(String splitId, Iterator<T> recordsForSplit) {
+        HBaseSplitRecords(String splitId, Iterator<T> recordsForSplit) {
             this.splitId = splitId;
             this.recordsForSplit = recordsForSplit;
         }
