@@ -38,8 +38,9 @@ public class ParseJsonFunction extends BuiltInScalarFunction {
         return eval(jsonStr, false);
     }
 
-    public @Nullable Variant eval(@Nullable StringData jsonStr, boolean allowDuplicateKeys) {
-        if (jsonStr == null) {
+    public @Nullable Variant eval(
+            @Nullable StringData jsonStr, @Nullable Boolean allowDuplicateKeys) {
+        if (jsonStr == null || allowDuplicateKeys == null) {
             return null;
         }
 

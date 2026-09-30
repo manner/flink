@@ -1036,8 +1036,13 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
         // The bulk of parsing behavior is covered by BinaryVariantInternalBuilderTest.
         return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.PARSE_JSON)
-                        .onFieldsWithData("{\"a\":1,\"b\":[2,3]}", "1e400", "{\"a\":1,\"a\":2}")
-                        .andDataTypes(STRING().notNull(), STRING().notNull(), STRING().notNull())
+                        .onFieldsWithData(
+                                "{\"a\":1,\"b\":[2,3]}", "1e400", "{\"a\":1,\"a\":2}", null)
+                        .andDataTypes(
+                                STRING().notNull(),
+                                STRING().notNull(),
+                                STRING().notNull(),
+                                BOOLEAN())
                         .testResult(
                                 jsonString($("f0").parseJson()),
                                 "JSON_STRING(PARSE_JSON(f0))",
@@ -1070,10 +1075,16 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 jsonString($("f2").parseJson(true)),
                                 "JSON_STRING(PARSE_JSON(f2, true))",
                                 "{\"a\":2}",
-                                STRING().notNull()),
+                                STRING().notNull())
+                        // a NULL allowDuplicateKeys yields NULL
+                        .testSqlResult("JSON_STRING(PARSE_JSON(f0, f3))", null, STRING()),
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.TRY_PARSE_JSON)
-                        .onFieldsWithData("{\"a\":1}", "1e400", "{\"a\":1,\"a\":2}")
-                        .andDataTypes(STRING().notNull(), STRING().notNull(), STRING().notNull())
+                        .onFieldsWithData("{\"a\":1}", "1e400", "{\"a\":1,\"a\":2}", null)
+                        .andDataTypes(
+                                STRING().notNull(),
+                                STRING().notNull(),
+                                STRING().notNull(),
+                                BOOLEAN())
                         .testResult(
                                 jsonString($("f0").tryParseJson()),
                                 "JSON_STRING(TRY_PARSE_JSON(f0))",
@@ -1095,7 +1106,9 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 jsonString($("f2").tryParseJson(true)),
                                 "JSON_STRING(TRY_PARSE_JSON(f2, true))",
                                 "{\"a\":2}",
-                                STRING()),
+                                STRING())
+                        // a NULL allowDuplicateKeys yields NULL
+                        .testSqlResult("JSON_STRING(TRY_PARSE_JSON(f0, f3))", null, STRING()),
                 TestSetSpec.forFunction(
                                 BuiltInFunctionDefinitions.PARSE_JSON,
                                 "VARIANT expression preceding another expression in a"
