@@ -115,6 +115,10 @@ class CodeGeneratorContext(
   val reusableInputUnboxingExprs: mutable.Map[(String, Int), GeneratedExpression] =
     mutable.Map[(String, Int), GeneratedExpression]()
 
+  // map of values that several calls share, e.g. a document that several calls read
+  // key -> term that returns the value
+  private val reusableSharedValues: mutable.Map[String, String] = mutable.Map[String, String]()
+
   // Stack of RexLocalRef cache scopes (`exprList-index -> generated body`).
   //   * Bottom scope == getReusableLocalRefExprBottomScope: bodies are hoisted to the top of the method
   //     and run unconditionally for every row.
@@ -485,6 +489,13 @@ class CodeGeneratorContext(
   /** Adds a reusable fusion codegen endInput statement */
   def addReusableFusionCodegenEndInputStatement(inputId: Int, s: String): Unit =
     reusableFusionCodegenEndInputStatements.put(inputId, s)
+
+  /**
+   * Returns the term of the value that the calls with the same key share. The first call adds the
+   * value with `addValue`.
+   */
+  def getOrAddReusableSharedValue(key: String, addValue: JSupplier[String]): String =
+    reusableSharedValues.getOrElseUpdate(key, addValue.get())
 
   /** Adds a reusable input unboxing expression */
   def addReusableInputUnboxingExprs(

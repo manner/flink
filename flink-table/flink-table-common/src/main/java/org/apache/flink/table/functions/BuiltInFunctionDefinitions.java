@@ -3249,7 +3249,8 @@ public final class BuiltInFunctionDefinitions {
                     .outputTypeStrategy(
                             nullableIfArgs(
                                     ConstantArgumentCount.of(0), explicit(DataTypes.VARIANT())))
-                    .runtimeProvided()
+                    .runtimeClass(
+                            "org.apache.flink.table.runtime.functions.scalar.ParseXmlFunction")
                     .build();
 
     public static final BuiltInFunctionDefinition TRY_PARSE_XML =
@@ -3263,7 +3264,8 @@ public final class BuiltInFunctionDefinitions {
                                             logical(LogicalTypeFamily.CHARACTER_STRING),
                                             logical(LogicalTypeRoot.BOOLEAN))))
                     .outputTypeStrategy(forceNullable(explicit(DataTypes.VARIANT())))
-                    .runtimeProvided()
+                    .runtimeClass(
+                            "org.apache.flink.table.runtime.functions.scalar.TryParseXmlFunction")
                     .build();
 
     // --------------------------------------------------------------------------------------------
